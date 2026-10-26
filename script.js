@@ -1,0 +1,509 @@
+const canvas = document.querySelector("#game-canvas");
+const ctx = canvas.getContext("2d");
+const WIDTH = canvas.width;
+const HEIGHT = canvas.height;
+const SAVE_KEY = "fernfall-save-v1";
+const keys = new Set();
+const heldDirections = new Set();
+const MAX_HEALTH = 5;
+
+const itemInfo = {
+	berry: { name: "Wild berry", icon: "●" },
+	wood: { name: "Softwood", icon: "▰" },
+	gel: { name: "Slime gel", icon: "●" },
+	tonic: { name: "Berry tonic", icon: "♧" },
+	seed: { name: "Acorn", icon: "✿" },
+};
+
+const saved = loadSave();
+const player = {
+	x: saved?.x ?? 478,
+	y: saved?.y ?? 322,
+	direction: "down",
+	health: saved?.health ?? MAX_HEALTH,
+	coins: saved?.coins ?? 0,
+	xp: saved?.xp ?? 0,
+	level: saved?.level ?? 1,
+	inventory: saved?.inventory ?? { berry: 0, wood: 0, gel: 0, tonic: 1, seed: 0 },
+	swing: 0,
+	hurt: 0,
+};
+
+const obstacles = [
+	{ x: 120, y: 110, r: 39 }, { x: 276, y: 95, r: 34 }, { x: 470, y: 106, r: 41 },
+	{ x: 693, y: 95, r: 36 }, { x: 850, y: 128, r: 43 }, { x: 202, y: 268, r: 42 },
+	{ x: 380, y: 242, r: 35 }, { x: 762, y: 270, r: 43 }, { x: 102, y: 440, r: 40 },
+	{ x: 303, y: 465, r: 36 }, { x: 636, y: 452, r: 42 }, { x: 856, y: 455, r: 39 },
+];
+
+const resources = [
+	{ x: 167, y: 190, type: "berry", available: true },
+	{ x: 335, y: 161, type: "wood", available: true },
+	{ x: 571, y: 186, type: "berry", available: true },
+	{ x: 830, y: 214, type: "seed", available: true },
+	{ x: 257, y: 360, type: "berry", available: true },
+	{ x: 470, y: 424, type: "wood", available: true },
+	{ x: 739, y: 365, type: "seed", available: true },
+];
+
+const mobs = [
+	{ x: 596, y: 325, hp: 2, maxHp: 2, alive: true, phase: 0, hit: 0 },
+	{ x: 386, y: 510, hp: 2, maxHp: 2, alive: true, phase: 2, hit: 0 },
+	{ x: 881, y: 333, hp: 3, maxHp: 3, alive: true, phase: 4, hit: 0 },
+];
+
+const pickups = [];
+let lastAttack = 0;
+let lastDamage = 0;
+let lastSave = 0;
+let toastTimer;
+let questClaimed = saved?.questClaimed ?? false;
+let soundEnabled = false;
+let audioContext;
+
+function loadSave() {
+	try {
+		return JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
+	} catch {
+		return null;
+	}
+}
+
+function saveGame() {
+	try {
+		localStorage.setItem(SAVE_KEY, JSON.stringify({
+			x: player.x, y: player.y, health: player.health, coins: player.coins,
+			xp: player.xp, level: player.level, inventory: player.inventory, questClaimed,
+		}));
+	} catch {
+		showToast("Progress could not be saved in this browser.");
+	}
+}
+
+function showToast(message) {
+	const toast = document.querySelector("#toast");
+	toast.textContent = message;
+	toast.classList.add("show");
+	clearTimeout(toastTimer);
+	toastTimer = setTimeout(() => toast.classList.remove("show"), 1700);
+}
+
+function playTone(frequency, duration = 0.12) {
+	if (!soundEnabled || !window.AudioContext) return;
+	audioContext ??= new AudioContext();
+	const oscillator = audioContext.createOscillator();
+	const gain = audioContext.createGain();
+	oscillator.frequency.value = frequency;
+	gain.gain.setValueAtTime(0.05, audioContext.currentTime);
+	gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+	oscillator.connect(gain);
+	gain.connect(audioContext.destination);
+	oscillator.start();
+	oscillator.stop(audioContext.currentTime + duration);
+}
+
+function drawGround() {
+	ctx.fillStyle = "#8dbb78";
+	ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+	for (let row = 0; row < 20; row += 1) {
+		for (let col = 0; col < 32; col += 1) {
+			const hash = (col * 71 + row * 139 + col * row * 17) % 97;
+			const x = col * 32 + 3 + (hash % 24);
+			const y = row * 32 + 4 + ((hash * 3) % 23);
+			ctx.fillStyle = hash % 3 === 0 ? "#a6c883" : hash % 3 === 1 ? "#7eae70" : "#b6cd83";
+			ctx.globalAlpha = 0.42;
+			ctx.fillRect(x, y, 3, 3);
+		}
+	}
+	ctx.globalAlpha = 1;
+
+	ctx.strokeStyle = "#d9c990";
+	ctx.lineWidth = 70;
+	ctx.lineCap = "round";
+	ctx.beginPath();
+	ctx.moveTo(-30, 332);
+	ctx.bezierCurveTo(180, 300, 290, 368, 468, 333);
+	ctx.bezierCurveTo(640, 301, 712, 345, 990, 300);
+	ctx.stroke();
+	ctx.strokeStyle = "#e6d9a7";
+	ctx.lineWidth = 3;
+	ctx.beginPath();
+	ctx.moveTo(-30, 305);
+	ctx.bezierCurveTo(180, 273, 290, 341, 468, 306);
+	ctx.bezierCurveTo(640, 274, 712, 318, 990, 273);
+	ctx.stroke();
+
+	ctx.fillStyle = "#719765";
+	ctx.fillRect(0, 0, WIDTH, 8);
+	ctx.fillRect(0, HEIGHT - 8, WIDTH, 8);
+	ctx.fillRect(0, 0, 8, HEIGHT);
+	ctx.fillRect(WIDTH - 8, 0, 8, HEIGHT);
+}
+
+function drawTree(tree, index) {
+	const sway = Math.sin(performance.now() / 900 + index) * 1.2;
+	ctx.fillStyle = "#6c4a32";
+	ctx.fillRect(tree.x - 8, tree.y + 6, 16, 24);
+	ctx.fillStyle = "#4d7950";
+	ctx.beginPath();
+	ctx.arc(tree.x + sway, tree.y, tree.r, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.fillStyle = "#63925a";
+	ctx.beginPath();
+	ctx.arc(tree.x - tree.r * .28 + sway, tree.y - tree.r * .24, tree.r * .68, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.fillStyle = "#83aa63";
+	ctx.beginPath();
+	ctx.arc(tree.x + tree.r * .28 + sway, tree.y - tree.r * .35, tree.r * .36, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.fillStyle = "#a9c977";
+	ctx.fillRect(tree.x - tree.r * .55 + sway, tree.y - tree.r * .66, 5, 4);
+	ctx.fillRect(tree.x + tree.r * .2 + sway, tree.y - tree.r * .52, 4, 4);
+}
+
+function drawResource(resource) {
+	if (!resource.available) return;
+	const bob = Math.sin(performance.now() / 260 + resource.x) * 2;
+	ctx.fillStyle = "#4a6741";
+	ctx.beginPath();
+	ctx.ellipse(resource.x, resource.y + 8, 15, 5, 0, 0, Math.PI * 2);
+	ctx.fill();
+	if (resource.type === "wood") {
+		ctx.fillStyle = "#805538";
+		ctx.fillRect(resource.x - 12, resource.y - 5 + bob, 24, 12);
+		ctx.fillStyle = "#bf8c57";
+		ctx.fillRect(resource.x - 12, resource.y - 5 + bob, 24, 4);
+		ctx.fillStyle = "#e0c189";
+		ctx.fillRect(resource.x - 8, resource.y - 3 + bob, 5, 2);
+	} else {
+		ctx.fillStyle = resource.type === "berry" ? "#d85f59" : "#bd9350";
+		ctx.beginPath();
+		ctx.arc(resource.x, resource.y + bob, 9, 0, Math.PI * 2);
+		ctx.arc(resource.x - 8, resource.y + 4 + bob, 6, 0, Math.PI * 2);
+		ctx.arc(resource.x + 8, resource.y + 4 + bob, 6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#e4c96a";
+		ctx.fillRect(resource.x - 2, resource.y - 11 + bob, 4, 3);
+	}
+	ctx.fillStyle = "#fff4b6";
+	ctx.fillRect(resource.x + 13, resource.y - 12 + bob, 3, 3);
+	ctx.fillRect(resource.x - 15, resource.y - 9 + bob, 2, 2);
+}
+
+function drawPlayer() {
+	const bob = Math.sin(performance.now() / 90) * (moving() ? 2 : 0.6);
+	ctx.fillStyle = "#49674655";
+	ctx.beginPath();
+	ctx.ellipse(player.x, player.y + 11, 14, 7, 0, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.fillStyle = player.hurt > 0 && Math.floor(performance.now() / 90) % 2 === 0 ? "#fff" : "#df8058";
+	ctx.fillRect(player.x - 9, player.y - 4 + bob, 18, 17);
+	ctx.fillStyle = "#f1c881";
+	ctx.fillRect(player.x - 8, player.y - 13 + bob, 16, 14);
+	ctx.fillStyle = "#3e6748";
+	ctx.fillRect(player.x - 10, player.y - 15 + bob, 20, 6);
+	ctx.fillRect(player.x - 6, player.y - 20 + bob, 12, 7);
+	ctx.fillStyle = "#394037";
+	const eyeX = player.direction === "left" ? -5 : player.direction === "right" ? 4 : -4;
+	ctx.fillRect(player.x + eyeX, player.y - 7 + bob, 2, 3);
+	ctx.fillRect(player.x + eyeX + 6, player.y - 7 + bob, 2, 3);
+	if (player.swing > 0) {
+		ctx.strokeStyle = "#f8e6ae";
+		ctx.lineWidth = 5;
+		ctx.lineCap = "round";
+		ctx.beginPath();
+		ctx.moveTo(player.x + (player.direction === "left" ? -8 : 8), player.y + 2);
+		ctx.lineTo(player.x + (player.direction === "left" ? -33 : 33), player.y - 13);
+		ctx.stroke();
+	} else {
+		ctx.strokeStyle = "#895d37";
+		ctx.lineWidth = 4;
+		ctx.beginPath();
+		ctx.moveTo(player.x + 8, player.y + 4);
+		ctx.lineTo(player.x + 18, player.y + 11);
+		ctx.stroke();
+	}
+}
+
+function drawMob(mob) {
+	if (!mob.alive) return;
+	const wobble = Math.sin(performance.now() / 180 + mob.phase) * 3;
+	const x = mob.x;
+	const y = mob.y + wobble;
+	ctx.fillStyle = "#49674655";
+	ctx.beginPath();
+	ctx.ellipse(x, y + 12, 18, 7, 0, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.fillStyle = mob.hit > 0 ? "#fbf2c1" : "#6bbcb0";
+	ctx.beginPath();
+	ctx.moveTo(x - 17, y + 9);
+	ctx.quadraticCurveTo(x - 19, y - 12, x, y - 14);
+	ctx.quadraticCurveTo(x + 18, y - 12, x + 17, y + 9);
+	ctx.quadraticCurveTo(x, y + 17, x - 17, y + 9);
+	ctx.fill();
+	ctx.fillStyle = "#e9f3d5";
+	ctx.fillRect(x - 8, y - 4, 5, 7);
+	ctx.fillRect(x + 3, y - 4, 5, 7);
+	ctx.fillStyle = "#294d47";
+	ctx.fillRect(x - 6, y - 1, 2, 4);
+	ctx.fillRect(x + 5, y - 1, 2, 4);
+	if (mob.hp < mob.maxHp) {
+		ctx.fillStyle = "#435c48";
+		ctx.fillRect(x - 15, y - 23, 30, 4);
+		ctx.fillStyle = "#e47660";
+		ctx.fillRect(x - 15, y - 23, 30 * mob.hp / mob.maxHp, 4);
+	}
+}
+
+function render() {
+	drawGround();
+	resources.forEach(drawResource);
+	mobs.filter((mob) => mob.alive && mob.y < player.y).forEach(drawMob);
+	obstacles.forEach(drawTree);
+	pickups.forEach((pickup) => {
+		ctx.fillStyle = "#f1cd66";
+		ctx.beginPath();
+		ctx.arc(pickup.x, pickup.y, 6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#fff7cd";
+		ctx.fillRect(pickup.x - 1, pickup.y - 4, 2, 3);
+	});
+	mobs.filter((mob) => mob.alive && mob.y >= player.y).forEach(drawMob);
+	drawPlayer();
+	requestAnimationFrame(render);
+}
+
+function moving() {
+	return keys.has("ArrowUp") || keys.has("w") || heldDirections.has("up") ||
+		keys.has("ArrowDown") || keys.has("s") || heldDirections.has("down") ||
+		keys.has("ArrowLeft") || keys.has("a") || heldDirections.has("left") ||
+		keys.has("ArrowRight") || keys.has("d") || heldDirections.has("right");
+}
+
+function collides(x, y) {
+	if (x < 28 || y < 35 || x > WIDTH - 28 || y > HEIGHT - 28) return true;
+	return obstacles.some((tree) => Math.hypot(x - tree.x, y - (tree.y + 5)) < tree.r * .66 + 9);
+}
+
+function update() {
+	const speed = 2.65;
+	let dx = 0;
+	let dy = 0;
+	if (keys.has("ArrowUp") || keys.has("w") || heldDirections.has("up")) dy -= 1;
+	if (keys.has("ArrowDown") || keys.has("s") || heldDirections.has("down")) dy += 1;
+	if (keys.has("ArrowLeft") || keys.has("a") || heldDirections.has("left")) dx -= 1;
+	if (keys.has("ArrowRight") || keys.has("d") || heldDirections.has("right")) dx += 1;
+	if (dx || dy) {
+		const length = Math.hypot(dx, dy);
+		dx = dx / length * speed;
+		dy = dy / length * speed;
+		if (Math.abs(dx) > Math.abs(dy)) player.direction = dx < 0 ? "left" : "right";
+		else player.direction = dy < 0 ? "up" : "down";
+		if (!collides(player.x + dx, player.y)) player.x += dx;
+		if (!collides(player.x, player.y + dy)) player.y += dy;
+	}
+
+	const now = performance.now();
+	if (player.swing > 0) player.swing = Math.max(0, player.swing - 0.06);
+	if (player.hurt > 0) player.hurt -= 1;
+	for (const mob of mobs) {
+		if (!mob.alive) continue;
+		if (mob.hit > 0) mob.hit -= 1;
+		const distance = Math.hypot(player.x - mob.x, player.y - mob.y);
+		if (distance < 195 && distance > 28) {
+			const speedToPlayer = .65;
+			const mx = (player.x - mob.x) / distance * speedToPlayer;
+			const my = (player.y - mob.y) / distance * speedToPlayer;
+			if (!mobs.some((other) => other !== mob && other.alive && Math.hypot(mob.x + mx - other.x, mob.y + my - other.y) < 28)) {
+				mob.x += mx;
+				mob.y += my;
+			}
+		} else if (distance <= 29 && now - lastDamage > 950) {
+			lastDamage = now;
+			player.health = Math.max(0, player.health - 1);
+			player.hurt = 14;
+			showToast("Oof! A slime bonked you.");
+			if (player.health === 0) {
+				player.health = MAX_HEALTH;
+				player.x = 478;
+				player.y = 322;
+				showToast("A friendly nap. Back to the trail!");
+			}
+			updateHud();
+		}
+	}
+	for (let index = pickups.length - 1; index >= 0; index -= 1) {
+		if (Math.hypot(player.x - pickups[index].x, player.y - pickups[index].y) < 23) {
+			const [pickup] = pickups.splice(index, 1);
+			addItem(pickup.type, 1);
+			showToast(`Found ${itemInfo[pickup.type].name.toLowerCase()}!`);
+		}
+	}
+	if (now - lastSave > 5000) {
+		saveGame();
+		lastSave = now;
+	}
+}
+
+function addItem(type, amount) {
+	player.inventory[type] = (player.inventory[type] || 0) + amount;
+	updateHud();
+	saveGame();
+}
+
+function gather() {
+	const nearbyPickup = pickups.find((pickup) => Math.hypot(player.x - pickup.x, player.y - pickup.y) < 55);
+	if (nearbyPickup) {
+		const index = pickups.indexOf(nearbyPickup);
+		pickups.splice(index, 1);
+		addItem(nearbyPickup.type, 1);
+		showToast(`Picked up ${itemInfo[nearbyPickup.type].name.toLowerCase()}.`);
+		return;
+	}
+	const resource = resources.find((item) => item.available && Math.hypot(player.x - item.x, player.y - item.y) < 48);
+	if (!resource) {
+		showToast("Nothing to gather nearby. Look for a sparkle!");
+		return;
+	}
+	resource.available = false;
+	addItem(resource.type, 1);
+	playTone(620);
+	showToast(`Gathered ${itemInfo[resource.type].name.toLowerCase()}!`);
+	setTimeout(() => { resource.available = true; }, 12000);
+}
+
+function attack() {
+	const now = performance.now();
+	if (now - lastAttack < 360) return;
+	lastAttack = now;
+	player.swing = 1;
+	let hit = false;
+	for (const mob of mobs) {
+		if (!mob.alive) continue;
+		const dx = mob.x - player.x;
+		const dy = mob.y - player.y;
+		const distance = Math.hypot(dx, dy);
+		const facingDot = player.direction === "up" ? -dy : player.direction === "down" ? dy : player.direction === "left" ? -dx : dx;
+		if (distance < 62 && facingDot > 2) {
+			mob.hp -= 1;
+			mob.hit = 9;
+			hit = true;
+			playTone(260, 0.08);
+			if (mob.hp <= 0) {
+				mob.alive = false;
+				player.coins += 1;
+				player.xp += 1;
+				pickups.push({ x: mob.x, y: mob.y, type: "gel" });
+				showToast("Slime popped! +1 coin and some gel.");
+				if (player.xp >= player.level * 3) {
+					player.level += 1;
+					player.xp = 0;
+					player.health = MAX_HEALTH;
+					showToast(`Level ${player.level}! You feel a little braver.`);
+				}
+				checkQuest();
+			}
+		}
+	}
+	if (!hit) showToast("Whoosh! Try facing a slime first.");
+	updateHud();
+	saveGame();
+}
+
+function useTonic() {
+	if (player.health >= MAX_HEALTH) {
+		showToast("You're already feeling great!");
+	} else if (!player.inventory.tonic) {
+		showToast("No berry tonic in your pack.");
+	} else {
+		player.inventory.tonic -= 1;
+		player.health = Math.min(MAX_HEALTH, player.health + 2);
+		showToast("Berry tonic! Two hearts restored.");
+		updateHud();
+		saveGame();
+	}
+}
+
+function checkQuest() {
+	const defeated = mobs.filter((mob) => !mob.alive).length;
+	if (defeated >= 3 && !questClaimed) {
+		questClaimed = true;
+		player.coins += 3;
+		showToast("Quest complete! +3 bonus coins.");
+		saveGame();
+	}
+}
+
+function updateHud() {
+	document.querySelector("#health-fill").style.width = `${player.health / MAX_HEALTH * 100}%`;
+	document.querySelector("#health-value").textContent = `${player.health} / ${MAX_HEALTH}`;
+	document.querySelector("#coin-value").textContent = player.coins;
+	document.querySelector("#level-value").textContent = player.level;
+	const defeated = mobs.filter((mob) => !mob.alive).length;
+	document.querySelector("#quest-progress").textContent = questClaimed ? "Done!" : `${defeated} / 3`;
+	document.querySelector("#quest-fill").style.width = `${questClaimed ? 100 : defeated / 3 * 100}%`;
+	document.querySelector("#inventory-grid").innerHTML = Object.entries(itemInfo).map(([type, item]) => {
+		const count = player.inventory[type] || 0;
+		return `<div class="item-slot${count ? " filled" : ""}" title="${item.name}: ${count}" aria-label="${item.name}: ${count}"><span class="item-icon">${item.icon}</span>${count ? `<span class="item-count">${count}</span>` : ""}</div>`;
+	}).join("");
+	const total = Object.values(player.inventory).reduce((sum, count) => sum + count, 0);
+	document.querySelector("#inventory-note").textContent = total ? `${total} little treasure${total === 1 ? "" : "s"} tucked away.` : "Your pockets are ready for an adventure.";
+}
+
+function setDirectionFromPointer(event) {
+	const bounds = canvas.getBoundingClientRect();
+	const x = (event.clientX - bounds.left) * WIDTH / bounds.width;
+	const y = (event.clientY - bounds.top) * HEIGHT / bounds.height;
+	const dx = x - player.x;
+	const dy = y - player.y;
+	player.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : (dy < 0 ? "up" : "down");
+}
+
+document.addEventListener("keydown", (event) => {
+	const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+	if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
+	keys.add(key);
+	if (event.repeat) return;
+	if (key === "e") gather();
+	if (key === " " || key === "Spacebar") attack();
+	if (key === "1") useTonic();
+});
+
+document.addEventListener("keyup", (event) => keys.delete(event.key.length === 1 ? event.key.toLowerCase() : event.key));
+window.addEventListener("blur", () => { keys.clear(); heldDirections.clear(); });
+canvas.addEventListener("pointerdown", setDirectionFromPointer);
+document.querySelector("#gather-button").addEventListener("click", gather);
+document.querySelector("#attack-button").addEventListener("click", attack);
+document.querySelector("#potion-button").addEventListener("click", useTonic);
+document.querySelector("#mobile-attack").addEventListener("pointerdown", (event) => { event.preventDefault(); attack(); });
+document.querySelectorAll("[data-move]").forEach((button) => {
+	const direction = button.dataset.move;
+	button.addEventListener("pointerdown", (event) => { event.preventDefault(); button.setPointerCapture(event.pointerId); heldDirections.add(direction); });
+	for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) button.addEventListener(type, () => heldDirections.delete(direction));
+});
+document.querySelector("#sound-toggle").addEventListener("click", (event) => {
+	if (!window.AudioContext) {
+		showToast("Game sounds are not available in this browser.");
+		return;
+	}
+	soundEnabled = !soundEnabled;
+	event.currentTarget.setAttribute("aria-pressed", String(soundEnabled));
+	document.querySelector("#sound-icon").textContent = soundEnabled ? "♫" : "♪";
+	if (soundEnabled) {
+		audioContext ??= new AudioContext();
+		audioContext.resume();
+		playTone(520);
+	}
+	showToast(soundEnabled ? "Game sounds are on." : "Game sounds are off.");
+});
+
+function gameLoop() {
+	update();
+	requestAnimationFrame(gameLoop);
+}
+
+document.querySelector("#day-count").textContent = String(Math.max(1, Math.floor((saved?.xp ?? 0) / 3) + 1));
+updateHud();
+render();
+gameLoop();

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#173b32">
+	<title>Fernfall | Forest Quest</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<main class="game-shell">
+		<header class="topbar">
+			<a class="wordmark" href="#" aria-label="Fernfall home"><span class="wordmark-mark">✳</span> fernfall</a>
+			<div class="location"><span class="location-dot"></span><span>Whispering Woods</span><span class="location-divider">/</span><span class="day-label">Day <span id="day-count">1</span></span></div>
+			<button class="icon-button sound-button" id="sound-toggle" type="button" aria-label="Toggle sound" title="Toggle sound"><span id="sound-icon">♫</span></button>
+		</header>
+
+		<section class="game-layout" aria-label="Forest adventure">
+			<div class="play-column">
+				<div class="statusbar">
+					<div class="player-name"><span class="avatar-mark">✦</span><span>Little Ranger</span><span class="level-pill">LV <span id="level-value">1</span></span></div>
+					<div class="health-block" aria-label="Health">
+						<span class="heart-icon" aria-hidden="true">♥</span>
+						<div class="health-track"><div class="health-fill" id="health-fill"></div></div>
+						<span class="health-value" id="health-value">5 / 5</span>
+					</div>
+					<div class="coin-count"><span aria-hidden="true">◉</span><span id="coin-value">0</span></div>
+				</div>
+
+				<div class="scene-wrap">
+					<canvas id="game-canvas" width="960" height="600" aria-label="Top-down forest game. Use WASD or arrow keys to move, E to gather, and Space to attack."></canvas>
+					<div class="scene-topline"><span class="weather-icon">☀</span><span>Clear skies</span><span class="scene-separator">·</span><span id="time-label">Morning</span></div>
+					<div class="toast" id="toast" role="status" aria-live="polite"></div>
+					<div class="mobile-pad" aria-label="Movement controls">
+						<button class="pad-button pad-up" data-move="up" aria-label="Move up">↑</button>
+						<button class="pad-button pad-left" data-move="left" aria-label="Move left">←</button>
+						<button class="pad-button pad-down" data-move="down" aria-label="Move down">↓</button>
+						<button class="pad-button pad-right" data-move="right" aria-label="Move right">→</button>
+					</div>
+					<button class="mobile-action" id="mobile-attack" aria-label="Attack">✦</button>
+				</div>
+
+				<div class="actionbar">
+					<div class="quick-actions">
+						<button class="action-button" id="gather-button" type="button" title="Gather nearby items (E)"><span class="action-icon">⌕</span><span>Gather</span><kbd>E</kbd></button>
+						<button class="action-button attack-action" id="attack-button" type="button" title="Swing your stick (Space)"><span class="action-icon">⚔</span><span>Attack</span><kbd>Space</kbd></button>
+						<button class="action-button" id="potion-button" type="button" title="Drink a berry tonic"><span class="action-icon">✿</span><span>Use tonic</span><kbd>1</kbd></button>
+					</div>
+					<p class="control-hint"><span>W A S D</span> move <i>·</i> <span>Click</span> face direction</p>
+				</div>
+			</div>
+
+			<aside class="inventory-panel" aria-label="Inventory and quest">
+				<div class="panel-heading">
+					<div><p class="eyebrow">YOUR PACK</p><h1>Inventory</h1></div>
+					<span class="pack-icon" aria-hidden="true">▤</span>
+				</div>
+				<div class="inventory-grid" id="inventory-grid" aria-label="Inventory items"></div>
+				<div class="pack-note" id="inventory-note">Your pockets are ready for an adventure.</div>
+
+				<div class="panel-rule"></div>
+				<div class="quest-heading"><span class="quest-spark">✦</span><div><p class="eyebrow">TODAY'S TASK</p><h2>Brave the woods</h2></div></div>
+				<p class="quest-copy">Defeat three little slimes to earn a coin bonus. They look grumpy, but they're mostly bubbles.</p>
+				<div class="quest-progress"><div class="progress-track"><div class="progress-fill" id="quest-fill"></div></div><span id="quest-progress">0 / 3</span></div>
+				<div class="quest-reward"><span>Reward</span><strong>+ 3 coins</strong></div>
+
+				<div class="panel-rule lower-rule"></div>
+				<div class="tip-row"><span class="tip-icon">☘</span><p><strong>Little tip</strong><br>Look for sparkles near bushes and stumps.</p></div>
+			</aside>
+		</section>
+		<footer class="footer"><span>FERNFALL FOREST CLUB</span><span>Save your progress <b>automatically</b></span></footer>
+	</main>
+	<script src="script.js"></script>
+</body>
+</html>
