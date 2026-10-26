@@ -106,19 +106,18 @@ function drawGround() {
 	ctx.fillStyle = "#8dbb78";
 	ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-	for (let row = 0; row < 20; row += 1) {
-		for (let col = 0; col < 32; col += 1) {
-			const hash = (col * 71 + row * 139 + col * row * 17) % 97;
-			const x = col * 32 + 3 + (hash % 24);
-			const y = row * 32 + 4 + ((hash * 3) % 23);
-			ctx.fillStyle = hash % 3 === 0 ? "#a6c883" : hash % 3 === 1 ? "#7eae70" : "#b6cd83";
-			ctx.globalAlpha = 0.42;
-			ctx.fillRect(x, y, 3, 3);
-		}
+	const grass = art.forest.ground_grass;
+	if (grass.complete && grass.naturalWidth) {
+		ctx.save();
+		ctx.imageSmoothingEnabled = false;
+		ctx.globalAlpha = 0.9;
+		ctx.fillStyle = ctx.createPattern(grass, "repeat");
+		ctx.fillRect(0, 0, WIDTH, HEIGHT);
+		ctx.restore();
 	}
-	ctx.globalAlpha = 1;
 
-	ctx.strokeStyle = "#d9c990";
+	const dirt = art.forest.ground_dirt;
+	ctx.strokeStyle = dirt.complete && dirt.naturalWidth ? ctx.createPattern(dirt, "repeat") : "#b99a64";
 	ctx.lineWidth = 70;
 	ctx.lineCap = "round";
 	ctx.beginPath();
@@ -126,7 +125,7 @@ function drawGround() {
 	ctx.bezierCurveTo(180, 300, 290, 368, 468, 333);
 	ctx.bezierCurveTo(640, 301, 712, 345, 990, 300);
 	ctx.stroke();
-	ctx.strokeStyle = "#e6d9a7";
+	ctx.strokeStyle = "#d4b981";
 	ctx.lineWidth = 3;
 	ctx.beginPath();
 	ctx.moveTo(-30, 305);
@@ -134,32 +133,18 @@ function drawGround() {
 	ctx.bezierCurveTo(640, 274, 712, 318, 990, 273);
 	ctx.stroke();
 
-	ctx.fillStyle = "#719765";
-	ctx.fillRect(0, 0, WIDTH, 8);
-	ctx.fillRect(0, HEIGHT - 8, WIDTH, 8);
-	ctx.fillRect(0, 0, 8, HEIGHT);
-	ctx.fillRect(WIDTH - 8, 0, 8, HEIGHT);
 }
 
 function drawTree(tree, index) {
-	const sway = Math.sin(performance.now() / 900 + index) * 1.2;
-	ctx.fillStyle = "#6c4a32";
-	ctx.fillRect(tree.x - 8, tree.y + 6, 16, 24);
-	ctx.fillStyle = "#4d7950";
-	ctx.beginPath();
-	ctx.arc(tree.x + sway, tree.y, tree.r, 0, Math.PI * 2);
-	ctx.fill();
-	ctx.fillStyle = "#63925a";
-	ctx.beginPath();
-	ctx.arc(tree.x - tree.r * .28 + sway, tree.y - tree.r * .24, tree.r * .68, 0, Math.PI * 2);
-	ctx.fill();
-	ctx.fillStyle = "#83aa63";
-	ctx.beginPath();
-	ctx.arc(tree.x + tree.r * .28 + sway, tree.y - tree.r * .35, tree.r * .36, 0, Math.PI * 2);
-	ctx.fill();
-	ctx.fillStyle = "#a9c977";
-	ctx.fillRect(tree.x - tree.r * .55 + sway, tree.y - tree.r * .66, 5, 4);
-	ctx.fillRect(tree.x + tree.r * .2 + sway, tree.y - tree.r * .52, 4, 4);
+	const sprite = index % 3 === 0 ? art.forest.tree_pine : art.forest.tree_oak;
+	if (!drawArt(ctx, sprite, tree.x, tree.y - 16, 108, 120)) {
+		ctx.fillStyle = "#6c4a32";
+		ctx.fillRect(tree.x - 8, tree.y + 6, 16, 24);
+		ctx.fillStyle = "#4d7950";
+		ctx.beginPath();
+		ctx.arc(tree.x, tree.y, tree.r, 0, Math.PI * 2);
+		ctx.fill();
+	}
 }
 
 function drawResource(resource) {
@@ -169,26 +154,13 @@ function drawResource(resource) {
 	ctx.beginPath();
 	ctx.ellipse(resource.x, resource.y + 8, 15, 5, 0, 0, Math.PI * 2);
 	ctx.fill();
-	if (resource.type === "wood") {
-		ctx.fillStyle = "#805538";
-		ctx.fillRect(resource.x - 12, resource.y - 5 + bob, 24, 12);
-		ctx.fillStyle = "#bf8c57";
-		ctx.fillRect(resource.x - 12, resource.y - 5 + bob, 24, 4);
-		ctx.fillStyle = "#e0c189";
-		ctx.fillRect(resource.x - 8, resource.y - 3 + bob, 5, 2);
-	} else {
-		ctx.fillStyle = resource.type === "berry" ? "#d85f59" : "#bd9350";
+	const sprite = resource.type === "wood" ? art.item.wood : art.item.herb;
+	if (!drawArt(ctx, sprite, resource.x, resource.y + bob, 30, 30)) {
+		ctx.fillStyle = resource.type === "wood" ? "#805538" : "#d85f59";
 		ctx.beginPath();
 		ctx.arc(resource.x, resource.y + bob, 9, 0, Math.PI * 2);
-		ctx.arc(resource.x - 8, resource.y + 4 + bob, 6, 0, Math.PI * 2);
-		ctx.arc(resource.x + 8, resource.y + 4 + bob, 6, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.fillStyle = "#e4c96a";
-		ctx.fillRect(resource.x - 2, resource.y - 11 + bob, 4, 3);
 	}
-	ctx.fillStyle = "#fff4b6";
-	ctx.fillRect(resource.x + 13, resource.y - 12 + bob, 3, 3);
-	ctx.fillRect(resource.x - 15, resource.y - 9 + bob, 2, 2);
 }
 
 function drawPlayer() {
@@ -197,6 +169,18 @@ function drawPlayer() {
 	ctx.beginPath();
 	ctx.ellipse(player.x, player.y + 11, 14, 7, 0, 0, Math.PI * 2);
 	ctx.fill();
+	const now = performance.now();
+	const action = player.swing > 0
+		? `attack${Math.floor(now / 100) % 2 + 1}`
+		: moving() ? `walk${Math.floor(now / 180) % 2 + 1}` : "idle";
+	const ranger = art.ranger[`${player.direction}_${action}`];
+	if (ranger?.complete && ranger.naturalWidth) {
+		ctx.save();
+		if (player.hurt > 0 && Math.floor(now / 90) % 2 === 0) ctx.filter = "brightness(1.8)";
+		drawArt(ctx, ranger, player.x, player.y + bob, 62, 62);
+		ctx.restore();
+		return;
+	}
 	ctx.fillStyle = player.hurt > 0 && Math.floor(performance.now() / 90) % 2 === 0 ? "#fff" : "#df8058";
 	ctx.fillRect(player.x - 9, player.y - 4 + bob, 18, 17);
 	ctx.fillStyle = "#f1c881";
@@ -235,6 +219,16 @@ function drawMob(mob) {
 	ctx.beginPath();
 	ctx.ellipse(x, y + 12, 18, 7, 0, 0, Math.PI * 2);
 	ctx.fill();
+	const slimeFrame = Math.floor(performance.now() / 260 + mob.phase) % 2 + 1;
+	const slime = art.slime[`green_idle${slimeFrame}`];
+	if (slime?.complete && slime.naturalWidth) {
+		ctx.save();
+		if (mob.hit > 0) ctx.filter = "brightness(1.7)";
+		drawArt(ctx, slime, x, y, 54, 54);
+		ctx.restore();
+		if (mob.hp < mob.maxHp) drawMobHealth(mob, x, y);
+		return;
+	}
 	ctx.fillStyle = mob.hit > 0 ? "#fbf2c1" : "#6bbcb0";
 	ctx.beginPath();
 	ctx.moveTo(x - 17, y + 9);
@@ -249,11 +243,15 @@ function drawMob(mob) {
 	ctx.fillRect(x - 6, y - 1, 2, 4);
 	ctx.fillRect(x + 5, y - 1, 2, 4);
 	if (mob.hp < mob.maxHp) {
-		ctx.fillStyle = "#435c48";
-		ctx.fillRect(x - 15, y - 23, 30, 4);
-		ctx.fillStyle = "#e47660";
-		ctx.fillRect(x - 15, y - 23, 30 * mob.hp / mob.maxHp, 4);
+		drawMobHealth(mob, x, y);
 	}
+}
+
+function drawMobHealth(mob, x, y) {
+	ctx.fillStyle = "#435c48";
+	ctx.fillRect(x - 15, y - 23, 30, 4);
+	ctx.fillStyle = "#e47660";
+	ctx.fillRect(x - 15, y - 23, 30 * mob.hp / mob.maxHp, 4);
 }
 
 function render() {
@@ -262,12 +260,12 @@ function render() {
 	mobs.filter((mob) => mob.alive && mob.y < player.y).forEach(drawMob);
 	obstacles.forEach(drawTree);
 	pickups.forEach((pickup) => {
-		ctx.fillStyle = "#f1cd66";
-		ctx.beginPath();
-		ctx.arc(pickup.x, pickup.y, 6, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.fillStyle = "#fff7cd";
-		ctx.fillRect(pickup.x - 1, pickup.y - 4, 2, 3);
+		if (!drawArt(ctx, art.item.coin, pickup.x, pickup.y, 24, 24)) {
+			ctx.fillStyle = "#f1cd66";
+			ctx.beginPath();
+			ctx.arc(pickup.x, pickup.y, 6, 0, Math.PI * 2);
+			ctx.fill();
+		}
 	});
 	mobs.filter((mob) => mob.alive && mob.y >= player.y).forEach(drawMob);
 	drawPlayer();
