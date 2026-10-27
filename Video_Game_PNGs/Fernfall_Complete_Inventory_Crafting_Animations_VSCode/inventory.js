@@ -59,7 +59,8 @@
     else if(s.id===cursor.id){const n=Math.min(cursor.count,maxFor(s.id)-s.count);s.count+=n;cursor.count-=n;if(!cursor.count)cursor=null}
     else {slots[i]=cursor;cursor=s}
     save();render();}
-  function setOpen(val){if(!val&&cursor){const left=add(cursor.id,cursor.count);cursor=left?{...cursor,count:left}:null;if(cursor)return;save()}open=val;if(open){document.body.append(root);root.classList.remove('fi-game-overlay')}else if(gameWindow){gameWindow.append(root);root.classList.add('fi-game-overlay')}panel.hidden=!open;root.classList.toggle('fi-open',open);render();window.dispatchEvent(new CustomEvent('fernfall:inventory-open',{detail:{open}}));}
+  function setOpen(val){if(!val&&cursor){const left=add(cursor.id,cursor.count);cursor=left?{...cursor,count:left}:null;if(cursor)return;save()}open=val;if(gameWindow&&root.parentElement!==gameWindow){gameWindow.append(root);root.classList.add('fi-game-overlay')}panel.hidden=!open;root.classList.toggle('fi-open',open);render();window.dispatchEvent(new CustomEvent('fernfall:inventory-open',{detail:{open}}));}
+  window.addEventListener('fernfall:crafting-open',event=>{if(event.detail?.open&&open)setOpen(false)});
   function select(i){selected=(i+9)%9;save();render()}
   root.addEventListener('click',e=>{if(e.target.closest('.fi-close'))return setOpen(false);if(e.target.closest('.fi-use'))return window.FernfallInventory.useSelected();const cat=e.target.closest('[data-cat]');if(cat){category=cat.dataset.cat;render();return}const el=e.target.closest('.fi-slot');if(!el)return;const i=Number(el.dataset.index);if(!open){select(i);return}clickSlot(i,false,e.shiftKey)});
   root.addEventListener('contextmenu',e=>{const el=e.target.closest('.fi-slot');if(el){e.preventDefault();if(open)clickSlot(Number(el.dataset.index),true,false)}});

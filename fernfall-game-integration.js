@@ -2,7 +2,7 @@
 	const gameToPack = {
 		berry: "berries",
 		gel: "slime_gel",
-		tonic: "potion",
+		tonic: "item_potion",
 		wooden_stick: "stick",
 		campfire_kit: "campfire",
 		cooking_pot: "cooking_pot_empty",

@@ -18,7 +18,8 @@ function recipePattern(id,ingredients){
 }
 const el=document.createElement('div');el.id='fernfall-crafting';el.hidden=true;
 el.innerHTML=`<div class="fc-head"><span>🌿 Crafting</span><button type="button" class="fc-close">×</button></div><div class="fc-body"><aside><label for="fc-search">Find a recipe</label><input id="fc-search" placeholder="Search..." autocomplete="off"><div class="fc-recipes"></div></aside><section><h3 class="fc-name">Select an item</h3><div class="fc-work"><div class="fc-grid"></div><div class="fc-arrow">➜</div><div class="fc-output"></div></div><p class="fc-needs"></p><button class="fc-craft" type="button">Craft item</button><p class="fc-message" role="status"></p></section></div>`;
-document.body.append(el);
+const gameWindow=document.querySelector('.scene-wrap');
+if(gameWindow)gameWindow.append(el);else document.body.append(el);
 let selected='crafting_table';const names=window.FERNFALL_ITEM_LABELS||{}, images=window.FERNFALL_ITEM_IMAGES||{};
 const icon=id=>images[id]?`<img src="${images[id]}" alt="">`:id.replaceAll('_',' ');
 const count=id=>window.FernfallInventory?.count(id)||0;
@@ -42,5 +43,6 @@ el.addEventListener('click',e=>{const b=e.target.closest('[data-recipe]');if(b){
 el.querySelector('#fc-search').addEventListener('input',render);
 document.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,[contenteditable]'))return;if(e.key.toLowerCase()==='c'){e.preventDefault();toggle()}if(e.key==='Escape'&&!el.hidden)toggle(false)});
 window.addEventListener('fernfall:inventory-change',()=>{if(!el.hidden)render()});
+window.addEventListener('fernfall:inventory-open',event=>{if(event.detail?.open&&!el.hidden)toggle(false)});
 window.FernfallCrafting={open:()=>toggle(true),close:()=>toggle(false),toggle:()=>toggle(),recipes};
 })();

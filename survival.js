@@ -67,6 +67,7 @@ const FernfallSurvival = (() => {
 	const inventoryIconKeys = {
 		berry: "berries", wood: "wood", stone: "stone", carrot: "carrot", potato: "potato", mushroom: "mushroom", grain: "grain", herb: "herbs",
 		beef_raw: "beef_raw", pork_raw: "pork_raw", mutton_raw: "mutton_raw", rabbit_raw: "rabbit_raw", wool: "wool", wooden_stick: "stick",
+		seed: "seed", gel: "slime_gel", tonic: "item_potion",
 		beef_cooked: "beef_cooked", pork_cooked: "pork_cooked", mutton_cooked: "mutton_cooked", rabbit_cooked: "rabbit_cooked",
 		cooked_steak: "cooked_steak", steak_veggies: "steak_veggies", pork_chop: "pork_chop", roasted_pork: "roasted_pork",
 		lamb_stew: "lamb_stew", meat_stew: "meat_stew", rabbit_stew: "rabbit_stew", berry_hand_pie: "berry_hand_pie",
@@ -124,6 +125,8 @@ const FernfallSurvival = (() => {
 		if (survivalImage?.src) return survivalImage.src;
 		const cookingImage = FernfallCooking.images[itemInfo[id]?.art || id];
 		if (cookingImage?.src) return cookingImage.src;
+		const packImage = window.FERNFALL_ITEM_IMAGES?.[survivalKey || id];
+		if (packImage) return packImage;
 		if (id === "crafting_table") return window.fernfallSettlementArt?.placeables?.crafting_table?.src || "";
 		if (id === "gel") return art.slime.green_idle1?.src || "";
 		if (id === "tonic") return art.item.potion?.src || "";
