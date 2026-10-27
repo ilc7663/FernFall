@@ -128,6 +128,7 @@ render = function () {
 		FernfallCooking.draw(ctx, itemInfo[pickup.type]?.art || pickup.type, pickup.x - 14, pickup.y - 14, 28, 28);
 	}
 	ctx.restore();
+	survivalModule?.drawNightOverlay();
 };
 
 const originalDrawMob = drawMob;

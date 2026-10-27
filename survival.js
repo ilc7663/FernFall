@@ -670,7 +670,7 @@ const FernfallSurvival = (() => {
 		for (const villager of villagers) {
 			const image = settlementArt?.villagers?.[villager.role]?.[villager.direction];
 			const y = villager.y - camera.y + Math.sin(performance.now() / 360 + villager.phase) * 1.5;
-			if (!drawArt(ctx, image, villager.x - camera.x, y, 42, 48)) {
+			if (!drawVillageSprite(image, villager.x - camera.x, y, 42, 48)) {
 				ctx.fillStyle = "#49674655";
 				ctx.beginPath();
 				ctx.ellipse(villager.x - camera.x, y + 12, 12, 4, 0, 0, Math.PI * 2);
@@ -885,13 +885,58 @@ const FernfallSurvival = (() => {
 		}
 	}
 
+	function updateVillagers(now) {
+		for (const villager of villagers) {
+			villager.homeX ??= villager.x;
+			villager.homeY ??= villager.y;
+			villager.roamAngle ??= (villager.phase || 0) * 1.7;
+			if (now >= (villager.roamUntil ?? 0)) {
+				villager.roamAngle = Math.random() * Math.PI * 2;
+				villager.roamUntil = now + 900 + Math.random() * 1800;
+			}
+			if (Math.hypot(villager.x - villager.homeX, villager.y - villager.homeY) > 40) {
+				villager.roamAngle = Math.atan2(villager.homeY - villager.y, villager.homeX - villager.x);
+			}
+
+			const previousX = villager.x;
+			const previousY = villager.y;
+			const speed = 0.32;
+			const dx = Math.cos(villager.roamAngle) * speed;
+			const dy = Math.sin(villager.roamAngle) * speed;
+			if (!collides(villager.x + dx, villager.y)) villager.x += dx;
+			if (!collides(villager.x, villager.y + dy)) villager.y += dy;
+			const movedX = villager.x - previousX;
+			const movedY = villager.y - previousY;
+			if (movedX || movedY) villager.direction = Math.abs(movedX) > Math.abs(movedY) ? (movedX < 0 ? "left" : "right") : (movedY < 0 ? "up" : "down");
+			else villager.roamUntil = now;
+		}
+	}
+
+	function drawNightOverlay() {
+		if (!worldEpoch) return;
+		const elapsed = ((Date.now() - worldEpoch) % NIGHT_CYCLE_MS + NIGHT_CYCLE_MS) % NIGHT_CYCLE_MS;
+		const phase = elapsed / NIGHT_CYCLE_MS;
+		const maxOpacity = 0.28;
+		let opacity = 0;
+		if (phase >= 0.62 && phase < 0.68) opacity = (phase - 0.62) / 0.06 * maxOpacity;
+		else if (phase >= 0.68 || phase < 0.1) opacity = maxOpacity;
+		else if (phase < 0.16) opacity = (0.16 - phase) / 0.06 * maxOpacity;
+		if (!opacity) return;
+		ctx.save();
+		ctx.fillStyle = `rgba(15, 27, 48, ${opacity})`;
+		ctx.fillRect(0, 0, WIDTH, HEIGHT);
+		ctx.restore();
+	}
+
 	function update() {
 		generateVillageChunks();
 		generateResourceChunks();
 		const now = Date.now();
+		updateVillagers(now);
 		const { isNight, nightIndex } = updateWorldClock(now);
 		if (isNight && nightIndex !== currentNightIndex) currentNightIndex = nightIndex;
 		if (isNight) generateHostileChunks(nightIndex);
+		else mobs.splice(0, mobs.length, ...mobs.filter((mob) => !hostileTypes.includes(mob.type) && mob.type !== "slime"));
 		for (const animal of animals) {
 			const health = { cow: 4, pig: 3, sheep: 3, rabbit: 2, wolf: 5, jimothy: 3 }[animal.type] || 3;
 			animal.maxHp ??= health;
@@ -981,7 +1026,7 @@ const FernfallSurvival = (() => {
 		restore(state);
 		ensureSpawnVillage();
 		if (!worldEpoch) {
-			worldEpoch = Date.now();
+			worldEpoch = Date.now() - NIGHT_CYCLE_MS * 0.24;
 			mobs.splice(0, mobs.length, ...mobs.filter((mob) => !hostileTypes.includes(mob.type)));
 		}
 		document.querySelectorAll("[data-inventory-category]").forEach((button) => button.addEventListener("click", () => {
@@ -1090,7 +1135,7 @@ const FernfallSurvival = (() => {
 	}
 
 	return {
-		setup, update, interact, attackAnimal, blocks, drawResource, drawPonds, drawStations, drawProjectiles, drawPickup,
+		setup, update, interact, attackAnimal, blocks, drawResource, drawPonds, drawStations, drawProjectiles, drawPickup, drawNightOverlay,
 		refreshInventory, openCrafting: () => openPanel("craft"), recordQuest, save,
 	};
 })();
