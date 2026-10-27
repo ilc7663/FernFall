@@ -250,6 +250,49 @@
 	}
 }
 
+@media (max-width: 520px) {
+	#fernfall-inventory-root .fi-content {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 7px;
+	}
+
+	#fernfall-inventory-root .fi-character {
+		display: grid;
+		grid-template-columns: 62px minmax(0, 1fr);
+		align-items: center;
+		gap: 2px 8px;
+		text-align: left;
+	}
+
+	#fernfall-inventory-root .fi-character-title {
+		grid-column: 1 / -1;
+		margin: 0;
+	}
+
+	#fernfall-inventory-root .fi-avatar-frame {
+		grid-column: 1;
+		grid-row: 2 / span 2;
+		width: 62px;
+		min-height: 82px;
+		height: 82px;
+	}
+
+	#fernfall-inventory-root .fi-avatar {
+		width: 58px;
+		height: 78px;
+	}
+
+	#fernfall-inventory-root .fi-character > strong {
+		grid-column: 2;
+		margin: 0;
+	}
+
+	#fernfall-inventory-root .fi-storage {
+		grid-column: 1;
+		min-width: 0;
+	}
+}
+
 #fernfall-crafting {
 	background-color: #e8d5aa !important;
 	background-image: url("assets/ui_textures/parchment.png") !important;
@@ -318,6 +361,32 @@
 	background-image: url("assets/ui_textures/parchment_light.png");
 	background-size: cover;
 	border: 1px solid #9a805b;
+}
+
+#fernfall-crafting,
+#fernfall-crafting .fc-body,
+#fernfall-crafting .fc-body aside,
+#fernfall-crafting .fc-body section {
+	min-width: 0;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+#fernfall-crafting .fc-recipes button {
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+#fernfall-crafting .fc-recipes button span {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+#fernfall-crafting .fc-recipes button img {
+	flex: 0 0 34px;
+	max-width: 34px;
+	object-fit: contain;
 }
 
 @media (max-width: 520px) {
