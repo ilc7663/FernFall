@@ -150,6 +150,7 @@ let soundEnabled = false;
 let audioContext;
 
 function loadSave() {
+	if (window.FERNFALL_SERVER_MODE && window.FERNFALL_SERVER_SAVE) return window.FERNFALL_SERVER_SAVE;
 	try {
 		return JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
 	} catch {
@@ -158,16 +159,36 @@ function loadSave() {
 }
 
 function saveGame() {
+	let serializedSave;
 	try {
-		localStorage.setItem(SAVE_KEY, JSON.stringify({
+		const save = {
 			x: player.x, y: player.y, health: player.health, coins: player.coins,
 			xp: player.xp, level: player.level, inventory: player.inventory, questClaimed,
 			wolfTamed: animals.find((animal) => animal.type === "wolf")?.tamed ?? false,
 			jimothyMet,
 			...FernfallSurvival.save(),
-		}));
+		};
+		serializedSave = JSON.stringify(save);
 	} catch {
-		showToast("Progress could not be saved in this browser.");
+		showToast("Progress could not be prepared for saving.");
+		return;
+	}
+	try {
+		localStorage.setItem(SAVE_KEY, serializedSave);
+	} catch {
+		if (!window.FERNFALL_SERVER_MODE) {
+			showToast("Progress could not be saved in this browser.");
+			return;
+		}
+	}
+	if (window.FERNFALL_SERVER_MODE) {
+		fetch("/api/save", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: serializedSave,
+		}).then((response) => {
+			if (!response.ok) throw new Error("Save request failed");
+		}).catch(() => showToast("Progress could not be saved to the game server."));
 	}
 }
 
