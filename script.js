@@ -9,6 +9,8 @@ const MAX_HEALTH = 5;
 const WORLD_CHUNK_SIZE = 512;
 const camera = { x: 0, y: 0 };
 const generatedChunks = new Set(["0,0"]);
+const loadingChunks = new Set();
+const chunkRetryAfter = new Map();
 
 const itemInfo = {
 	berry: { name: "Wild berry", icon: "●" },
@@ -102,7 +104,31 @@ function randomChunkPosition(random, chunkX, chunkY) {
 
 function generateWorldChunk(chunkX, chunkY) {
 	const key = `${chunkX},${chunkY}`;
-	if (generatedChunks.has(key)) return;
+	if (generatedChunks.has(key) || loadingChunks.has(key) || Date.now() < (chunkRetryAfter.get(key) ?? 0)) return;
+	if (window.FERNFALL_SERVER_MODE) {
+		loadingChunks.add(key);
+		fetch("/api/chunk", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				chunkX, chunkY, playerX: player.x, playerY: player.y,
+				obstacles: obstacles.map(({ x, y, r }) => ({ x, y, r })),
+			}),
+		}).then((response) => {
+			if (!response.ok) throw new Error("Chunk request failed");
+			return response.json();
+		}).then((chunk) => {
+			chunk.obstacles.forEach(addObstacle);
+			resources.push(...chunk.resources);
+			animals.push(...chunk.animals);
+			generatedChunks.add(key);
+			chunkRetryAfter.delete(key);
+		}).catch(() => {
+			chunkRetryAfter.set(key, Date.now() + 2000);
+			showToast("A forest area could not be loaded. Retrying shortly.");
+		}).finally(() => loadingChunks.delete(key));
+		return;
+	}
 	generatedChunks.add(key);
 	const random = chunkRandom(chunkX, chunkY);
 	for (let index = 0; index < 5; index += 1) {
