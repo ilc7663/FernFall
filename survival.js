@@ -74,7 +74,8 @@ const FernfallSurvival = (() => {
 	const discoveredRecipes = new Set();
 	const questProgress = { gathered: 0, campfire: 0, meal: 0, milk: 0, wolf: 0, jimothy: 0 };
 	const completedSurvivalQuests = new Set();
-	const NIGHT_CYCLE_MS = 180000;
+	const craftingSlots = Array(16).fill("");
+	const NIGHT_CYCLE_MS = 60000;
 	const hostileChunks = new Set();
 	let selectedCategory = "food";
 	let selectedItem = "";
@@ -152,6 +153,27 @@ const FernfallSurvival = (() => {
 		return missing;
 	}
 
+	function craftingGridCounts() {
+		return craftingSlots.reduce((counts, id) => {
+			if (id) counts[id] = (counts[id] || 0) + 1;
+			return counts;
+		}, {});
+	}
+
+	function craftingGridMatches(recipe) {
+		const counts = craftingGridCounts();
+		const required = recipe.ingredients;
+		return Object.keys(counts).length === Object.keys(required).length &&
+			Object.entries(required).every(([id, amount]) => counts[id] === amount);
+	}
+
+	function missingCraftIngredients(recipe) {
+		const counts = craftingGridCounts();
+		return Object.entries(recipe.ingredients)
+			.filter(([id, amount]) => counts[id] !== amount)
+			.map(([id, amount]) => `${label(id)} ${counts[id] || 0}/${amount}`);
+	}
+
 	function stationReady(recipe, fire) {
 		if (recipe.station === "fire") return true;
 		if (recipe.station === "open_fire_or_pan") return !fire.cookware || fire.cookware === "frying_pan";
@@ -203,14 +225,40 @@ const FernfallSurvival = (() => {
 	}
 
 	function recipeRow(recipe, fire) {
-		const missing = missingIngredients(recipe);
+		const isCrafting = activeMode === "craft";
+		const counts = craftingGridCounts();
+		const missing = isCrafting ? missingCraftIngredients(recipe) : missingIngredients(recipe);
 		const stationOk = activeMode !== "cook" || stationReady(recipe, fire);
-		const requirements = Object.entries(recipe.ingredients).map(([id, count]) => `${label(id)} ${player.inventory[id] || 0}/${count}`);
+		const requirements = Object.entries(recipe.ingredients).map(([id, count]) => `${label(id)} ${isCrafting ? counts[id] || 0 : player.inventory[id] || 0}/${count}`);
 		if (recipe.anyMeat) requirements.push(`Any raw meat ${meatCount()}/${recipe.anyMeat}`);
 		if (recipe.waterOptional) requirements.push(`Water ${player.inventory.bucket_water || 0}/1 (optional)`);
-		const unavailable = missing.length > 0 || !stationOk || Boolean(fire?.cooking);
+		const unavailable = isCrafting ? !craftingGridMatches(recipe) : missing.length > 0 || !stationOk || Boolean(fire?.cooking);
 		const action = activeMode === "cook" ? "cook" : "craft";
 		return `<article class="recipe-row"><div><strong>${recipe.name}</strong><p>${requirements.join(" · ")}</p><small>${activeMode === "cook" ? `${recipe.seconds}s · ${recipe.station === "either" ? "Pot or pan" : recipe.station === "open_fire_or_pan" ? "Open fire or frying pan" : recipe.station === "fire" ? "Campfire" : recipe.station === "pan" ? "Frying pan" : "Cooking pot"}` : "Craft equipment"}</small>${missing.length ? `<small class="missing-items">Missing: ${missing.join(", ")}</small>` : ""}</div><button type="button" class="recipe-action" data-survival-action="${action}" data-recipe="${recipe.id}" ${unavailable ? "disabled" : ""}>${activeMode === "cook" ? "Start" : "Craft"}</button></article>`;
+	}
+
+	function renderCraftingWorkspace() {
+		const workspace = document.querySelector("#crafting-workspace");
+		workspace.hidden = activeMode !== "craft";
+		if (workspace.hidden) return;
+		const grid = document.querySelector("#crafting-grid");
+		grid.innerHTML = craftingSlots.map((id, index) => {
+			const icon = id && itemInfo[id]?.art && FernfallCooking.images[itemInfo[id].art]?.src
+				? `<img class="item-texture" src="${FernfallCooking.images[itemInfo[id].art].src}" alt="">`
+				: id ? `<span class="item-icon">${itemInfo[id]?.icon || id[0].toUpperCase()}</span>` : "";
+			return `<button type="button" class="crafting-slot${id ? " filled" : ""}" data-craft-slot="${index}" aria-label="${id ? `Remove ${label(id)}` : `Empty slot ${index + 1}`}">${icon}</button>`;
+		}).join("");
+		const ingredients = new Set(craftingRecipes.flatMap((recipe) => Object.keys(recipe.ingredients)));
+		const inventory = document.querySelector("#crafting-inventory");
+		inventory.innerHTML = Object.entries(player.inventory).filter(([id, amount]) => amount > 0 && ingredients.has(id)).map(([id, amount]) => {
+			const placed = craftingGridCounts()[id] || 0;
+			const icon = itemInfo[id]?.art && FernfallCooking.images[itemInfo[id].art]?.src
+				? `<img class="item-texture" src="${FernfallCooking.images[itemInfo[id].art].src}" alt="">`
+				: `<span class="item-icon">${itemInfo[id]?.icon || id[0].toUpperCase()}</span>`;
+			return `<button type="button" class="crafting-material" data-craft-item="${id}" ${placed >= amount ? "disabled" : ""}>${icon}<span>${label(id)}</span><span class="crafting-material-count">${amount - placed}</span></button>`;
+		}).join("") || `<p class="inventory-empty">Gather wood and stone to craft.</p>`;
+		const matched = craftingRecipes.find(craftingGridMatches);
+		document.querySelector("#crafting-grid-status").textContent = matched ? `Ready to craft: ${matched.name}` : "Place the exact recipe ingredients in the grid.";
 	}
 
 	function refreshPanel() {
@@ -218,9 +266,11 @@ const FernfallSurvival = (() => {
 		if (!list) return;
 		const fire = currentFire();
 		if (activeMode === "craft") {
-			list.innerHTML = `<p class="menu-intro">Crafting uses materials from your inventory.</p>${craftingRecipes.map((recipe) => recipeRow(recipe, null)).join("")}`;
+			renderCraftingWorkspace();
+			list.innerHTML = `<p class="menu-intro">Fill the 4×4 grid with the exact recipe ingredients, then craft.</p>${craftingRecipes.map((recipe) => recipeRow(recipe, null)).join("")}`;
 			return;
 		}
+		renderCraftingWorkspace();
 		if (!fire) {
 			list.innerHTML = "<p class=menu-intro>That campfire is no longer nearby.</p>";
 			return;
@@ -238,14 +288,17 @@ const FernfallSurvival = (() => {
 	}
 
 	function addCraftedItem(recipe) {
+		if (!recipe || !craftingGridMatches(recipe)) return show("Place the exact recipe ingredients in the grid first.");
 		if (Object.entries(recipe.ingredients).some(([id, count]) => (player.inventory[id] || 0) < count)) return show("You do not have enough materials.");
 		for (const [id, count] of Object.entries(recipe.ingredients)) player.inventory[id] -= count;
+		craftingSlots.fill("");
 		player.inventory[recipe.id] = (player.inventory[recipe.id] || 0) + (recipe.amount || 1);
 		if (recipe.id === "campfire_kit") recordQuest("campfire");
 		show(`Crafted ${recipe.name}.`);
 		updateHud();
 		saveGame();
 		refreshPanel();
+		renderCraftingWorkspace();
 	}
 
 	function placeCampfire() {
@@ -819,9 +872,29 @@ const FernfallSurvival = (() => {
 			selectedItem = button.dataset.itemId;
 			refreshInventory();
 		}));
+		document.querySelector("#crafting-inventory").addEventListener("click", (event) => {
+			const button = event.target.closest("[data-craft-item]");
+			if (!button || button.disabled) return;
+			const slot = craftingSlots.findIndex((id) => !id);
+			if (slot < 0) return show("The crafting grid is full.");
+			craftingSlots[slot] = button.dataset.craftItem;
+			refreshPanel();
+		});
+		document.querySelector("#crafting-grid").addEventListener("click", (event) => {
+			const button = event.target.closest("[data-craft-slot]");
+			if (!button) return;
+			craftingSlots[Number(button.dataset.craftSlot)] = "";
+			refreshPanel();
+		});
 		document.querySelector("#use-selected-button").addEventListener("click", useSelected);
 		document.querySelector("#craft-menu-button").addEventListener("click", () => openPanel("craft"));
 		document.querySelector("#survival-close").addEventListener("click", () => document.querySelector("#survival-dialog").close());
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Tab" && !event.repeat && !document.querySelector("#survival-dialog").open) {
+				event.preventDefault();
+				openPanel("craft");
+			}
+		});
 		document.querySelector("#survival-list").addEventListener("click", (event) => {
 			const button = event.target.closest("[data-survival-action]");
 			if (!button || button.disabled) return;
@@ -877,13 +950,14 @@ const FernfallSurvival = (() => {
 		Object.assign(questProgress, state.questProgress || {});
 		(state.completedSurvivalQuests || []).forEach((id) => completedSurvivalQuests.add(id));
 		selectedItem = state.selectedItem || "";
+		if (Array.isArray(state.craftingSlots) && state.craftingSlots.length === 16) craftingSlots.splice(0, 16, ...state.craftingSlots);
 	}
 
 	function save() {
 		return {
 			inventory: player.inventory, resources, animals, mobs, pickups, obstacles,
 			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], villageChunks: [...villageChunks],
-			villages, villagers, craftingTables, ponds, campfires, hostileProjectiles,
+			villages, villagers, craftingTables, ponds, campfires, hostileProjectiles, craftingSlots,
 			discoveredRecipes: [...discoveredRecipes], jimothyMet, selectedItem, questProgress,
 			completedSurvivalQuests: [...completedSurvivalQuests], worldEpoch,
 			hostileChunks: [...hostileChunks],
