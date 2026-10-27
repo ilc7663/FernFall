@@ -296,6 +296,7 @@ function drawPlayer() {
 	ctx.ellipse(player.x, player.y + 11, 14, 7, 0, 0, Math.PI * 2);
 	ctx.fill();
 	const now = performance.now();
+	if (drawToolAction(now, bob)) return;
 	const action = player.swing > 0
 		? `attack${Math.floor(now / 100) % 2 + 1}`
 		: moving() ? `walk${Math.floor(now / 180) % 2 + 1}` : "idle";
@@ -305,7 +306,6 @@ function drawPlayer() {
 		if (player.hurt > 0 && Math.floor(now / 90) % 2 === 0) ctx.filter = "brightness(1.8)";
 		drawArt(ctx, ranger, player.x, player.y + bob, 62, 62);
 		ctx.restore();
-		drawToolAction(now);
 		return;
 	}
 	ctx.fillStyle = player.hurt > 0 && Math.floor(performance.now() / 90) % 2 === 0 ? "#fff" : "#df8058";
@@ -335,14 +335,19 @@ function drawPlayer() {
 		ctx.lineTo(player.x + 18, player.y + 11);
 		ctx.stroke();
 	}
-	drawToolAction(now);
 }
 
-function drawToolAction(now) {
-	if (!player.toolAction || now >= player.toolActionUntil || !window.FernfallToolAnimations?.draw) return;
-	const offsets = { up: [0, -13], down: [0, 10], left: [-12, 0], right: [12, 0] };
-	const [offsetX, offsetY] = offsets[player.direction] || offsets.down;
-	window.FernfallToolAnimations.draw(ctx, player.toolAction, player.direction, player.x + offsetX, player.y + offsetY, 64, now);
+function drawToolAction(now, bob) {
+	const animations = window.FernfallToolAnimations;
+	if (!player.toolAction || now >= player.toolActionUntil || !animations?.draw) return false;
+	const frames = animations.images?.[`${player.toolAction}_${player.direction}`] || animations.images?.[`${player.toolAction}_down`];
+	const frame = frames?.[Math.floor(now / 90) % frames.length];
+	if (!frame?.complete || !frame.naturalWidth) return false;
+	ctx.save();
+	ctx.imageSmoothingEnabled = false;
+	animations.draw(ctx, player.toolAction, player.direction, player.x - 32, player.y + bob - 32, 64, now - player.toolActionStarted);
+	ctx.restore();
+	return true;
 }
 
 function drawMob(mob) {

@@ -95,7 +95,8 @@
 			const id = window.FernfallInventory.getSelected()?.id || "";
 			if (!/_(pickaxe|axe|shovel|hoe|sword|bow|fishing_rod|shears)$/.test(id)) return false;
 			player.toolAction = toolActionForSelected(fallback);
-			player.toolActionUntil = performance.now() + 480;
+			player.toolActionStarted = performance.now();
+			player.toolActionUntil = player.toolActionStarted + 540;
 			return true;
 		},
 	};
