@@ -450,6 +450,7 @@ function update() {
 		if (!mob.alive) continue;
 		if (mob.hit > 0) mob.hit -= 1;
 		const distance = Math.hypot(player.x - mob.x, player.y - mob.y);
+		if (mob.type === "witch") continue;
 		if (distance >= 240) continue;
 		if (distance < 195 && distance > 28) {
 			const speedToPlayer = .65;
@@ -463,7 +464,7 @@ function update() {
 			lastDamage = now;
 			player.health = Math.max(0, player.health - 1);
 			player.hurt = 14;
-			showToast("Oof! A slime bonked you.");
+			showToast(mob.type === "skeleton" ? "A skeleton struck you!" : "Oof! A slime bonked you.");
 			if (player.health === 0) {
 				player.health = MAX_HEALTH;
 				player.x = 478;

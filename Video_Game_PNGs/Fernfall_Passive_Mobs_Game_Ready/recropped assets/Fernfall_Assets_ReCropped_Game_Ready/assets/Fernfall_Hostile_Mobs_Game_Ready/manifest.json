@@ -1,0 +1,88 @@
+{
+  "enemies": {
+    "skeleton": {
+      "sheet": "chibi_skeleton_warrior_sprite_sheet.png",
+      "frames": {
+        "down_idle": "assets/hostile/skeleton/down_idle.png",
+        "down_walk1": "assets/hostile/skeleton/down_walk1.png",
+        "down_walk2": "assets/hostile/skeleton/down_walk2.png",
+        "down_attack": "assets/hostile/skeleton/down_attack.png",
+        "left_idle": "assets/hostile/skeleton/left_idle.png",
+        "left_walk1": "assets/hostile/skeleton/left_walk1.png",
+        "left_walk2": "assets/hostile/skeleton/left_walk2.png",
+        "left_attack": "assets/hostile/skeleton/left_attack.png",
+        "right_idle": "assets/hostile/skeleton/right_idle.png",
+        "right_walk1": "assets/hostile/skeleton/right_walk1.png",
+        "right_walk2": "assets/hostile/skeleton/right_walk2.png",
+        "right_attack": "assets/hostile/skeleton/right_attack.png",
+        "up_idle": "assets/hostile/skeleton/up_idle.png",
+        "up_walk1": "assets/hostile/skeleton/up_walk1.png",
+        "up_walk2": "assets/hostile/skeleton/up_walk2.png",
+        "up_attack": "assets/hostile/skeleton/up_attack.png"
+      }
+    },
+    "witch": {
+      "sheet": "chibi_forest_witch_sprite_sheet.png",
+      "frames": {
+        "down_idle": "assets/hostile/witch/down_idle.png",
+        "down_walk1": "assets/hostile/witch/down_walk1.png",
+        "down_walk2": "assets/hostile/witch/down_walk2.png",
+        "down_cast": "assets/hostile/witch/down_cast.png",
+        "left_idle": "assets/hostile/witch/left_idle.png",
+        "left_walk1": "assets/hostile/witch/left_walk1.png",
+        "left_walk2": "assets/hostile/witch/left_walk2.png",
+        "left_cast": "assets/hostile/witch/left_cast.png",
+        "right_idle": "assets/hostile/witch/right_idle.png",
+        "right_walk1": "assets/hostile/witch/right_walk1.png",
+        "right_walk2": "assets/hostile/witch/right_walk2.png",
+        "right_cast": "assets/hostile/witch/right_cast.png",
+        "up_idle": "assets/hostile/witch/up_idle.png",
+        "up_walk1": "assets/hostile/witch/up_walk1.png",
+        "up_walk2": "assets/hostile/witch/up_walk2.png",
+        "up_cast": "assets/hostile/witch/up_cast.png"
+      }
+    },
+    "spider": {
+      "sheet": "mossy_woodland_spider_sprite_sheet.png",
+      "frames": {
+        "down_idle": "assets/hostile/spider/down_idle.png",
+        "down_walk1": "assets/hostile/spider/down_walk1.png",
+        "down_walk2": "assets/hostile/spider/down_walk2.png",
+        "down_attack": "assets/hostile/spider/down_attack.png",
+        "left_idle": "assets/hostile/spider/left_idle.png",
+        "left_walk1": "assets/hostile/spider/left_walk1.png",
+        "left_walk2": "assets/hostile/spider/left_walk2.png",
+        "left_attack": "assets/hostile/spider/left_attack.png",
+        "right_idle": "assets/hostile/spider/right_idle.png",
+        "right_walk1": "assets/hostile/spider/right_walk1.png",
+        "right_walk2": "assets/hostile/spider/right_walk2.png",
+        "right_attack": "assets/hostile/spider/right_attack.png",
+        "up_idle": "assets/hostile/spider/up_idle.png",
+        "up_walk1": "assets/hostile/spider/up_walk1.png",
+        "up_walk2": "assets/hostile/spider/up_walk2.png",
+        "up_attack": "assets/hostile/spider/up_attack.png"
+      }
+    },
+    "bat": {
+      "sheet": "chibi_bat_enemy_sprite_sheet.png",
+      "frames": {
+        "down_idle": "assets/hostile/bat/down_idle.png",
+        "down_fly1": "assets/hostile/bat/down_fly1.png",
+        "down_fly2": "assets/hostile/bat/down_fly2.png",
+        "down_attack": "assets/hostile/bat/down_attack.png",
+        "left_idle": "assets/hostile/bat/left_idle.png",
+        "left_fly1": "assets/hostile/bat/left_fly1.png",
+        "left_fly2": "assets/hostile/bat/left_fly2.png",
+        "left_attack": "assets/hostile/bat/left_attack.png",
+        "right_idle": "assets/hostile/bat/right_idle.png",
+        "right_fly1": "assets/hostile/bat/right_fly1.png",
+        "right_fly2": "assets/hostile/bat/right_fly2.png",
+        "right_attack": "assets/hostile/bat/right_attack.png",
+        "up_idle": "assets/hostile/bat/up_idle.png",
+        "up_fly1": "assets/hostile/bat/up_fly1.png",
+        "up_fly2": "assets/hostile/bat/up_fly2.png",
+        "up_attack": "assets/hostile/bat/up_attack.png"
+      }
+    }
+  }
+}

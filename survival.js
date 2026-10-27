@@ -62,8 +62,11 @@ const FernfallSurvival = (() => {
 	const categories = ["food", "materials", "equipment", "other"];
 	const campfires = [];
 	const ponds = [];
+	const hostileProjectiles = [];
 	const resourceChunks = new Set();
 	const discoveredRecipes = new Set();
+	const questProgress = { gathered: 0, campfire: 0, meal: 0, milk: 0, wolf: 0, jimothy: 0 };
+	const completedSurvivalQuests = new Set();
 	let selectedCategory = "food";
 	let selectedItem = "";
 	let activeMode = "craft";
@@ -78,6 +81,34 @@ const FernfallSurvival = (() => {
 
 	function show(message) {
 		showToast(message);
+	}
+
+	function recordQuest(id, amount = 1) {
+		const goals = { gathered: 5, campfire: 1, meal: 1, milk: 1, wolf: 1, jimothy: 1 };
+		if (!(id in goals) || completedSurvivalQuests.has(id)) return;
+		questProgress[id] += amount;
+		if (questProgress[id] >= goals[id]) {
+			completedSurvivalQuests.add(id);
+			player.coins += 1;
+			show(`Survival task complete: ${questTitle(id)}. +1 coin.`);
+			updateHud();
+			saveGame();
+		}
+		refreshQuests();
+	}
+
+	function questTitle(id) {
+		return { gathered: "Gather supplies", campfire: "Craft a campfire", meal: "Cook a meal", milk: "Milk a cow", wolf: "Tame a wolf", jimothy: "Meet Jimothy" }[id];
+	}
+
+	function refreshQuests() {
+		const list = document.querySelector("#survival-quests");
+		if (!list) return;
+		list.innerHTML = Object.keys(questProgress).map((id) => {
+			const goal = { gathered: 5, campfire: 1, meal: 1, milk: 1, wolf: 1, jimothy: 1 }[id];
+			const completed = completedSurvivalQuests.has(id);
+			return `<p class="survival-quest${completed ? " complete" : ""}"><span>${completed ? "✓" : "○"}</span><span>${questTitle(id)}</span><strong>${Math.min(questProgress[id], goal)}/${goal}</strong></p>`;
+		}).join("");
 	}
 
 	function near(a, b, distance) {
@@ -120,7 +151,7 @@ const FernfallSurvival = (() => {
 
 	function startCook(recipeId, fire) {
 		const recipe = recipes.find((entry) => entry.id === recipeId);
-		if (!recipe || fire.cooking) return;
+		if (!recipe || !fire || fire.cooking) return;
 		if (missingIngredients(recipe).length) return show(`Missing ingredients: ${missingIngredients(recipe).join(", ")}.`);
 		if (!stationReady(recipe, fire)) return show(`Place a ${recipe.station === "pan" ? "frying pan" : "cooking pot"} on this campfire first.`);
 		consumeRecipe(recipe);
@@ -179,13 +210,15 @@ const FernfallSurvival = (() => {
 			progress = `<section class="cooking-progress"><strong>${fire.cooking.ready ? `${label(fire.cooking.recipeId)} is ready` : `Cooking ${label(fire.cooking.recipeId)}`}</strong><div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div><small>${fire.cooking.ready ? "Press E beside the fire to collect." : `${Math.max(1, Math.ceil((fire.cooking.duration - elapsed) / 1000))} seconds remaining`}</small></section>`;
 		}
 		const cookwareText = fire.cookware ? `Equipped: ${label(fire.cookware)}` : "No pot or pan placed";
-		list.innerHTML = `<p class="menu-intro">${cookwareText}. Craft cookware and use it beside this fire to place it.</p>${progress}${recipes.map((recipe) => recipeRow(recipe, fire)).join("")}`;
+		const cookwareAction = fire.cookware && !fire.cooking ? `<button type="button" class="recipe-action" data-survival-action="remove-cookware">Remove ${label(fire.cookware)}</button>` : "";
+		list.innerHTML = `<p class="menu-intro">${cookwareText}. Craft cookware and use it beside this fire to place it.</p>${cookwareAction}${progress}${recipes.map((recipe) => recipeRow(recipe, fire)).join("")}`;
 	}
 
 	function addCraftedItem(recipe) {
 		if (Object.entries(recipe.ingredients).some(([id, count]) => (player.inventory[id] || 0) < count)) return show("You do not have enough materials.");
 		for (const [id, count] of Object.entries(recipe.ingredients)) player.inventory[id] -= count;
 		player.inventory[recipe.id] = (player.inventory[recipe.id] || 0) + (recipe.amount || 1);
+		if (recipe.id === "campfire_kit") recordQuest("campfire");
 		show(`Crafted ${recipe.name}.`);
 		updateHud();
 		saveGame();
@@ -241,6 +274,7 @@ const FernfallSurvival = (() => {
 		if (!fire.cooking?.ready) return false;
 		const recipeId = fire.cooking.recipeId;
 		player.inventory[recipeId] = (player.inventory[recipeId] || 0) + 1;
+		recordQuest("meal");
 		fire.cooking = null;
 		show(`${label(recipeId)} added to your pack.`);
 		updateHud();
@@ -258,6 +292,7 @@ const FernfallSurvival = (() => {
 		const jimothy = animals.find((animal) => animal.type === "jimothy" && near(animal, player, 58));
 		if (jimothy) {
 			jimothyMet = true;
+			recordQuest("jimothy");
 			animals.splice(animals.indexOf(jimothy), 1);
 			if (player.inventory.berry > 0) {
 				player.inventory.berry -= 1;
@@ -275,6 +310,7 @@ const FernfallSurvival = (() => {
 					cow.milkedUntil = Date.now() + 45000;
 					player.inventory.bucket_empty -= 1;
 					player.inventory.bucket_milk = (player.inventory.bucket_milk || 0) + 1;
+					recordQuest("milk");
 					show("You filled the bucket with fresh milk.");
 					updateHud();
 					saveGame();
@@ -305,6 +341,7 @@ const FernfallSurvival = (() => {
 			resource.available = false;
 			resource.respawnAt = Date.now() + 30000;
 			player.inventory[resource.type] = (player.inventory[resource.type] || 0) + 1;
+			recordQuest("gathered");
 			show(`Gathered ${label(resource.type)}.`);
 			updateHud();
 			saveGame();
@@ -314,6 +351,7 @@ const FernfallSurvival = (() => {
 		if (tree) {
 			tree.woodHits = (tree.woodHits || 0) + 1;
 			player.inventory.wood = (player.inventory.wood || 0) + 1;
+			recordQuest("gathered");
 			if (tree.woodHits >= 3) tree.chopped = true;
 			show(tree.chopped ? "Gathered wood. The tree is now a stump." : "Gathered wood from the tree.");
 			updateHud();
@@ -324,7 +362,7 @@ const FernfallSurvival = (() => {
 	}
 
 	function attackAnimal() {
-		const animal = animals.find((entry) => entry.hp > 0 && near(entry, player, 62) && (() => {
+		const animal = animals.find((entry) => entry.hp > 0 && !(entry.type === "wolf" && entry.tamed) && near(entry, player, 62) && (() => {
 			const dx = entry.x - player.x;
 			const dy = entry.y - player.y;
 			return (player.direction === "up" ? -dy : player.direction === "down" ? dy : player.direction === "left" ? -dx : dx) > 2;
@@ -421,6 +459,20 @@ const FernfallSurvival = (() => {
 		}
 	}
 
+	function drawProjectiles() {
+		for (const projectile of hostileProjectiles) {
+			ctx.fillStyle = "#8d62c9";
+			ctx.beginPath();
+			ctx.arc(projectile.x, projectile.y, 7, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = "#d8b8ff";
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.arc(projectile.x, projectile.y, 10, 0, Math.PI * 2);
+			ctx.stroke();
+		}
+	}
+
 	function drawPickup(pickup) {
 		const artKey = itemInfo[pickup.type]?.art || pickup.type;
 		return FernfallCooking.draw(ctx, artKey, pickup.x - 14, pickup.y - 14, 28, 28);
@@ -467,6 +519,16 @@ const FernfallSurvival = (() => {
 					if (!collides(resource.x, resource.y) && Math.hypot(player.x - resource.x, player.y - resource.y) > 85) resources.push(resource);
 				}
 				if (random() < 0.22) ponds.push({ x: cx * WORLD_CHUNK_SIZE + 100 + random() * 300, y: cy * WORLD_CHUNK_SIZE + 100 + random() * 300 });
+				if (random() < 0.55) {
+					const roll = random();
+					const type = roll < 0.14 ? "witch" : roll < 0.44 ? "spider" : roll < 0.74 ? "skeleton" : "zombie";
+					const position = {
+						x: cx * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
+						y: cy * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
+					};
+					const hp = type === "witch" ? 5 : type === "zombie" ? 4 : 3;
+					mobs.push({ ...position, type, hp, maxHp: hp, alive: true, phase: random() * 6, hit: 0, lastSpell: 0 });
+				}
 			}
 		}
 	}
@@ -493,14 +555,41 @@ const FernfallSurvival = (() => {
 						target.alive = false;
 						player.coins += 1;
 						player.xp += 1;
-						addDrop(target.x, target.y, "gel");
-						show("Your wolf helped defeat a slime!");
+						if (!["skeleton", "witch"].includes(target.type)) addDrop(target.x, target.y, "gel");
+						show(`Your wolf helped defeat a ${target.type || "slime"}!`);
 						checkQuest();
 						updateHud();
 						saveGame();
 					}
 				}
 			}
+		}
+		for (const enemy of mobs) {
+			if (!enemy.alive || enemy.type !== "witch") continue;
+			const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+			if (distance < 320 && distance > 36 && now - (enemy.lastSpell || 0) > 2400) {
+				enemy.lastSpell = now;
+				const speed = 3.2;
+				hostileProjectiles.push({ x: enemy.x, y: enemy.y - 12, vx: (player.x - enemy.x) / distance * speed, vy: (player.y - enemy.y) / distance * speed, expiresAt: now + 2400 });
+			}
+		}
+		for (let index = hostileProjectiles.length - 1; index >= 0; index -= 1) {
+			const projectile = hostileProjectiles[index];
+			projectile.x += projectile.vx;
+			projectile.y += projectile.vy;
+			if (near(projectile, player, 18)) {
+				hostileProjectiles.splice(index, 1);
+				player.health = Math.max(0, player.health - 1);
+				player.hurt = 14;
+				show("A witch's spell struck you!");
+				if (player.health === 0) {
+					player.health = MAX_HEALTH;
+					player.x = 478;
+					player.y = 322;
+					show("A friendly nap. Back to the trail!");
+				}
+				updateHud();
+			} else if (projectile.expiresAt <= now) hostileProjectiles.splice(index, 1);
 		}
 		for (const resource of resources) {
 			if (!resource.available && resource.respawnAt && resource.respawnAt <= now) {
@@ -552,8 +641,18 @@ const FernfallSurvival = (() => {
 			if (!button || button.disabled) return;
 			if (button.dataset.survivalAction === "craft") addCraftedItem(craftingRecipes.find((entry) => entry.id === button.dataset.recipe));
 			if (button.dataset.survivalAction === "cook") startCook(button.dataset.recipe, currentFire());
+			if (button.dataset.survivalAction === "remove-cookware") {
+				const fire = currentFire();
+				if (!fire?.cookware || fire.cooking) return;
+				player.inventory[fire.cookware] = (player.inventory[fire.cookware] || 0) + 1;
+				fire.cookware = "";
+				updateHud();
+				saveGame();
+				refreshPanel();
+			}
 		});
 		refreshInventory();
+		refreshQuests();
 	}
 
 	function restore(state) {
@@ -579,22 +678,26 @@ const FernfallSurvival = (() => {
 		}
 		campfires.splice(0, campfires.length, ...(state.campfires || []));
 		ponds.splice(0, ponds.length, ...(state.ponds || []));
+		hostileProjectiles.splice(0, hostileProjectiles.length, ...(state.hostileProjectiles || []));
 		(state.resourceChunks || []).forEach((key) => resourceChunks.add(key));
 		(state.discoveredRecipes || []).forEach((key) => discoveredRecipes.add(key));
 		jimothyMet = state.jimothyMet ?? jimothyMet;
+		Object.assign(questProgress, state.questProgress || {});
+		(state.completedSurvivalQuests || []).forEach((id) => completedSurvivalQuests.add(id));
 		selectedItem = state.selectedItem || "";
 	}
 
 	function save() {
 		return {
 			inventory: player.inventory, resources, animals, mobs, pickups, obstacles,
-			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], ponds, campfires,
-			discoveredRecipes: [...discoveredRecipes], jimothyMet, selectedItem,
+			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], ponds, campfires, hostileProjectiles,
+			discoveredRecipes: [...discoveredRecipes], jimothyMet, selectedItem, questProgress,
+			completedSurvivalQuests: [...completedSurvivalQuests],
 		};
 	}
 
 	return {
-		setup, update, interact, attackAnimal, drawResource, drawPonds, drawStations, drawPickup,
-		refreshInventory, openCrafting: () => openPanel("craft"), save,
+		setup, update, interact, attackAnimal, drawResource, drawPonds, drawStations, drawProjectiles, drawPickup,
+		refreshInventory, openCrafting: () => openPanel("craft"), recordQuest, save,
 	};
 })();

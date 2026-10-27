@@ -475,6 +475,36 @@ kbd {
 	color: #a67825;
 }
 
+.survival-quests {
+	margin-top: 12px;
+	padding-top: 8px;
+	border-top: 1px solid var(--line);
+}
+
+.survival-quest {
+	display: grid;
+	grid-template-columns: 14px minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 6px;
+	margin: 6px 0;
+	color: var(--muted);
+	font-size: 11px;
+}
+
+.survival-quest strong {
+	color: var(--forest);
+	font-size: 10px;
+}
+
+.survival-quest.complete {
+	color: #7d8f78;
+	text-decoration: line-through;
+}
+
+.survival-quest.complete > span:first-child {
+	color: var(--leaf);
+}
+
 .tip-row {
 	display: flex;
 	align-items: flex-start;
