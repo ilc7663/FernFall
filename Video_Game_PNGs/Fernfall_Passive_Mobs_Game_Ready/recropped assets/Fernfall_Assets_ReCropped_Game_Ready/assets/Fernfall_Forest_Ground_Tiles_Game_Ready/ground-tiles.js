@@ -7,18 +7,24 @@ for (const name of FERNFALL_TILES) {
   img.src = new URL(`${name}.png`, fernfallGroundBase);
   fernfallGround[name] = img;
 }
-function drawFernfallGround(ctx, width, height) {
+function drawFernfallGround(ctx, width, height, cameraX, cameraY) {
   const tileSize = 64;
+  cameraX ??= typeof camera === "undefined" ? 0 : camera.x;
+  cameraY ??= typeof camera === "undefined" ? 0 : camera.y;
   ctx.fillStyle = '#749d58';
   ctx.fillRect(0, 0, width, height);
-  for (let row = 0; row < Math.ceil(height / tileSize); row++) {
-    for (let col = 0; col < Math.ceil(width / tileSize); col++) {
-      const x = col * tileSize, y = row * tileSize;
-      const hash = ((col*73856093) ^ (row*19349663)) >>> 0;
+  const firstCol = Math.floor(cameraX / tileSize);
+  const firstRow = Math.floor(cameraY / tileSize);
+  for (let row = 0; row <= Math.ceil(height / tileSize); row++) {
+    for (let col = 0; col <= Math.ceil(width / tileSize); col++) {
+      const worldCol = firstCol + col, worldRow = firstRow + row;
+      const worldX = worldCol * tileSize, worldY = worldRow * tileSize;
+      const x = worldX - cameraX, y = worldY - cameraY;
+      const hash = ((worldCol*73856093) ^ (worldRow*19349663)) >>> 0;
       const rand = hash % 100;
-      const pathY = 325 - 23*Math.sin((x / 960)*Math.PI*2);
+      const pathY = 325 - 23*Math.sin((worldX / 960)*Math.PI*2);
       let name;
-      if (Math.abs(y + tileSize/2 - pathY) < 54) {
+      if (Math.abs(worldY + tileSize/2 - pathY) < 54) {
         name = FERNFALL_TILES[8 + (hash % 4)];
       } else if (rand < 8) {
         name = FERNFALL_TILES[12 + (hash % 4)];

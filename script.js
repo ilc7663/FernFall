@@ -6,6 +6,9 @@ const SAVE_KEY = "fernfall-save-v1";
 const keys = new Set();
 const heldDirections = new Set();
 const MAX_HEALTH = 5;
+const WORLD_CHUNK_SIZE = 512;
+const camera = { x: 0, y: 0 };
+const generatedChunks = new Set(["0,0"]);
 
 const itemInfo = {
 	berry: { name: "Wild berry", icon: "●" },
@@ -35,6 +38,24 @@ const obstacles = [
 	{ x: 380, y: 242, r: 35 }, { x: 762, y: 270, r: 43 }, { x: 102, y: 440, r: 40 },
 	{ x: 303, y: 465, r: 36 }, { x: 636, y: 452, r: 42 }, { x: 856, y: 455, r: 39 },
 ];
+const obstacleChunks = new Map();
+
+function obstacleChunkKey(x, y) {
+	return `${Math.floor(x / WORLD_CHUNK_SIZE)},${Math.floor(y / WORLD_CHUNK_SIZE)}`;
+}
+
+function indexObstacle(obstacle) {
+	const key = obstacleChunkKey(obstacle.x, obstacle.y);
+	if (!obstacleChunks.has(key)) obstacleChunks.set(key, []);
+	obstacleChunks.get(key).push(obstacle);
+}
+
+function addObstacle(obstacle) {
+	obstacles.push(obstacle);
+	indexObstacle(obstacle);
+}
+
+obstacles.forEach(indexObstacle);
 
 const resources = [
 	{ x: 167, y: 190, type: "berry", available: true },
@@ -60,6 +81,63 @@ const animals = [
 	{ type: "wolf", x: 520, y: 500, phase: 4, roamAngle: 3.3, turnTimer: 0, direction: "down", moving: false, tamed: saved?.wolfTamed ?? false },
 	...(!saved?.jimothyMet ? [{ type: "jimothy", name: "Jimothy", x: 760, y: 165, phase: 5, roamAngle: 2.2, turnTimer: 0, direction: "down", moving: false }] : []),
 ];
+
+function chunkRandom(chunkX, chunkY) {
+	let state = (Math.imul(chunkX, 73856093) ^ Math.imul(chunkY, 19349663)) >>> 0;
+	if (!state) state = 1;
+	return () => {
+		state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+		return state / 4294967296;
+	};
+}
+
+function randomChunkPosition(random, chunkX, chunkY) {
+	return {
+		x: chunkX * WORLD_CHUNK_SIZE + 40 + random() * (WORLD_CHUNK_SIZE - 80),
+		y: chunkY * WORLD_CHUNK_SIZE + 40 + random() * (WORLD_CHUNK_SIZE - 80),
+	};
+}
+
+function generateWorldChunk(chunkX, chunkY) {
+	const key = `${chunkX},${chunkY}`;
+	if (generatedChunks.has(key)) return;
+	generatedChunks.add(key);
+	const random = chunkRandom(chunkX, chunkY);
+	for (let index = 0; index < 5; index += 1) {
+		const position = randomChunkPosition(random, chunkX, chunkY);
+		if (!collides(position.x, position.y) && Math.hypot(player.x - position.x, player.y - position.y) > 90) {
+			addObstacle({ ...position, r: 30 + random() * 12 });
+		}
+	}
+	for (let index = 0; index < 3; index += 1) {
+		resources.push({ ...randomChunkPosition(random, chunkX, chunkY), type: ["berry", "wood", "seed"][Math.floor(random() * 3)], available: true });
+	}
+	const mobPosition = randomChunkPosition(random, chunkX, chunkY);
+	mobs.push({ ...mobPosition, hp: 2, maxHp: 2, alive: true, phase: random() * 6, hit: 0 });
+	const animalTypes = ["sheep", "cow", "pig", "rabbit", "wolf"];
+	for (let index = 0; index < 2; index += 1) {
+		animals.push({
+			...randomChunkPosition(random, chunkX, chunkY),
+			type: animalTypes[Math.floor(random() * animalTypes.length)],
+			phase: random() * 6,
+			roamAngle: random() * Math.PI * 2,
+			turnTimer: 0,
+			direction: "down",
+			moving: false,
+			tamed: false,
+		});
+	}
+}
+
+function ensureWorldChunks() {
+	const centerX = Math.floor(player.x / WORLD_CHUNK_SIZE);
+	const centerY = Math.floor(player.y / WORLD_CHUNK_SIZE);
+	for (let chunkY = centerY - 1; chunkY <= centerY + 1; chunkY += 1) {
+		for (let chunkX = centerX - 1; chunkX <= centerX + 1; chunkX += 1) {
+			generateWorldChunk(chunkX, chunkY);
+		}
+	}
+}
 
 const pickups = [];
 let lastAttack = 0;
@@ -270,12 +348,19 @@ function drawMobHealth(mob, x, y) {
 }
 
 function render() {
+	camera.x = player.x - WIDTH / 2;
+	camera.y = player.y - HEIGHT / 2;
 	drawGround();
-	resources.forEach(drawResource);
-	animals.filter((animal) => animal.y < player.y).forEach(drawAnimal);
-	mobs.filter((mob) => mob.alive && mob.y < player.y).forEach(drawMob);
-	obstacles.forEach(drawTree);
+	ctx.save();
+	ctx.translate(-camera.x, -camera.y);
+	const visible = (entity, margin = 96) => entity.x > camera.x - margin && entity.x < camera.x + WIDTH + margin &&
+		entity.y > camera.y - margin && entity.y < camera.y + HEIGHT + margin;
+	resources.filter((resource) => visible(resource)).forEach(drawResource);
+	animals.filter((animal) => visible(animal) && animal.y < player.y).forEach(drawAnimal);
+	mobs.filter((mob) => mob.alive && visible(mob) && mob.y < player.y).forEach(drawMob);
+	obstacles.filter((tree) => visible(tree, 140)).forEach(drawTree);
 	pickups.forEach((pickup) => {
+		if (!visible(pickup)) return;
 		if (!drawArt(ctx, art.item.coin, pickup.x, pickup.y, 24, 24)) {
 			ctx.fillStyle = "#f1cd66";
 			ctx.beginPath();
@@ -283,9 +368,10 @@ function render() {
 			ctx.fill();
 		}
 	});
-	animals.filter((animal) => animal.y >= player.y).forEach(drawAnimal);
-	mobs.filter((mob) => mob.alive && mob.y >= player.y).forEach(drawMob);
+	animals.filter((animal) => visible(animal) && animal.y >= player.y).forEach(drawAnimal);
+	mobs.filter((mob) => mob.alive && visible(mob) && mob.y >= player.y).forEach(drawMob);
 	drawPlayer();
+	ctx.restore();
 	requestAnimationFrame(render);
 }
 
@@ -297,11 +383,22 @@ function moving() {
 }
 
 function collides(x, y) {
-	if (x < 28 || y < 35 || x > WIDTH - 28 || y > HEIGHT - 28) return true;
-	return obstacles.some((tree) => Math.hypot(x - tree.x, y - (tree.y + 5)) < tree.r * .66 + 9);
+	const minChunkX = Math.floor((x - 48) / WORLD_CHUNK_SIZE);
+	const maxChunkX = Math.floor((x + 48) / WORLD_CHUNK_SIZE);
+	const minChunkY = Math.floor((y - 48) / WORLD_CHUNK_SIZE);
+	const maxChunkY = Math.floor((y + 48) / WORLD_CHUNK_SIZE);
+	for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY += 1) {
+		for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX += 1) {
+			for (const tree of obstacleChunks.get(`${chunkX},${chunkY}`) ?? []) {
+				if (Math.hypot(x - tree.x, y - (tree.y + 5)) < tree.r * .66 + 9) return true;
+			}
+		}
+	}
+	return false;
 }
 
 function update() {
+	ensureWorldChunks();
 	const speed = 2.65;
 	let dx = 0;
 	let dy = 0;
@@ -322,11 +419,14 @@ function update() {
 	const now = performance.now();
 	if (player.swing > 0) player.swing = Math.max(0, player.swing - 0.06);
 	if (player.hurt > 0) player.hurt -= 1;
-	for (const animal of animals) updateAnimal(animal);
+	for (const animal of animals) {
+		if (animal.type === "wolf" && animal.tamed || Math.hypot(player.x - animal.x, player.y - animal.y) < 720) updateAnimal(animal);
+	}
 	for (const mob of mobs) {
 		if (!mob.alive) continue;
 		if (mob.hit > 0) mob.hit -= 1;
 		const distance = Math.hypot(player.x - mob.x, player.y - mob.y);
+		if (distance >= 240) continue;
 		if (distance < 195 && distance > 28) {
 			const speedToPlayer = .65;
 			const mx = (player.x - mob.x) / distance * speedToPlayer;
@@ -532,8 +632,8 @@ function updateHud() {
 
 function setDirectionFromPointer(event) {
 	const bounds = canvas.getBoundingClientRect();
-	const x = (event.clientX - bounds.left) * WIDTH / bounds.width;
-	const y = (event.clientY - bounds.top) * HEIGHT / bounds.height;
+	const x = (event.clientX - bounds.left) * WIDTH / bounds.width + camera.x;
+	const y = (event.clientY - bounds.top) * HEIGHT / bounds.height + camera.y;
 	const dx = x - player.x;
 	const dy = y - player.y;
 	player.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : (dy < 0 ? "up" : "down");
