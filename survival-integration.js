@@ -1,3 +1,4 @@
+const survivalModule = typeof FernfallSurvival === "undefined" ? null : FernfallSurvival;
 const hostileAssetRoot = new URL("Video_Game_PNGs/Fernfall_Passive_Mobs_Game_Ready/recropped assets/Fernfall_Assets_ReCropped_Game_Ready/assets/Fernfall_Hostile_Mobs_Game_Ready/", document.baseURI).href;
 loadFernfallHostileAssets(hostileAssetRoot);
 const hostileMotion = new WeakMap();
@@ -31,16 +32,16 @@ function drawHostileSprite(mob, x, y) {
 
 const originalGather = gather;
 gather = function () {
-	if (FernfallSurvival.interact()) return;
+	if (survivalModule?.interact()) return;
 	const untamedWolves = animals.filter((animal) => animal.type === "wolf" && !animal.tamed);
 	originalGather();
-	if (untamedWolves.some((animal) => animal.tamed)) FernfallSurvival.recordQuest("wolf");
+	if (survivalModule && untamedWolves.some((animal) => animal.tamed)) survivalModule.recordQuest("wolf");
 };
 
 const originalAttack = attack;
 attack = function () {
 	if (performance.now() - lastAttack < 360) return;
-	if (FernfallSurvival.attackAnimal()) {
+	if (survivalModule?.attackAnimal()) {
 		lastAttack = performance.now();
 		player.swing = 1;
 		updateHud();
@@ -60,7 +61,7 @@ attack = function () {
 const originalUpdate = update;
 update = function () {
 	originalUpdate();
-	FernfallSurvival.update();
+	survivalModule?.update();
 };
 
 const originalCheckQuest = checkQuest;
@@ -78,18 +79,18 @@ updateHud = function () {
 	for (const hostile of hostiles) mobs.splice(mobs.indexOf(hostile), 1);
 	originalUpdateHud();
 	mobs.push(...hostiles);
-	FernfallSurvival.refreshInventory();
+	survivalModule?.refreshInventory();
 };
 
 const originalDrawGround = drawGround;
 drawGround = function () {
 	originalDrawGround();
-	FernfallSurvival.drawPonds();
+	survivalModule?.drawPonds();
 };
 
 const originalDrawResource = drawResource;
 drawResource = function (resource) {
-	if (!FernfallSurvival.drawResource(resource)) originalDrawResource(resource);
+	if (!survivalModule?.drawResource(resource)) originalDrawResource(resource);
 };
 
 const originalDrawTree = drawTree;
@@ -112,8 +113,8 @@ render = function () {
 	originalRender();
 	ctx.save();
 	ctx.translate(-camera.x, -camera.y);
-	FernfallSurvival.drawStations();
-	FernfallSurvival.drawProjectiles();
+	survivalModule?.drawStations();
+	survivalModule?.drawProjectiles();
 	for (const pickup of pickups) {
 		FernfallCooking.draw(ctx, itemInfo[pickup.type]?.art || pickup.type, pickup.x - 14, pickup.y - 14, 28, 28);
 	}
@@ -203,5 +204,7 @@ drawMob = function (mob) {
 	drawMobHealth(mob, x, y);
 };
 
-FernfallSurvival.setup(saved);
-updateHud();
+if (survivalModule) {
+	survivalModule.setup(saved);
+	updateHud();
+}
