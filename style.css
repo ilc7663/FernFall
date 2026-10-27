@@ -969,12 +969,14 @@ kbd {
 	bottom: 10px !important;
 	left: 50% !important;
 	width: min(600px, calc(100% - 12px)) !important;
-	height: auto !important;
-	aspect-ratio: 10 / 1;
+	height: clamp(40px, 10vw, 60px) !important;
+	min-height: 0 !important;
+	grid-template-rows: minmax(0, 1fr) !important;
 	max-width: calc(100% - 16px) !important;
 	grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+	grid-auto-rows: minmax(0, 1fr) !important;
 	gap: 0 !important;
-	padding: 9px 4.1% 4px !important;
+	padding: 5px 4.1% !important;
 	border: 0 !important;
 	transform: translateX(-50%);
 	background: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_elements/hotbar_9slot.png") center / 100% 100% no-repeat !important;
@@ -984,6 +986,9 @@ kbd {
 
 #fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot {
 	width: 76%;
+	height: 100%;
+	min-height: 0;
+	aspect-ratio: auto;
 	justify-self: center;
 	align-self: center;
 	border: 0 !important;
@@ -1041,12 +1046,14 @@ kbd {
 	bottom: 2.5vh !important;
 	left: 50% !important;
 	width: min(560px, calc(100vw - 24px)) !important;
-	height: auto !important;
-	aspect-ratio: 10 / 1;
+	height: clamp(40px, 10vw, 56px) !important;
+	min-height: 0 !important;
+	grid-template-rows: minmax(0, 1fr) !important;
 	max-width: calc(100vw - 24px) !important;
 	grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+	grid-auto-rows: minmax(0, 1fr) !important;
 	gap: 0 !important;
-	padding: 9px 4.7% 4px !important;
+	padding: 5px 4.7% !important;
 	transform: translateX(-50%);
 	background: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_elements/hotbar_9slot.png") center / 100% 100% no-repeat !important;
 	border: 0 !important;
@@ -1056,6 +1063,9 @@ kbd {
 
 #fernfall-inventory-root.fi-open .fi-hotbar .fi-slot {
 	width: 76%;
+	height: 100%;
+	min-height: 0;
+	aspect-ratio: auto;
 	justify-self: center;
 	align-self: center;
 	border: 0 !important;
