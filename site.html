@@ -49,7 +49,7 @@
 						<button class="action-button attack-action" id="attack-button" type="button" title="Swing your stick (Space)"><span class="action-icon">⚔</span><span>Attack</span><kbd>Space</kbd></button>
 						<button class="action-button" id="potion-button" type="button" title="Drink a berry tonic"><span class="action-icon">✿</span><span>Use tonic</span><kbd>1</kbd></button>
 					</div>
-					<p class="control-hint"><span>W A S D</span> move <i>·</i> <span>Click</span> face direction</p>
+					<p class="control-hint"><span>W A S D</span> move <i>·</i> <span>Click</span> face direction <i>·</i> <span>I</span> inventory</p>
 				</div>
 			</div>
 
@@ -78,6 +78,10 @@
 				<div class="quest-progress"><div class="progress-track"><div class="progress-fill" id="quest-fill"></div></div><span id="quest-progress">0 / 3</span></div>
 				<div class="quest-reward"><span>Reward</span><strong>+ 3 coins</strong></div>
 				<div class="survival-quests" id="survival-quests" aria-label="Survival objectives"></div>
+					<div class="village-quest-section" id="village-quest-section" hidden>
+						<p class="eyebrow">VILLAGE QUESTS</p>
+						<div class="survival-quests" id="village-quest-list" aria-label="Accepted village quests"></div>
+					</div>
 
 				<div class="panel-rule lower-rule"></div>
 				<div class="tip-row"><span class="tip-icon">☘</span><p><strong>Little tip</strong><br>Offer a wild berry with E to tame the wolf. Jimothy appears only once.</p></div>
@@ -93,6 +97,10 @@
 		<div class="crafting-workspace" id="crafting-workspace" hidden>
 			<section class="crafting-grid-panel" aria-label="Crafting grid">
 				<h3>Crafting grid</h3>
+				<section class="quick-craft-panel" aria-label="Quick craft recipes">
+					<h4>Quick craft</h4>
+					<div class="quick-craft-list" id="quick-craft-list"></div>
+				</section>
 				<div class="crafting-machine">
 					<div class="crafting-grid" id="crafting-grid"></div>
 					<span class="crafting-arrow" aria-hidden="true">➜</span>
@@ -106,6 +114,22 @@
 			</section>
 		</div>
 		<div class="survival-list" id="survival-list"></div>
+	</dialog>
+	<dialog class="survival-dialog villager-dialog" id="villager-dialog" aria-labelledby="villager-dialog-name">
+		<div class="survival-dialog-header">
+			<div><p class="eyebrow">VILLAGE CONVERSATION</p><h2 id="villager-dialog-name">Villager</h2></div>
+			<button class="icon-button" id="villager-dialog-close" type="button" aria-label="Close conversation">×</button>
+		</div>
+		<p id="villager-greeting"></p>
+		<section class="quest-offer" aria-labelledby="villager-quest-title">
+			<h3 id="villager-quest-title"></h3>
+			<p id="villager-quest-description"></p>
+			<p id="villager-quest-status" aria-live="polite"></p>
+		</section>
+		<div class="inventory-actions">
+			<button class="action-button" id="villager-quest-action" type="button">Accept quest</button>
+			<button class="action-button" id="villager-dialog-close-secondary" type="button">Close</button>
+		</div>
 	</dialog>
 	<script src="Video_Game_PNGs/assets.js"></script>
 	<script src="passive-assets.js"></script>

@@ -38,7 +38,14 @@ const originalGather = gather;
 gather = function () {
 	if (survivalModule?.interact()) return;
 	const untamedWolves = animals.filter((animal) => animal.type === "wolf" && !animal.tamed);
+	const inventoryBefore = { ...player.inventory };
 	originalGather();
+	for (const [type, amount] of Object.entries(player.inventory)) {
+		const gained = amount - (inventoryBefore[type] || 0);
+		if (gained <= 0) continue;
+		survivalModule?.recordQuest("gathered", gained);
+		survivalModule?.recordVillagerQuestProgress(type, gained);
+	}
 	if (survivalModule && untamedWolves.some((animal) => animal.tamed)) survivalModule.recordQuest("wolf");
 };
 

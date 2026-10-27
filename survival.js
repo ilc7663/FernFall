@@ -37,13 +37,13 @@ const FernfallSurvival = (() => {
 		bowl: { name: "Wooden bowl", category: "equipment", icon: "D", art: "bowl_empty" },
 	};
 	const craftingRecipes = [
-		{ id: "crafting_table", name: "Crafting table", ingredients: { wood: 5, stone: 2 } },
-		{ id: "campfire_kit", name: "Campfire kit", ingredients: { wood: 3, stone: 2 } },
-		{ id: "bucket_empty", name: "Empty bucket", ingredients: { wood: 3, stone: 1 } },
-		{ id: "cooking_pot", name: "Cooking pot", ingredients: { stone: 3, wood: 1 } },
-		{ id: "frying_pan", name: "Frying pan", ingredients: { stone: 2, wood: 2 } },
-		{ id: "bowl", name: "Wooden bowl", ingredients: { wood: 1 } },
-		{ id: "wooden_stick", name: "Three wooden sticks", ingredients: { wood: 1 }, amount: 3 },
+		{ id: "crafting_table", name: "Crafting table", ingredients: { wood: 4 }, pattern: ["wood", "wood", "", "wood", "wood", "", "", "", ""] },
+		{ id: "campfire_kit", name: "Campfire kit", ingredients: { wood: 3, stone: 2 }, pattern: ["", "stone", "", "wood", "wood", "wood", "", "stone", ""] },
+		{ id: "bucket_empty", name: "Empty bucket", ingredients: { wood: 3, stone: 1 }, pattern: ["wood", "", "wood", "", "stone", "", "", "wood", ""] },
+		{ id: "cooking_pot", name: "Cooking pot", ingredients: { stone: 3, wood: 1 }, pattern: ["stone", "stone", "stone", "", "wood", "", "", "", ""] },
+		{ id: "frying_pan", name: "Frying pan", ingredients: { stone: 2, wood: 2 }, pattern: ["stone", "stone", "", "", "wood", "", "", "wood", ""] },
+		{ id: "bowl", name: "Wooden bowl", ingredients: { wood: 3 }, pattern: ["wood", "", "wood", "", "wood", "", "", "", ""] },
+		{ id: "wooden_stick", name: "Three wooden sticks", ingredients: { wood: 2 }, pattern: ["wood", "", "", "wood", "", "", "", "", ""], amount: 3 },
 	];
 	const recipes = [
 		{ id: "beef_cooked", name: "Cooked beef", ingredients: { beef_raw: 1 }, station: "open_fire_or_pan", seconds: 4 },
@@ -84,12 +84,22 @@ const FernfallSurvival = (() => {
 	const discoveredRecipes = new Set();
 	const questProgress = { gathered: 0, campfire: 0, meal: 0, milk: 0, wolf: 0, jimothy: 0 };
 	const completedSurvivalQuests = new Set();
-	const craftingSlots = Array(16).fill("");
+	const villagerQuestDefinitions = {
+		mayor: { title: "Stock the village pantry", description: "Gather five supplies for the village pantry.", greeting: "Our pantry is running low. Could you gather supplies for everyone?", event: "gathered", goal: 5, reward: 3 },
+		shopkeeper: { title: "Gather wild berries", description: "Gather three wild berries for the shop.", greeting: "Wild berries sell quickly. Could you bring me three?", event: "berry", goal: 3, reward: 3 },
+		blacksmith: { title: "Gather softwood", description: "Gather four pieces of softwood for the forge.", greeting: "I need good softwood for a new tool handle. Can you gather four pieces?", event: "wood", goal: 4, reward: 4 },
+		farmer: { title: "Help with the harvest", description: "Gather four crops from the forest edge.", greeting: "The harvest could use a hand. Bring back four crops, please.", event: "crop", goal: 4, reward: 3 },
+		innkeeper: { title: "Cook a warm meal", description: "Cook one meal at a campfire.", greeting: "A warm meal lifts everyone's spirits. Could you cook one for the inn?", event: "meal", goal: 1, reward: 4 },
+		healer: { title: "Make a friend", description: "Tame a wolf with a wild berry.", greeting: "A wolf has been wandering nearby. A berry may help you earn its trust.", event: "wolf", goal: 1, reward: 5 },
+	};
+	const villagerQuestStates = {};
+	const craftingSlots = Array(9).fill("");
 	const NIGHT_CYCLE_MS = 60000;
 	const hostileChunks = new Set();
 	let selectedCategory = "food";
 	let selectedItem = "";
 	let activeMode = "craft";
+	let activeVillagerRole = "";
 	let activeFireId = null;
 	let lastRefresh = 0;
 	let sickUntil = 0;
@@ -131,6 +141,7 @@ const FernfallSurvival = (() => {
 	}
 
 	function recordQuest(id, amount = 1) {
+		recordVillagerQuestProgress(id, amount);
 		const goals = { gathered: 5, campfire: 1, meal: 1, milk: 1, wolf: 1, jimothy: 1 };
 		if (!(id in goals) || completedSurvivalQuests.has(id)) return;
 		questProgress[id] += amount;
@@ -142,6 +153,105 @@ const FernfallSurvival = (() => {
 			saveGame();
 		}
 		refreshQuests();
+	}
+
+	function villagerQuestState(role) {
+		const quest = villagerQuestDefinitions[role];
+		if (!quest) return null;
+		return (villagerQuestStates[role] ??= { accepted: false, progress: 0, claimed: false });
+	}
+
+	function refreshVillageQuestBoard() {
+		const section = document.querySelector("#village-quest-section");
+		const list = document.querySelector("#village-quest-list");
+		if (!section || !list) return;
+		const activeQuests = Object.entries(villagerQuestDefinitions).filter(([role]) => {
+			const state = villagerQuestStates[role];
+			return state?.accepted && !state.claimed;
+		});
+		section.hidden = activeQuests.length === 0;
+		list.innerHTML = activeQuests.map(([role, quest]) => {
+			const state = villagerQuestStates[role];
+			const ready = state.progress >= quest.goal;
+			return `<p class="survival-quest${ready ? " complete" : ""}"><span>${ready ? "✓" : "○"}</span><span>${quest.title}</span><strong>${Math.min(state.progress, quest.goal)}/${quest.goal}</strong></p>`;
+		}).join("");
+	}
+
+	function recordVillagerQuestProgress(event, amount = 1) {
+		if (["carrot", "potato", "grain"].includes(event)) event = "crop";
+		let changed = false;
+		for (const [role, quest] of Object.entries(villagerQuestDefinitions)) {
+			const state = villagerQuestStates[role];
+			if (!state?.accepted || state.claimed || quest.event !== event) continue;
+			const previousProgress = state.progress || 0;
+			state.progress = Math.min(quest.goal, previousProgress + amount);
+			if (state.progress !== previousProgress) changed = true;
+			if (previousProgress < quest.goal && state.progress >= quest.goal) show(`${quest.title} is ready to turn in.`);
+		}
+		if (!changed) return;
+		refreshVillageQuestBoard();
+		saveGame();
+	}
+
+	function refreshVillagerDialogue() {
+		const role = activeVillagerRole;
+		const quest = villagerQuestDefinitions[role];
+		const state = villagerQuestState(role);
+		if (!quest || !state) return;
+		const roleName = role[0].toUpperCase() + role.slice(1);
+		const ready = state.accepted && !state.claimed && state.progress >= quest.goal;
+		document.querySelector("#villager-dialog-name").textContent = roleName;
+		document.querySelector("#villager-greeting").textContent = quest.greeting;
+		document.querySelector("#villager-quest-title").textContent = quest.title;
+		document.querySelector("#villager-quest-description").textContent = quest.description;
+		const status = document.querySelector("#villager-quest-status");
+		const action = document.querySelector("#villager-quest-action");
+		if (state.claimed) {
+			status.textContent = "Quest complete. Thank you for helping the village.";
+			action.textContent = "Completed";
+			action.disabled = true;
+		} else if (ready) {
+			status.textContent = `Complete: ${quest.goal}/${quest.goal}. Return your report for ${quest.reward} coins.`;
+			action.textContent = `Claim ${quest.reward} coins`;
+			action.disabled = false;
+		} else if (state.accepted) {
+			status.textContent = `In progress: ${Math.min(state.progress, quest.goal)}/${quest.goal}. Reward: ${quest.reward} coins.`;
+			action.textContent = "Quest accepted";
+			action.disabled = true;
+		} else {
+			status.textContent = `Reward: ${quest.reward} coins.`;
+			action.textContent = "Accept quest";
+			action.disabled = false;
+		}
+	}
+
+	function openVillagerDialogue(villager) {
+		if (!villagerQuestDefinitions[villager.role]) {
+			show("The villager smiles and waves.");
+			return;
+		}
+		activeVillagerRole = villager.role;
+		refreshVillagerDialogue();
+		const dialog = document.querySelector("#villager-dialog");
+		if (!dialog.open) dialog.showModal();
+	}
+
+	function handleVillagerQuestAction() {
+		const quest = villagerQuestDefinitions[activeVillagerRole];
+		const state = villagerQuestState(activeVillagerRole);
+		if (!quest || !state || state.claimed) return;
+		if (!state.accepted) {
+			state.accepted = true;
+			show(`Quest accepted: ${quest.title}.`);
+		} else if (state.progress >= quest.goal) {
+			state.claimed = true;
+			player.coins += quest.reward;
+			show(`Quest complete: +${quest.reward} coins.`);
+			updateHud();
+		}
+		refreshVillagerDialogue();
+		refreshVillageQuestBoard();
+		saveGame();
 	}
 
 	function questTitle(id) {
@@ -184,10 +294,38 @@ const FernfallSurvival = (() => {
 	}
 
 	function craftingGridMatches(recipe) {
-		const counts = craftingGridCounts();
-		const required = recipe.ingredients;
-		return Object.keys(counts).length === Object.keys(required).length &&
-			Object.entries(required).every(([id, amount]) => counts[id] === amount);
+		for (const mirrored of [false, true]) {
+			for (let offsetY = 0; offsetY < 3; offsetY += 1) {
+				for (let offsetX = 0; offsetX < 3; offsetX += 1) {
+					const pattern = Array(9).fill("");
+					let fits = true;
+					recipe.pattern.forEach((item, index) => {
+						if (!item) return;
+						const sourceX = mirrored ? 2 - index % 3 : index % 3;
+						const x = sourceX + offsetX;
+						const y = Math.floor(index / 3) + offsetY;
+						if (x > 2 || y > 2) {
+							fits = false;
+						return;
+						}
+						pattern[y * 3 + x] = item;
+					});
+					if (fits && pattern.every((item, index) => item === craftingSlots[index])) return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	function recipeHasIngredients(recipe) {
+		return Object.entries(recipe.ingredients).every(([id, count]) => (player.inventory[id] || 0) >= count);
+	}
+
+	function selectQuickCraftRecipe(recipeId) {
+		const recipe = craftingRecipes.find((entry) => entry.id === recipeId);
+		if (!recipe || !recipeHasIngredients(recipe)) return;
+		craftingSlots.splice(0, craftingSlots.length, ...recipe.pattern);
+		refreshPanel();
 	}
 
 	function missingCraftIngredients(recipe) {
@@ -272,6 +410,14 @@ const FernfallSurvival = (() => {
 				: id ? `<span class="item-icon">${itemInfo[id]?.icon || id[0].toUpperCase()}</span>` : "";
 			return `<button type="button" class="crafting-slot${id ? " filled" : ""}" data-craft-slot="${index}" aria-label="${id ? `Remove ${label(id)}` : `Empty slot ${index + 1}`}">${icon}</button>`;
 		}).join("");
+		const quickCraft = document.querySelector("#quick-craft-list");
+		quickCraft.innerHTML = craftingRecipes.map((recipe) => {
+			const image = inventoryImageSource(recipe.id);
+			const icon = image
+				? `<img class="item-texture" src="${image}" alt="">`
+				: `<span class="item-icon">${itemInfo[recipe.id]?.icon || recipe.id[0].toUpperCase()}</span>`;
+			return `<button type="button" class="quick-craft-recipe" data-quick-craft="${recipe.id}" ${recipeHasIngredients(recipe) ? "" : "disabled"}>${icon}<span>${recipe.name}</span></button>`;
+		}).join("");
 		const ingredients = new Set(craftingRecipes.flatMap((recipe) => Object.keys(recipe.ingredients)));
 		const inventory = document.querySelector("#crafting-inventory");
 		inventory.innerHTML = Object.entries(player.inventory).filter(([id, amount]) => amount > 0 && ingredients.has(id)).map(([id, amount]) => {
@@ -289,7 +435,7 @@ const FernfallSurvival = (() => {
 			: matched ? `<span class="item-icon">${itemInfo[matched.id]?.icon || matched.id[0].toUpperCase()}</span>` : "";
 		output.innerHTML = `${outputIcon}${matched ? `<small>${label(matched.id)}</small>` : ""}`;
 		output.disabled = !matched || Object.entries(matched.ingredients).some(([id, count]) => (player.inventory[id] || 0) < count);
-		document.querySelector("#crafting-grid-status").textContent = matched ? `Ready to craft: ${matched.name}` : "Place the exact recipe ingredients in the grid.";
+		document.querySelector("#crafting-grid-status").textContent = matched ? `Ready to craft: ${matched.name}` : "Arrange a recipe in the 3×3 grid.";
 	}
 
 	function refreshPanel() {
@@ -298,7 +444,7 @@ const FernfallSurvival = (() => {
 		const fire = currentFire();
 		if (activeMode === "craft") {
 			renderCraftingWorkspace();
-			list.innerHTML = `<p class="menu-intro">Fill the 4×4 grid with the exact recipe ingredients, then craft.</p>${craftingRecipes.map((recipe) => recipeRow(recipe, null)).join("")}`;
+			list.innerHTML = "";
 			return;
 		}
 		renderCraftingWorkspace();
@@ -421,21 +567,13 @@ const FernfallSurvival = (() => {
 			openPanel("cook", fire);
 			return true;
 		}
-		if (craftingTables.some((table) => near(table, player, 62))) {
-			openPanel("craft");
-			return true;
-		}
 		const villager = villagers.find((resident) => near(resident, player, 58));
 		if (villager) {
-			const dialogue = {
-				mayor: "Welcome to our little forest village. Keep an eye out for nightfall.",
-				shopkeeper: "Gather berries and herbs. They are always useful on the trail.",
-				blacksmith: "Stone and wood make sturdy tools. Try the crafting table.",
-				farmer: "Carrots, potatoes, and grain grow well near the village.",
-				innkeeper: "A warm meal and a quiet night can restore your spirits.",
-				healer: "Cooked meals are safer and more nourishing than raw food.",
-			};
-			show(dialogue[villager.role] || "Welcome to the village!");
+			openVillagerDialogue(villager);
+			return true;
+		}
+		if (craftingTables.some((table) => near(table, player, 62))) {
+			openPanel("craft");
 			return true;
 		}
 		const jimothy = animals.find((animal) => animal.type === "jimothy" && near(animal, player, 58));
@@ -479,7 +617,10 @@ const FernfallSurvival = (() => {
 		const pickup = pickups.find((entry) => near(entry, player, 56));
 		if (pickup) {
 			pickups.splice(pickups.indexOf(pickup), 1);
-			player.inventory[pickup.type] = (player.inventory[pickup.type] || 0) + (pickup.amount || 1);
+			const amount = pickup.amount || 1;
+			player.inventory[pickup.type] = (player.inventory[pickup.type] || 0) + amount;
+			recordQuest("gathered", amount);
+			recordVillagerQuestProgress(pickup.type, amount);
 			show(`Collected ${label(pickup.type)} x${pickup.amount || 1}.`);
 			updateHud();
 			saveGame();
@@ -491,6 +632,7 @@ const FernfallSurvival = (() => {
 			resource.respawnAt = Date.now() + 30000;
 			player.inventory[resource.type] = (player.inventory[resource.type] || 0) + 1;
 			recordQuest("gathered");
+			recordVillagerQuestProgress(resource.type);
 			show(`Gathered ${label(resource.type)}.`);
 			updateHud();
 			saveGame();
@@ -501,6 +643,7 @@ const FernfallSurvival = (() => {
 			tree.woodHits = (tree.woodHits || 0) + 1;
 			player.inventory.wood = (player.inventory.wood || 0) + 1;
 			recordQuest("gathered");
+			recordVillagerQuestProgress("wood");
 			if (tree.woodHits >= 3) tree.chopped = true;
 			show(tree.chopped ? "Gathered wood. The tree is now a stump." : "Gathered wood from the tree.");
 			updateHud();
@@ -798,7 +941,7 @@ const FernfallSurvival = (() => {
 		const key = `${chunkX},${chunkY}`;
 		if (villageChunks.has(key)) return;
 		villageChunks.add(key);
-		if (random() > 0.7) return;
+		if (random() > 0.2) return;
 		const center = { x: chunkX * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE / 2, y: chunkY * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE / 2 };
 		const layouts = [[-96, -72], [96, -72], [-96, 72], [96, 72], [0, -150]];
 		const houseCount = 3 + Math.floor(random() * 3);
@@ -1047,6 +1190,10 @@ const FernfallSurvival = (() => {
 			craftingSlots[slot] = button.dataset.craftItem;
 			refreshPanel();
 		});
+		document.querySelector("#quick-craft-list").addEventListener("click", (event) => {
+			const button = event.target.closest("[data-quick-craft]");
+			if (button && !button.disabled) selectQuickCraftRecipe(button.dataset.quickCraft);
+		});
 		document.querySelector("#crafting-grid").addEventListener("click", (event) => {
 			const button = event.target.closest("[data-craft-slot]");
 			if (!button) return;
@@ -1060,6 +1207,9 @@ const FernfallSurvival = (() => {
 		document.querySelector("#use-selected-button").addEventListener("click", useSelected);
 		document.querySelector("#craft-menu-button").addEventListener("click", () => openPanel("craft"));
 		document.querySelector("#survival-close").addEventListener("click", () => document.querySelector("#survival-dialog").close());
+		document.querySelector("#villager-quest-action").addEventListener("click", handleVillagerQuestAction);
+		document.querySelector("#villager-dialog-close").addEventListener("click", () => document.querySelector("#villager-dialog").close());
+		document.querySelector("#villager-dialog-close-secondary").addEventListener("click", () => document.querySelector("#villager-dialog").close());
 		document.addEventListener("keydown", (event) => {
 			if (event.key.toLowerCase() !== "i" || event.repeat) return;
 			event.preventDefault();
@@ -1082,6 +1232,7 @@ const FernfallSurvival = (() => {
 		});
 		refreshInventory();
 		refreshQuests();
+		refreshVillageQuestBoard();
 	}
 
 	function restore(state) {
@@ -1118,9 +1269,15 @@ const FernfallSurvival = (() => {
 		worldEpoch = state.worldEpoch || 0;
 		(state.hostileChunks || []).forEach((key) => hostileChunks.add(key));
 		Object.assign(questProgress, state.questProgress || {});
+		Object.assign(villagerQuestStates, state.villagerQuestStates || {});
 		(state.completedSurvivalQuests || []).forEach((id) => completedSurvivalQuests.add(id));
 		selectedItem = state.selectedItem || "";
-		if (Array.isArray(state.craftingSlots) && state.craftingSlots.length === 16) craftingSlots.splice(0, 16, ...state.craftingSlots);
+		if (Array.isArray(state.craftingSlots)) {
+			const savedGrid = state.craftingSlots.length === 16
+				? [0, 1, 2, 4, 5, 6, 8, 9, 10].map((index) => state.craftingSlots[index])
+				: state.craftingSlots;
+			if (savedGrid.length === 9) craftingSlots.splice(0, 9, ...savedGrid);
+		}
 	}
 
 	function save() {
@@ -1128,7 +1285,7 @@ const FernfallSurvival = (() => {
 			inventory: player.inventory, resources, animals, mobs, pickups, obstacles,
 			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], villageChunks: [...villageChunks],
 			villages, villagers, craftingTables, ponds, campfires, hostileProjectiles, craftingSlots,
-			discoveredRecipes: [...discoveredRecipes], jimothyMet, selectedItem, questProgress,
+			discoveredRecipes: [...discoveredRecipes], jimothyMet, selectedItem, questProgress, villagerQuestStates,
 			completedSurvivalQuests: [...completedSurvivalQuests], worldEpoch,
 			hostileChunks: [...hostileChunks],
 		};
@@ -1136,6 +1293,6 @@ const FernfallSurvival = (() => {
 
 	return {
 		setup, update, interact, attackAnimal, blocks, drawResource, drawPonds, drawStations, drawProjectiles, drawPickup, drawNightOverlay,
-		refreshInventory, openCrafting: () => openPanel("craft"), recordQuest, save,
+		refreshInventory, openCrafting: () => openPanel("craft"), recordQuest, recordVillagerQuestProgress, save,
 	};
 })();
