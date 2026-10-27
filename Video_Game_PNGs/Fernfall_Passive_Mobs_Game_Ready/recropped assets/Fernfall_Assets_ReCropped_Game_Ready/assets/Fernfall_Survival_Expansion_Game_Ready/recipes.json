@@ -1,0 +1,156 @@
+{
+  "recipes": {
+    "beef_cooked": {
+      "name": "Cooked Beef",
+      "ingredients": {
+        "beef_raw": 1
+      },
+      "station": "campfire",
+      "cookSeconds": 4,
+      "hearts": 3
+    },
+    "pork_cooked": {
+      "name": "Cooked Pork",
+      "ingredients": {
+        "pork_raw": 1
+      },
+      "station": "campfire",
+      "cookSeconds": 4,
+      "hearts": 3
+    },
+    "mutton_cooked": {
+      "name": "Cooked Mutton",
+      "ingredients": {
+        "mutton_raw": 1
+      },
+      "station": "campfire",
+      "cookSeconds": 4,
+      "hearts": 3
+    },
+    "rabbit_cooked": {
+      "name": "Cooked Rabbit",
+      "ingredients": {
+        "rabbit_raw": 1
+      },
+      "station": "campfire",
+      "cookSeconds": 4,
+      "hearts": 2
+    },
+    "cooked_steak": {
+      "name": "Grilled Steak",
+      "ingredients": {
+        "beef_raw": 1
+      },
+      "station": "frying_pan",
+      "cookSeconds": 6,
+      "hearts": 4
+    },
+    "steak_veggies": {
+      "name": "Steak and Vegetables",
+      "ingredients": {
+        "beef_raw": 1,
+        "carrot": 1,
+        "potato": 1
+      },
+      "station": "frying_pan",
+      "cookSeconds": 8,
+      "hearts": 6
+    },
+    "pork_chop": {
+      "name": "Pan-Seared Pork Chop",
+      "ingredients": {
+        "pork_raw": 1
+      },
+      "station": "frying_pan",
+      "cookSeconds": 6,
+      "hearts": 4
+    },
+    "roasted_pork": {
+      "name": "Herb-Roasted Pork",
+      "ingredients": {
+        "pork_raw": 1,
+        "herb": 1
+      },
+      "station": "cooking_pot",
+      "cookSeconds": 8,
+      "hearts": 5
+    },
+    "lamb_stew": {
+      "name": "Mutton Stew",
+      "ingredients": {
+        "mutton_raw": 1,
+        "carrot": 1,
+        "potato": 1
+      },
+      "station": "cooking_pot",
+      "cookSeconds": 10,
+      "hearts": 6
+    },
+    "mutton_chops": {
+      "name": "Grilled Mutton Chops",
+      "ingredients": {
+        "mutton_raw": 1,
+        "herb": 1
+      },
+      "station": "frying_pan",
+      "cookSeconds": 7,
+      "hearts": 5
+    },
+    "rabbit_stew": {
+      "name": "Rabbit Stew",
+      "ingredients": {
+        "rabbit_raw": 1,
+        "carrot": 1,
+        "potato": 1
+      },
+      "station": "cooking_pot",
+      "cookSeconds": 9,
+      "hearts": 5
+    },
+    "meat_stew": {
+      "name": "Hearty Meat Stew",
+      "ingredients": {
+        "beef_raw": 1,
+        "carrot": 1,
+        "potato": 1
+      },
+      "station": "cooking_pot",
+      "cookSeconds": 10,
+      "hearts": 6
+    }
+  },
+  "animalDrops": {
+    "cow": {
+      "beef_raw": [
+        1,
+        2
+      ]
+    },
+    "pig": {
+      "pork_raw": [
+        1,
+        2
+      ]
+    },
+    "sheep": {
+      "mutton_raw": [
+        1,
+        2
+      ]
+    },
+    "rabbit": {
+      "rabbit_raw": [
+        1,
+        1
+      ]
+    },
+    "wolf": {},
+    "jimothy": {
+      "berry_hand_pie": [
+        0,
+        1
+      ]
+    }
+  },
+  "notes": "Ingredient keys carrot/potato/herb are expected from game inventory; their artwork is not included in this pack."
+}

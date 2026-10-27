@@ -58,7 +58,18 @@
 					<div><p class="eyebrow">YOUR PACK</p><h1>Inventory</h1></div>
 					<span class="pack-icon" aria-hidden="true">▤</span>
 				</div>
+				<nav class="inventory-tabs" id="inventory-tabs" aria-label="Inventory categories">
+					<button type="button" data-inventory-category="food" aria-pressed="true">Food</button>
+					<button type="button" data-inventory-category="materials" aria-pressed="false">Materials</button>
+					<button type="button" data-inventory-category="equipment" aria-pressed="false">Equipment</button>
+					<button type="button" data-inventory-category="other" aria-pressed="false">Other</button>
+				</nav>
 				<div class="inventory-grid" id="inventory-grid" aria-label="Inventory items"></div>
+				<p class="inventory-selection" id="survival-status">Select an item to use or place it.</p>
+				<div class="inventory-actions">
+					<button class="action-button" id="use-selected-button" type="button" disabled>Use selected</button>
+					<button class="action-button" id="craft-menu-button" type="button">Craft</button>
+				</div>
 				<div class="pack-note" id="inventory-note">Your pockets are ready for an adventure.</div>
 
 				<div class="panel-rule"></div>
@@ -73,9 +84,19 @@
 		</section>
 		<footer class="footer"><span>FERNFALL FOREST CLUB</span><span>Save your progress <b>automatically</b></span></footer>
 	</main>
+	<dialog class="survival-dialog" id="survival-dialog" aria-labelledby="survival-title">
+		<div class="survival-dialog-header">
+			<div><p class="eyebrow">FERNFALL FIELDCRAFT</p><h2 id="survival-title">Crafting bench</h2></div>
+			<button class="icon-button" id="survival-close" type="button" aria-label="Close menu">×</button>
+		</div>
+		<div class="survival-list" id="survival-list"></div>
+	</dialog>
 	<script src="Video_Game_PNGs/assets.js"></script>
 	<script src="passive-assets.js"></script>
 	<script src="Video_Game_PNGs/Fernfall_Passive_Mobs_Game_Ready/recropped%20assets/Fernfall_Assets_ReCropped_Game_Ready/assets/Fernfall_Forest_Ground_Tiles_Game_Ready/ground-tiles.js"></script>
+	<script src="Video_Game_PNGs/Fernfall_Passive_Mobs_Game_Ready/recropped%20assets/Fernfall_Assets_ReCropped_Game_Ready/assets/Fernfall_Cooking_Assets_Game_Ready/cooking-assets.js"></script>
+	<script src="survival.js"></script>
 	<script src="script.js"></script>
+	<script src="survival-integration.js"></script>
 </body>
 </html>

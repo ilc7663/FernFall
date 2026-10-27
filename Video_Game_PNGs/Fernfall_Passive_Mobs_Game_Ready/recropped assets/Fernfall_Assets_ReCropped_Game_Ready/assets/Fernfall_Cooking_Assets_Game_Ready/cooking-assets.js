@@ -201,7 +201,7 @@
   }
 };
   const images = {};
-  const basePath = (global.FERNFALL_COOKING_BASE_PATH || '').replace(/\/$/, '');
+  const basePath = (global.FERNFALL_COOKING_BASE_PATH || new URL('.', document.currentScript.src).href).replace(/\/$/, '');
   const ready = Promise.all(Object.entries(paths).map(([key, p]) => new Promise((resolve) => {
     const img = new Image();
     images[key] = img;

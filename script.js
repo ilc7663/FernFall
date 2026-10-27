@@ -170,6 +170,7 @@ function saveGame() {
 			xp: player.xp, level: player.level, inventory: player.inventory, questClaimed,
 			wolfTamed: animals.find((animal) => animal.type === "wolf")?.tamed ?? false,
 			jimothyMet,
+			...FernfallSurvival.save(),
 		}));
 	} catch {
 		showToast("Progress could not be saved in this browser.");
@@ -470,13 +471,6 @@ function update() {
 				showToast("A friendly nap. Back to the trail!");
 			}
 			updateHud();
-		}
-	}
-	for (let index = pickups.length - 1; index >= 0; index -= 1) {
-		if (Math.hypot(player.x - pickups[index].x, player.y - pickups[index].y) < 23) {
-			const [pickup] = pickups.splice(index, 1);
-			addItem(pickup.type, 1);
-			showToast(`Found ${itemInfo[pickup.type].name.toLowerCase()}!`);
 		}
 	}
 	if (now - lastSave > 5000) {

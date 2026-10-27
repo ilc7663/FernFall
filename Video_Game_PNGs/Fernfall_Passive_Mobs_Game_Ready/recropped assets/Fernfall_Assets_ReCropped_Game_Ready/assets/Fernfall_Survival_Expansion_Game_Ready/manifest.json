@@ -1,0 +1,742 @@
+{
+  "world/sage_plant.png": {
+    "width": 96,
+    "height": 96
+  },
+  "world/blueberries_plant.png": {
+    "width": 96,
+    "height": 96
+  },
+  "world/herbs_plant.png": {
+    "width": 96,
+    "height": 96
+  },
+  "world/grain_plant.png": {
+    "width": 96,
+    "height": 96
+  },
+  "world/mushroom_plant.png": {
+    "width": 96,
+    "height": 96
+  },
+  "world/carrot_plant.png": {
+    "width": 96,
+    "height": 96
+  },
+  "world/berries_plant.png": {
+    "width": 96,
+    "height": 96
+  },
+  "world/potato_plant.png": {
+    "width": 96,
+    "height": 96
+  },
+  "cookware/bowl_food.png": {
+    "width": 105,
+    "height": 89
+  },
+  "cookware/cooking_pot_food.png": {
+    "width": 119,
+    "height": 99
+  },
+  "cookware/frying_pan_empty.png": {
+    "width": 124,
+    "height": 101
+  },
+  "cookware/pot_lid.png": {
+    "width": 102,
+    "height": 84
+  },
+  "cookware/small_pan.png": {
+    "width": 107,
+    "height": 98
+  },
+  "cookware/bowl_empty.png": {
+    "width": 104,
+    "height": 82
+  },
+  "cookware/cooking_pot_empty.png": {
+    "width": 112,
+    "height": 94
+  },
+  "cookware/frying_pan_food.png": {
+    "width": 123,
+    "height": 99
+  },
+  "gathered/salt.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/milk_bottle.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/garlic.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/cheese.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/hide.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/mushroom.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/knife.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/dough.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/greens.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/egg.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/bucket_water.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/onion.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/berries.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/herbs.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/stone.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/wood.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/tomato.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/wool.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/cabbage.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/sage.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/bowl.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/carrot.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/stick.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/bucket_milk.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/flour.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/blueberries.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/wooden_spoon.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/potato.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/grain.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/corn.png": {
+    "width": 96,
+    "height": 96
+  },
+  "gathered/bone.png": {
+    "width": 96,
+    "height": 96
+  },
+  "bucket/bucket_water.png": {
+    "width": 108,
+    "height": 130
+  },
+  "bucket/bucket_empty.png": {
+    "width": 103,
+    "height": 113
+  },
+  "ui/quest_complete.png": {
+    "width": 96,
+    "height": 96
+  },
+  "ui/gather_empty.png": {
+    "width": 96,
+    "height": 96
+  },
+  "ui/cooking.png": {
+    "width": 96,
+    "height": 96
+  },
+  "ui/craft_available.png": {
+    "width": 96,
+    "height": 96
+  },
+  "ui/tamed_wolf.png": {
+    "width": 96,
+    "height": 96
+  },
+  "ui/food_ready.png": {
+    "width": 96,
+    "height": 96
+  },
+  "ui/gather_ready.png": {
+    "width": 96,
+    "height": 96
+  },
+  "ui/craft_missing.png": {
+    "width": 96,
+    "height": 96
+  },
+  "ui/health_gain.png": {
+    "width": 96,
+    "height": 96
+  },
+  "ui/water_source.png": {
+    "width": 96,
+    "height": 96
+  },
+  "campfire/campfire_5.png": {
+    "width": 95,
+    "height": 89
+  },
+  "campfire/campfire_0.png": {
+    "width": 98,
+    "height": 89
+  },
+  "campfire/campfire_2.png": {
+    "width": 99,
+    "height": 107
+  },
+  "campfire/campfire_3.png": {
+    "width": 100,
+    "height": 109
+  },
+  "campfire/campfire_1.png": {
+    "width": 99,
+    "height": 104
+  },
+  "campfire/campfire_6.png": {
+    "width": 99,
+    "height": 90
+  },
+  "campfire/campfire_4.png": {
+    "width": 98,
+    "height": 106
+  },
+  "existing_world/item_herb.png": {
+    "width": 96,
+    "height": 96
+  },
+  "existing_world/tree_log.png": {
+    "width": 447,
+    "height": 272
+  },
+  "existing_world/item_wood.png": {
+    "width": 96,
+    "height": 96
+  },
+  "existing_world/item_coin.png": {
+    "width": 96,
+    "height": 96
+  },
+  "existing_world/rock_moss.png": {
+    "width": 270,
+    "height": 187
+  },
+  "existing_world/mushroom_red.png": {
+    "width": 223,
+    "height": 215
+  },
+  "existing_world/mushroom_brown.png": {
+    "width": 218,
+    "height": 213
+  },
+  "existing_world/flowers_white.png": {
+    "width": 220,
+    "height": 213
+  },
+  "existing_world/item_heart.png": {
+    "width": 96,
+    "height": 96
+  },
+  "existing_world/rock_small.png": {
+    "width": 171,
+    "height": 156
+  },
+  "inventory_64/salt.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/beef_raw.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/mutton_raw.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/milk_bottle.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/mutton_chops.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/bowl_food.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/garlic.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/cheese.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/quest_complete.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/hide.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/mushroom.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/knife.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/campfire_5.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/dough.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/lamb_stew.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/gather_empty.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/greens.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/egg.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/bucket_water.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/onion.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/berries.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/pork_cooked.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/rabbit_raw.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/campfire_0.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/cooking_pot_food.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/frying_pan_empty.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/mutton_cooked.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/herbs.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/fish_stew.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/boar_raw.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/pot_lid.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/campfire_2.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/meat_stew.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/rabbit_stew.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/stone.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/campfire_3.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/wood.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/deer_raw.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/cooking.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/tomato.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/campfire_1.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/wool.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/cabbage.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/craft_available.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/small_pan.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/tamed_wolf.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/bowl_empty.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/campfire_6.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/food_ready.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/gather_ready.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/deer_cooked.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/sage.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/bowl.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/roasted_pork.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/craft_missing.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/beef_cooked.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/carrot.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/stick.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/rabbit_cooked.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/campfire_4.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/bucket_milk.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/fish_raw.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/health_gain.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/berry_hand_pie.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/flour.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/bird_raw.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/cooked_steak.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/cooking_pot_empty.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/blueberries.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/frying_pan_food.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/fish_cooked.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/steak_veggies.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/bird_cooked.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/pork_raw.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/wooden_spoon.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/potato.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/water_source.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/bucket_empty.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/grain.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/boar_cooked.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/corn.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/bone.png": {
+    "width": 64,
+    "height": 64
+  },
+  "inventory_64/pork_chop.png": {
+    "width": 64,
+    "height": 64
+  },
+  "food/cooked/pork_cooked.png": {
+    "width": 113,
+    "height": 91
+  },
+  "food/cooked/mutton_cooked.png": {
+    "width": 108,
+    "height": 99
+  },
+  "food/cooked/deer_cooked.png": {
+    "width": 110,
+    "height": 95
+  },
+  "food/cooked/beef_cooked.png": {
+    "width": 107,
+    "height": 91
+  },
+  "food/cooked/rabbit_cooked.png": {
+    "width": 98,
+    "height": 102
+  },
+  "food/cooked/fish_cooked.png": {
+    "width": 106,
+    "height": 105
+  },
+  "food/cooked/bird_cooked.png": {
+    "width": 108,
+    "height": 107
+  },
+  "food/cooked/boar_cooked.png": {
+    "width": 114,
+    "height": 90
+  },
+  "food/raw/beef_raw.png": {
+    "width": 114,
+    "height": 91
+  },
+  "food/raw/mutton_raw.png": {
+    "width": 114,
+    "height": 102
+  },
+  "food/raw/rabbit_raw.png": {
+    "width": 98,
+    "height": 97
+  },
+  "food/raw/boar_raw.png": {
+    "width": 108,
+    "height": 97
+  },
+  "food/raw/deer_raw.png": {
+    "width": 106,
+    "height": 91
+  },
+  "food/raw/fish_raw.png": {
+    "width": 108,
+    "height": 98
+  },
+  "food/raw/bird_raw.png": {
+    "width": 97,
+    "height": 95
+  },
+  "food/raw/pork_raw.png": {
+    "width": 105,
+    "height": 91
+  },
+  "food/recipes/mutton_chops.png": {
+    "width": 118,
+    "height": 95
+  },
+  "food/recipes/lamb_stew.png": {
+    "width": 114,
+    "height": 84
+  },
+  "food/recipes/fish_stew.png": {
+    "width": 108,
+    "height": 81
+  },
+  "food/recipes/meat_stew.png": {
+    "width": 111,
+    "height": 88
+  },
+  "food/recipes/rabbit_stew.png": {
+    "width": 109,
+    "height": 82
+  },
+  "food/recipes/roasted_pork.png": {
+    "width": 112,
+    "height": 83
+  },
+  "food/recipes/berry_hand_pie.png": {
+    "width": 127,
+    "height": 130
+  },
+  "food/recipes/cooked_steak.png": {
+    "width": 107,
+    "height": 83
+  },
+  "food/recipes/steak_veggies.png": {
+    "width": 126,
+    "height": 90
+  },
+  "food/recipes/pork_chop.png": {
+    "width": 107,
+    "height": 83
+  }
+}
