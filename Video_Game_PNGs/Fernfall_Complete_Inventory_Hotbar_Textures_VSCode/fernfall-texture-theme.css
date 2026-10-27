@@ -284,3 +284,46 @@
 	background-size: cover;
 	border: 1px solid #9a805b;
 }
+
+@media (max-width: 520px) {
+	#fernfall-inventory-root .fi-content {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 8px;
+	}
+
+	#fernfall-inventory-root .fi-character {
+		display: grid;
+		grid-template-columns: 72px minmax(0, 1fr);
+		align-items: center;
+		gap: 2px 9px;
+		text-align: left;
+	}
+
+	#fernfall-inventory-root .fi-character-title {
+		grid-column: 1 / -1;
+		margin: 0;
+	}
+
+	#fernfall-inventory-root .fi-avatar-frame {
+		grid-column: 1;
+		grid-row: 2 / span 2;
+		width: 72px;
+		min-height: 88px;
+		height: 88px;
+	}
+
+	#fernfall-inventory-root .fi-avatar {
+		width: 70px;
+		height: 84px;
+	}
+
+	#fernfall-inventory-root .fi-character > strong {
+		grid-column: 2;
+		margin: 0;
+	}
+
+	#fernfall-inventory-root .fi-storage {
+		grid-column: 1;
+		min-width: 0;
+	}
+}
