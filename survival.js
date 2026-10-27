@@ -73,6 +73,10 @@ const FernfallSurvival = (() => {
 		campfire_kit: "campfire_0", bucket_empty: "bucket_empty", bucket_milk: "bucket_milk", bucket_water: "bucket_water",
 		cooking_pot: "cooking_pot_empty", frying_pan: "frying_pan_empty", bowl: "bowl_empty",
 	};
+	const resourcePlantArt = {
+		berry: "world_berries_plant", carrot: "world_carrot_plant", potato: "world_potato_plant",
+		mushroom: "world_mushroom_plant", grain: "world_grain_plant", herb: "world_herbs_plant",
+	};
 	const campfires = [];
 	const packArtCache = new Map();
 	const villages = [];
@@ -748,6 +752,18 @@ const FernfallSurvival = (() => {
 		ctx.beginPath();
 		ctx.ellipse(resource.x, resource.y + 9, 12, 4, 0, 0, Math.PI * 2);
 		ctx.fill();
+		const plantKey = resourcePlantArt[resource.type];
+		const plant = plantKey && typeof fernfallSurvival !== "undefined" ? fernfallSurvival[plantKey] : null;
+		if (plant && drawArt(ctx, plant, resource.x, resource.y - 6, 48, 48)) return true;
+		if (resource.type === "seed") {
+			ctx.fillStyle = "#8a5a35";
+			ctx.beginPath();
+			ctx.ellipse(resource.x, resource.y + bob + 2, 8, 10, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = "#5e3d25";
+			ctx.fillRect(resource.x - 9, resource.y + bob - 9, 18, 6);
+			return true;
+		}
 		if (drawPackItemIcon(resource.type, resource.x, resource.y + bob, 36)) return true;
 		if (resource.type === "stone") {
 			const sprite = art.forest.rock_moss || art.forest.rock_small;
@@ -760,10 +776,6 @@ const FernfallSurvival = (() => {
 		}
 		const colors = { carrot: "#df8b42", potato: "#b59a68", mushroom: "#bd6653", grain: "#d6b652", herb: "#62865b" };
 		if (!colors[resource.type]) return false;
-		ctx.fillStyle = "#49674655";
-		ctx.beginPath();
-		ctx.ellipse(resource.x, resource.y + 9, 12, 4, 0, 0, Math.PI * 2);
-		ctx.fill();
 		ctx.fillStyle = colors[resource.type];
 		ctx.beginPath();
 		ctx.ellipse(resource.x, resource.y, resource.type === "potato" ? 9 : 7, 9, -0.3, 0, Math.PI * 2);

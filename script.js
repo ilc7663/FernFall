@@ -259,7 +259,10 @@ function drawTree(tree) {
 }
 
 function drawPackItemIcon(itemType, x, y, size) {
-	const iconId = { berry: "berries", herb: "herbs", gel: "slime_gel", tonic: "item_potion" }[itemType] || itemType;
+	const iconId = {
+		berry: "berries", herb: "herbs", gel: "slime_gel", tonic: "item_potion", wooden_stick: "stick",
+		cooking_pot: "cooking_pot_empty", frying_pan: "frying_pan_empty", bowl: "bowl_empty", campfire_kit: "campfire_0",
+	}[itemType] || itemType;
 	const source = window.FERNFALL_ITEM_IMAGES?.[iconId];
 	if (!source) return false;
 	let sprite = packItemIconCache.get(iconId);
@@ -480,11 +483,28 @@ function render() {
 	obstacles.filter((tree) => visible(tree, 140) && tree.y < player.y).forEach(drawTree);
 	pickups.forEach((pickup) => {
 		if (!visible(pickup)) return;
-		if (!drawPackItemIcon(pickup.type, pickup.x, pickup.y, 26)) {
+		const bob = Math.sin(performance.now() / 300 + pickup.x) * 1.5;
+		ctx.fillStyle = "#49674655";
+		ctx.beginPath();
+		ctx.ellipse(pickup.x, pickup.y + 9, 9, 3, 0, 0, Math.PI * 2);
+		ctx.fill();
+		const drawn = drawPackItemIcon(pickup.type, pickup.x, pickup.y + bob, 26) ||
+			(typeof FernfallSurvival !== "undefined" && FernfallSurvival.drawPickup({ ...pickup, y: pickup.y + bob }));
+		if (!drawn) {
 			ctx.fillStyle = itemInfo[pickup.type]?.category === "food" ? "#d85f59" : "#d1ad62";
 			ctx.beginPath();
-			ctx.arc(pickup.x, pickup.y, 7, 0, Math.PI * 2);
+			ctx.arc(pickup.x, pickup.y + bob, 7, 0, Math.PI * 2);
 			ctx.fill();
+		}
+		if ((pickup.amount || 1) > 1) {
+			ctx.fillStyle = "#fff";
+			ctx.strokeStyle = "#30483b";
+			ctx.lineWidth = 3;
+			ctx.font = "bold 12px sans-serif";
+			ctx.textAlign = "right";
+			ctx.strokeText(`x${pickup.amount}`, pickup.x + 16, pickup.y + 16);
+			ctx.fillText(`x${pickup.amount}`, pickup.x + 16, pickup.y + 16);
+			ctx.textAlign = "left";
 		}
 	});
 	animals.filter((animal) => visible(animal) && animal.y >= player.y).forEach(drawAnimal);
