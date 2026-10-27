@@ -258,6 +258,12 @@ const FernfallSurvival = (() => {
 			return `<button type="button" class="crafting-material" data-craft-item="${id}" ${placed >= amount ? "disabled" : ""}>${icon}<span>${label(id)}</span><span class="crafting-material-count">${amount - placed}</span></button>`;
 		}).join("") || `<p class="inventory-empty">Gather wood and stone to craft.</p>`;
 		const matched = craftingRecipes.find(craftingGridMatches);
+		const output = document.querySelector("#crafting-output");
+		const outputIcon = matched && itemInfo[matched.id]?.art && FernfallCooking.images[itemInfo[matched.id].art]?.src
+			? `<img class="item-texture" src="${FernfallCooking.images[itemInfo[matched.id].art].src}" alt="">`
+			: matched ? `<span class="item-icon">${itemInfo[matched.id]?.icon || matched.id[0].toUpperCase()}</span>` : "";
+		output.innerHTML = `${outputIcon}${matched ? `<small>${label(matched.id)}</small>` : ""}`;
+		output.disabled = !matched || Object.entries(matched.ingredients).some(([id, count]) => (player.inventory[id] || 0) < count);
 		document.querySelector("#crafting-grid-status").textContent = matched ? `Ready to craft: ${matched.name}` : "Place the exact recipe ingredients in the grid.";
 	}
 
@@ -885,6 +891,10 @@ const FernfallSurvival = (() => {
 			if (!button) return;
 			craftingSlots[Number(button.dataset.craftSlot)] = "";
 			refreshPanel();
+		});
+		document.querySelector("#crafting-output").addEventListener("click", () => {
+			const recipe = craftingRecipes.find(craftingGridMatches);
+			if (recipe) addCraftedItem(recipe);
 		});
 		document.querySelector("#use-selected-button").addEventListener("click", useSelected);
 		document.querySelector("#craft-menu-button").addEventListener("click", () => openPanel("craft"));

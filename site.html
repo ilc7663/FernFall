@@ -93,7 +93,11 @@
 		<div class="crafting-workspace" id="crafting-workspace" hidden>
 			<section class="crafting-grid-panel" aria-label="Crafting grid">
 				<h3>Crafting grid</h3>
-				<div class="crafting-grid" id="crafting-grid"></div>
+				<div class="crafting-machine">
+					<div class="crafting-grid" id="crafting-grid"></div>
+					<span class="crafting-arrow" aria-hidden="true">➜</span>
+					<button class="crafting-output" id="crafting-output" type="button" disabled aria-label="Crafting result"></button>
+				</div>
 				<p class="crafting-grid-status" id="crafting-grid-status">Add ingredients from your pack.</p>
 			</section>
 			<section class="crafting-inventory-panel" aria-label="Crafting inventory">
