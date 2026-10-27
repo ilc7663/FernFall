@@ -63,7 +63,7 @@
   root.addEventListener('mousemove',e=>{cur.style.left=e.clientX+14+'px';cur.style.top=e.clientY+14+'px';const b=e.target.closest('.fi-slot');const item=b&&slots[Number(b.dataset.index)];tip.hidden=!item;if(item){tip.textContent=catalog[item.id][0]+` ×${item.count}`;tip.style.left=e.clientX+16+'px';tip.style.top=e.clientY-35+'px'}});
   root.addEventListener('mouseleave',()=>tip.hidden=true);
   document.addEventListener('keydown',e=>{if(e.repeat||e.target.closest('input, textarea, select,[contenteditable]'))return;
-    if((e.key==='i'||e.key==='I'||(e.key==='e'||e.key==='E'&&window.FERNFALL_INVENTORY_E_KEY))){e.preventDefault();setOpen(!open)}
+    if(e.key.toLowerCase()==='i'){e.preventDefault();setOpen(!open)}
     if(e.key==='Escape'&&open){e.preventDefault();setOpen(false)}
     if(/^Digit[1-9]$/.test(e.code)){select(Number(e.code.slice(-1))-1)}});
   window.FernfallInventory={add,remove,count:countItem,setCount,replace,getSlots,hasCursor,select,toggle:()=>setOpen(!open),open:()=>setOpen(true),close:()=>setOpen(false),getSelected:()=>slots[selected]?{...slots[selected]}:null,

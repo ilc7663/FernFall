@@ -1,0 +1,258 @@
+{
+  "mine_down": [
+    "assets/animations/mine_down_0.png",
+    "assets/animations/mine_down_1.png",
+    "assets/animations/mine_down_2.png",
+    "assets/animations/mine_down_3.png",
+    "assets/animations/mine_down_4.png",
+    "assets/animations/mine_down_5.png"
+  ],
+  "mine_left": [
+    "assets/animations/mine_left_0.png",
+    "assets/animations/mine_left_1.png",
+    "assets/animations/mine_left_2.png",
+    "assets/animations/mine_left_3.png",
+    "assets/animations/mine_left_4.png",
+    "assets/animations/mine_left_5.png"
+  ],
+  "mine_right": [
+    "assets/animations/mine_right_0.png",
+    "assets/animations/mine_right_1.png",
+    "assets/animations/mine_right_2.png",
+    "assets/animations/mine_right_3.png",
+    "assets/animations/mine_right_4.png",
+    "assets/animations/mine_right_5.png"
+  ],
+  "mine_up": [
+    "assets/animations/mine_up_0.png",
+    "assets/animations/mine_up_1.png",
+    "assets/animations/mine_up_2.png",
+    "assets/animations/mine_up_3.png",
+    "assets/animations/mine_up_4.png",
+    "assets/animations/mine_up_5.png"
+  ],
+  "chop_down": [
+    "assets/animations/chop_down_0.png",
+    "assets/animations/chop_down_1.png",
+    "assets/animations/chop_down_2.png",
+    "assets/animations/chop_down_3.png",
+    "assets/animations/chop_down_4.png",
+    "assets/animations/chop_down_5.png"
+  ],
+  "chop_left": [
+    "assets/animations/chop_left_0.png",
+    "assets/animations/chop_left_1.png",
+    "assets/animations/chop_left_2.png",
+    "assets/animations/chop_left_3.png",
+    "assets/animations/chop_left_4.png",
+    "assets/animations/chop_left_5.png"
+  ],
+  "chop_right": [
+    "assets/animations/chop_right_0.png",
+    "assets/animations/chop_right_1.png",
+    "assets/animations/chop_right_2.png",
+    "assets/animations/chop_right_3.png",
+    "assets/animations/chop_right_4.png",
+    "assets/animations/chop_right_5.png"
+  ],
+  "chop_up": [
+    "assets/animations/chop_up_0.png",
+    "assets/animations/chop_up_1.png",
+    "assets/animations/chop_up_2.png",
+    "assets/animations/chop_up_3.png",
+    "assets/animations/chop_up_4.png",
+    "assets/animations/chop_up_5.png"
+  ],
+  "dig_down": [
+    "assets/animations/dig_down_0.png",
+    "assets/animations/dig_down_1.png",
+    "assets/animations/dig_down_2.png",
+    "assets/animations/dig_down_3.png",
+    "assets/animations/dig_down_4.png",
+    "assets/animations/dig_down_5.png"
+  ],
+  "dig_left": [
+    "assets/animations/dig_left_0.png",
+    "assets/animations/dig_left_1.png",
+    "assets/animations/dig_left_2.png",
+    "assets/animations/dig_left_3.png",
+    "assets/animations/dig_left_4.png",
+    "assets/animations/dig_left_5.png"
+  ],
+  "dig_right": [
+    "assets/animations/dig_right_0.png",
+    "assets/animations/dig_right_1.png",
+    "assets/animations/dig_right_2.png",
+    "assets/animations/dig_right_3.png",
+    "assets/animations/dig_right_4.png",
+    "assets/animations/dig_right_5.png"
+  ],
+  "dig_up": [
+    "assets/animations/dig_up_0.png",
+    "assets/animations/dig_up_1.png",
+    "assets/animations/dig_up_2.png",
+    "assets/animations/dig_up_3.png",
+    "assets/animations/dig_up_4.png",
+    "assets/animations/dig_up_5.png"
+  ],
+  "till_down": [
+    "assets/animations/till_down_0.png",
+    "assets/animations/till_down_1.png",
+    "assets/animations/till_down_2.png",
+    "assets/animations/till_down_3.png",
+    "assets/animations/till_down_4.png",
+    "assets/animations/till_down_5.png"
+  ],
+  "till_left": [
+    "assets/animations/till_left_0.png",
+    "assets/animations/till_left_1.png",
+    "assets/animations/till_left_2.png",
+    "assets/animations/till_left_3.png",
+    "assets/animations/till_left_4.png",
+    "assets/animations/till_left_5.png"
+  ],
+  "till_right": [
+    "assets/animations/till_right_0.png",
+    "assets/animations/till_right_1.png",
+    "assets/animations/till_right_2.png",
+    "assets/animations/till_right_3.png",
+    "assets/animations/till_right_4.png",
+    "assets/animations/till_right_5.png"
+  ],
+  "till_up": [
+    "assets/animations/till_up_0.png",
+    "assets/animations/till_up_1.png",
+    "assets/animations/till_up_2.png",
+    "assets/animations/till_up_3.png",
+    "assets/animations/till_up_4.png",
+    "assets/animations/till_up_5.png"
+  ],
+  "attack_down": [
+    "assets/animations/attack_down_0.png",
+    "assets/animations/attack_down_1.png",
+    "assets/animations/attack_down_2.png",
+    "assets/animations/attack_down_3.png",
+    "assets/animations/attack_down_4.png",
+    "assets/animations/attack_down_5.png"
+  ],
+  "attack_left": [
+    "assets/animations/attack_left_0.png",
+    "assets/animations/attack_left_1.png",
+    "assets/animations/attack_left_2.png",
+    "assets/animations/attack_left_3.png",
+    "assets/animations/attack_left_4.png",
+    "assets/animations/attack_left_5.png"
+  ],
+  "attack_right": [
+    "assets/animations/attack_right_0.png",
+    "assets/animations/attack_right_1.png",
+    "assets/animations/attack_right_2.png",
+    "assets/animations/attack_right_3.png",
+    "assets/animations/attack_right_4.png",
+    "assets/animations/attack_right_5.png"
+  ],
+  "attack_up": [
+    "assets/animations/attack_up_0.png",
+    "assets/animations/attack_up_1.png",
+    "assets/animations/attack_up_2.png",
+    "assets/animations/attack_up_3.png",
+    "assets/animations/attack_up_4.png",
+    "assets/animations/attack_up_5.png"
+  ],
+  "shoot_down": [
+    "assets/animations/shoot_down_0.png",
+    "assets/animations/shoot_down_1.png",
+    "assets/animations/shoot_down_2.png",
+    "assets/animations/shoot_down_3.png",
+    "assets/animations/shoot_down_4.png",
+    "assets/animations/shoot_down_5.png"
+  ],
+  "shoot_left": [
+    "assets/animations/shoot_left_0.png",
+    "assets/animations/shoot_left_1.png",
+    "assets/animations/shoot_left_2.png",
+    "assets/animations/shoot_left_3.png",
+    "assets/animations/shoot_left_4.png",
+    "assets/animations/shoot_left_5.png"
+  ],
+  "shoot_right": [
+    "assets/animations/shoot_right_0.png",
+    "assets/animations/shoot_right_1.png",
+    "assets/animations/shoot_right_2.png",
+    "assets/animations/shoot_right_3.png",
+    "assets/animations/shoot_right_4.png",
+    "assets/animations/shoot_right_5.png"
+  ],
+  "shoot_up": [
+    "assets/animations/shoot_up_0.png",
+    "assets/animations/shoot_up_1.png",
+    "assets/animations/shoot_up_2.png",
+    "assets/animations/shoot_up_3.png",
+    "assets/animations/shoot_up_4.png",
+    "assets/animations/shoot_up_5.png"
+  ],
+  "fish_down": [
+    "assets/animations/fish_down_0.png",
+    "assets/animations/fish_down_1.png",
+    "assets/animations/fish_down_2.png",
+    "assets/animations/fish_down_3.png",
+    "assets/animations/fish_down_4.png",
+    "assets/animations/fish_down_5.png"
+  ],
+  "fish_left": [
+    "assets/animations/fish_left_0.png",
+    "assets/animations/fish_left_1.png",
+    "assets/animations/fish_left_2.png",
+    "assets/animations/fish_left_3.png",
+    "assets/animations/fish_left_4.png",
+    "assets/animations/fish_left_5.png"
+  ],
+  "fish_right": [
+    "assets/animations/fish_right_0.png",
+    "assets/animations/fish_right_1.png",
+    "assets/animations/fish_right_2.png",
+    "assets/animations/fish_right_3.png",
+    "assets/animations/fish_right_4.png",
+    "assets/animations/fish_right_5.png"
+  ],
+  "fish_up": [
+    "assets/animations/fish_up_0.png",
+    "assets/animations/fish_up_1.png",
+    "assets/animations/fish_up_2.png",
+    "assets/animations/fish_up_3.png",
+    "assets/animations/fish_up_4.png",
+    "assets/animations/fish_up_5.png"
+  ],
+  "shear_down": [
+    "assets/animations/shear_down_0.png",
+    "assets/animations/shear_down_1.png",
+    "assets/animations/shear_down_2.png",
+    "assets/animations/shear_down_3.png",
+    "assets/animations/shear_down_4.png",
+    "assets/animations/shear_down_5.png"
+  ],
+  "shear_left": [
+    "assets/animations/shear_left_0.png",
+    "assets/animations/shear_left_1.png",
+    "assets/animations/shear_left_2.png",
+    "assets/animations/shear_left_3.png",
+    "assets/animations/shear_left_4.png",
+    "assets/animations/shear_left_5.png"
+  ],
+  "shear_right": [
+    "assets/animations/shear_right_0.png",
+    "assets/animations/shear_right_1.png",
+    "assets/animations/shear_right_2.png",
+    "assets/animations/shear_right_3.png",
+    "assets/animations/shear_right_4.png",
+    "assets/animations/shear_right_5.png"
+  ],
+  "shear_up": [
+    "assets/animations/shear_up_0.png",
+    "assets/animations/shear_up_1.png",
+    "assets/animations/shear_up_2.png",
+    "assets/animations/shear_up_3.png",
+    "assets/animations/shear_up_4.png",
+    "assets/animations/shear_up_5.png"
+  ]
+}

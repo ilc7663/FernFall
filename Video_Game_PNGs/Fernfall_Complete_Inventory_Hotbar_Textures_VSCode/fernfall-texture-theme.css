@@ -1,0 +1,28 @@
+/* Fernfall repeatable textures: loaded after inventory.css and crafting.css */
+#fernfall-inventory-root .fi-window {
+ background-image: url("assets/ui_textures/parchment.png") !important;
+ background-repeat: repeat !important;
+ border-color: #6b4a2b !important;
+}
+#fernfall-inventory-root .fi-window header {
+ background-image: url("assets/ui_textures/wood_oak.png") !important;
+ background-repeat: repeat !important;
+ border-radius: 5px;
+ padding: 9px !important;
+}
+#fernfall-inventory-root .fi-hotbar {
+ background-image: url("assets/ui_textures/wood_walnut.png") !important;
+ background-repeat: repeat !important;
+}
+#fernfall-inventory-root .fi-slot {
+ background-image: url("assets/ui_elements/slot_empty.png") !important;
+ background-position: center;
+ background-size: 100% 100%;
+ background-repeat: no-repeat;
+}
+#fernfall-inventory-root .fi-slot.fi-selected {
+ background-image: url("assets/ui_elements/slot_selected.png") !important;
+}
+#fernfall-inventory-root .fi-slot:hover:not(.fi-selected) {
+ background-image: url("assets/ui_elements/slot_hover.png") !important;
+}
