@@ -118,18 +118,7 @@ function drawGround() {
 	ctx.fillStyle = "#8dbb78";
 	ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-	const grass = art.forest.ground_grass;
-	if (grass.complete && grass.naturalWidth) {
-		ctx.save();
-		ctx.imageSmoothingEnabled = false;
-		ctx.globalAlpha = 0.9;
-		ctx.fillStyle = ctx.createPattern(grass, "repeat");
-		ctx.fillRect(0, 0, WIDTH, HEIGHT);
-		ctx.restore();
-	}
-
-	const dirt = art.forest.ground_dirt;
-	ctx.strokeStyle = dirt.complete && dirt.naturalWidth ? ctx.createPattern(dirt, "repeat") : "#b99a64";
+	ctx.strokeStyle = "#b99a64";
 	ctx.lineWidth = 70;
 	ctx.lineCap = "round";
 	ctx.beginPath();
