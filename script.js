@@ -115,25 +115,7 @@ function playTone(frequency, duration = 0.12) {
 }
 
 function drawGround() {
-	ctx.fillStyle = "#8dbb78";
-	ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-	ctx.strokeStyle = "#b99a64";
-	ctx.lineWidth = 70;
-	ctx.lineCap = "round";
-	ctx.beginPath();
-	ctx.moveTo(-30, 332);
-	ctx.bezierCurveTo(180, 300, 290, 368, 468, 333);
-	ctx.bezierCurveTo(640, 301, 712, 345, 990, 300);
-	ctx.stroke();
-	ctx.strokeStyle = "#d4b981";
-	ctx.lineWidth = 3;
-	ctx.beginPath();
-	ctx.moveTo(-30, 305);
-	ctx.bezierCurveTo(180, 273, 290, 341, 468, 306);
-	ctx.bezierCurveTo(640, 274, 712, 318, 990, 273);
-	ctx.stroke();
-
+	drawFernfallGround(ctx, WIDTH, HEIGHT);
 }
 
 function drawTree(tree, index) {

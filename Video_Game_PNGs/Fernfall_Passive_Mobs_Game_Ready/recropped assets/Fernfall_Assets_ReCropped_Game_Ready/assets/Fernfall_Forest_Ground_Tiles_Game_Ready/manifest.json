@@ -1,0 +1,22 @@
+{
+  "tileSize": 128,
+  "recommendedDisplaySize": 64,
+  "tiles": {
+    "grass_light": "assets/ground/grass_light.png",
+    "grass_meadow": "assets/ground/grass_meadow.png",
+    "grass_dark": "assets/ground/grass_dark.png",
+    "grass_clover": "assets/ground/grass_clover.png",
+    "grass_flowers": "assets/ground/grass_flowers.png",
+    "grass_sparse": "assets/ground/grass_sparse.png",
+    "grass_wildflower": "assets/ground/grass_wildflower.png",
+    "grass_worn": "assets/ground/grass_worn.png",
+    "path_pebbles": "assets/ground/path_pebbles.png",
+    "path_light": "assets/ground/path_light.png",
+    "path_earth": "assets/ground/path_earth.png",
+    "path_stones": "assets/ground/path_stones.png",
+    "moss_stones": "assets/ground/moss_stones.png",
+    "moss_ferns": "assets/ground/moss_ferns.png",
+    "moss_earth": "assets/ground/moss_earth.png",
+    "moss_dark": "assets/ground/moss_dark.png"
+  }
+}
