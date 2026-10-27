@@ -1,0 +1,30 @@
+// Fernfall village, camp, loot and placeable crafting objects.
+window.fernfallSettlementArt = window.fernfallSettlementArt || {};
+window.loadFernfallSettlementAssets = function loadFernfallSettlementAssets(basePath = '') {
+  const join = (p) => basePath ? `${basePath.replace(/\/$/, '')}/${p}` : p;
+  const manifest = {"villagers":{"shopkeeper":{"down":"assets/villagers/shopkeeper/down.png","left":"assets/villagers/shopkeeper/left.png","right":"assets/villagers/shopkeeper/right.png","up":"assets/villagers/shopkeeper/up.png"},"blacksmith":{"down":"assets/villagers/blacksmith/down.png","left":"assets/villagers/blacksmith/left.png","right":"assets/villagers/blacksmith/right.png","up":"assets/villagers/blacksmith/up.png"},"farmer":{"down":"assets/villagers/farmer/down.png","left":"assets/villagers/farmer/left.png","right":"assets/villagers/farmer/right.png","up":"assets/villagers/farmer/up.png"},"innkeeper":{"down":"assets/villagers/innkeeper/down.png","left":"assets/villagers/innkeeper/left.png","right":"assets/villagers/innkeeper/right.png","up":"assets/villagers/innkeeper/up.png"},"healer":{"down":"assets/villagers/healer/down.png","left":"assets/villagers/healer/left.png","right":"assets/villagers/healer/right.png","up":"assets/villagers/healer/up.png"},"mayor":{"down":"assets/villagers/mayor/down.png","left":"assets/villagers/mayor/left.png","right":"assets/villagers/mayor/right.png","up":"assets/villagers/mayor/up.png"}},"camp_objects":{"tent_small":"assets/camp_objects/tent_small.png","tent_large":"assets/camp_objects/tent_large.png","bedroll":"assets/camp_objects/bedroll.png","bed":"assets/camp_objects/bed.png","chest_closed":"assets/camp_objects/chest_closed.png","chest_open":"assets/camp_objects/chest_open.png","campfire_unlit":"assets/camp_objects/campfire_unlit.png","campfire_lit":"assets/camp_objects/campfire_lit.png","cooking_tripod":"assets/camp_objects/cooking_tripod.png","frying_pan_fire":"assets/camp_objects/frying_pan_fire.png","chopping_stump":"assets/camp_objects/chopping_stump.png","work_table":"assets/camp_objects/work_table.png","barrel":"assets/camp_objects/barrel.png","crate":"assets/camp_objects/crate.png","lantern":"assets/camp_objects/lantern.png","spawn_banner":"assets/camp_objects/spawn_banner.png","signpost":"assets/camp_objects/signpost.png","fence":"assets/camp_objects/fence.png","gate":"assets/camp_objects/gate.png","dock":"assets/camp_objects/dock.png"},"village_assets":{"general_store":"assets/village_assets/general_store.png","blacksmith_building":"assets/village_assets/blacksmith_building.png","farmer_cottage":"assets/village_assets/farmer_cottage.png","inn":"assets/village_assets/inn.png","healer_house":"assets/village_assets/healer_house.png","town_hall":"assets/village_assets/town_hall.png","villager_house":"assets/village_assets/villager_house.png","stable":"assets/village_assets/stable.png","well":"assets/village_assets/well.png","market_stall":"assets/village_assets/market_stall.png","signpost_village":"assets/village_assets/signpost_village.png","lamp_post":"assets/village_assets/lamp_post.png","flower_planter":"assets/village_assets/flower_planter.png","bench":"assets/village_assets/bench.png","notice_board":"assets/village_assets/notice_board.png","fountain":"assets/village_assets/fountain.png","bridge":"assets/village_assets/bridge.png","gate_arch":"assets/village_assets/gate_arch.png"},"enemy_loot":{"coins_stack":"assets/enemy_loot/coins_stack.png","coin_single":"assets/enemy_loot/coin_single.png","bone":"assets/enemy_loot/bone.png","skull_fragment":"assets/enemy_loot/skull_fragment.png","spider_silk":"assets/enemy_loot/spider_silk.png","fang":"assets/enemy_loot/fang.png","bat_wing":"assets/enemy_loot/bat_wing.png","fur_tuft":"assets/enemy_loot/fur_tuft.png","slime_gel":"assets/enemy_loot/slime_gel.png","magic_essence":"assets/enemy_loot/magic_essence.png","rune_shard":"assets/enemy_loot/rune_shard.png","twig_bundle":"assets/enemy_loot/twig_bundle.png","mana_crystal":"assets/enemy_loot/mana_crystal.png","health_potion":"assets/enemy_loot/health_potion.png","broken_shield":"assets/enemy_loot/broken_shield.png","rusty_dagger":"assets/enemy_loot/rusty_dagger.png","monster_eye":"assets/enemy_loot/monster_eye.png","coin_pouch":"assets/enemy_loot/coin_pouch.png"},"placeables":{"crafting_table":"assets/placeables/crafting_table.png","furnace_unlit":"assets/placeables/furnace_unlit.png","furnace_lit":"assets/placeables/furnace_lit.png","forge_lit":"assets/placeables/forge_lit.png"}};
+  const art = {};
+  const promises = [];
+  function loadGroup(src, dst) {
+    for (const [key, val] of Object.entries(src)) {
+      if (typeof val === 'string') {
+        const img = new Image();
+        dst[key] = img;
+        promises.push(new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = () => reject(new Error('Could not load image: ' + join(val)));
+          img.src = join(val);
+        }));
+      } else if (val && typeof val === 'object') {
+        dst[key] = {};
+        loadGroup(val, dst[key]);
+      }
+    }
+  }
+  for (const [group, entries] of Object.entries(manifest)) {
+    art[group] = {};
+    loadGroup(entries, art[group]);
+  }
+  window.fernfallSettlementArt = art;
+  return Promise.all(promises).then(() => art);
+};

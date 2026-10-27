@@ -1,0 +1,22 @@
+{
+  "crafting_table": {
+    "placeable": true,
+    "interaction": "open crafting menu",
+    "collision": true
+  },
+  "furnace_unlit": {
+    "placeable": true,
+    "interaction": "open furnace interface",
+    "collision": true
+  },
+  "furnace_lit": {
+    "placeable": true,
+    "interaction": "furnace active visual state",
+    "collision": true
+  },
+  "forge_lit": {
+    "placeable": true,
+    "interaction": "forge or advanced crafting interface",
+    "collision": true
+  }
+}

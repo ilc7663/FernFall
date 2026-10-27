@@ -1,6 +1,8 @@
 const survivalModule = typeof FernfallSurvival === "undefined" ? null : FernfallSurvival;
 const hostileAssetRoot = new URL("Video_Game_PNGs/Fernfall_Passive_Mobs_Game_Ready/recropped assets/Fernfall_Assets_ReCropped_Game_Ready/assets/Fernfall_Hostile_Mobs_Game_Ready/", document.baseURI).href;
 loadFernfallHostileAssets(hostileAssetRoot);
+const settlementAssetRoot = new URL("Video_Game_PNGs/Fernfall_Passive_Mobs_Game_Ready/recropped assets/Fernfall_Assets_ReCropped_Game_Ready/assets/Fernfall_Settlement_and_Crafting_Game_Ready/", document.baseURI).href;
+const settlementAssetsReady = loadFernfallSettlementAssets(settlementAssetRoot).catch(() => null);
 const hostileMotion = new WeakMap();
 const hostileTypes = ["skeleton", "witch", "spider", "bat", "zombie"];
 
@@ -62,6 +64,11 @@ const originalUpdate = update;
 update = function () {
 	originalUpdate();
 	survivalModule?.update();
+};
+
+const originalCollides = collides;
+collides = function (x, y) {
+	return originalCollides(x, y) || Boolean(survivalModule?.blocks(x, y));
 };
 
 const originalCheckQuest = checkQuest;

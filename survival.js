@@ -28,6 +28,7 @@ const FernfallSurvival = (() => {
 		rabbit_stew: { name: "Rabbit stew", category: "food", icon: "R", heal: 4, art: "rabbit_stew" },
 		berry_hand_pie: { name: "Berry hand pie", category: "food", icon: "B", heal: 3, art: "berry_hand_pie" },
 		campfire_kit: { name: "Campfire kit", category: "equipment", icon: "F" },
+		crafting_table: { name: "Crafting table", category: "equipment", icon: "T" },
 		bucket_empty: { name: "Empty bucket", category: "equipment", icon: "U", art: "bucket_empty" },
 		bucket_milk: { name: "Milk bucket", category: "food", icon: "M", heal: 2 },
 		bucket_water: { name: "Water bucket", category: "equipment", icon: "W", art: "bucket_water" },
@@ -36,6 +37,7 @@ const FernfallSurvival = (() => {
 		bowl: { name: "Wooden bowl", category: "equipment", icon: "D", art: "bowl_empty" },
 	};
 	const craftingRecipes = [
+		{ id: "crafting_table", name: "Crafting table", ingredients: { wood: 5, stone: 2 } },
 		{ id: "campfire_kit", name: "Campfire kit", ingredients: { wood: 3, stone: 2 } },
 		{ id: "bucket_empty", name: "Empty bucket", ingredients: { wood: 3, stone: 1 } },
 		{ id: "cooking_pot", name: "Cooking pot", ingredients: { stone: 3, wood: 1 } },
@@ -62,9 +64,13 @@ const FernfallSurvival = (() => {
 	const hostileTypes = ["skeleton", "witch", "spider", "bat", "zombie"];
 	const categories = ["food", "materials", "equipment", "other"];
 	const campfires = [];
+	const villages = [];
+	const villagers = [];
+	const craftingTables = [];
 	const ponds = [];
 	const hostileProjectiles = [];
 	const resourceChunks = new Set();
+	const villageChunks = new Set();
 	const discoveredRecipes = new Set();
 	const questProgress = { gathered: 0, campfire: 0, meal: 0, milk: 0, wolf: 0, jimothy: 0 };
 	const completedSurvivalQuests = new Set();
@@ -255,6 +261,28 @@ const FernfallSurvival = (() => {
 		saveGame();
 	}
 
+	function placeCraftingTable() {
+		const offset = { up: [0, -48], down: [0, 48], left: [-48, 0], right: [48, 0] }[player.direction];
+		const table = { x: player.x + offset[0], y: player.y + offset[1], village: false, id: `table-${Date.now()}-${craftingTables.length}` };
+		if (collides(table.x, table.y) || craftingTables.some((entry) => near(entry, table, 42)) || campfires.some((fire) => near(fire, table, 50))) return show("There is no clear space for a crafting table.");
+		craftingTables.push(table);
+		player.inventory.crafting_table -= 1;
+		show("Crafting table placed. Press E nearby to craft.");
+		updateHud();
+		saveGame();
+	}
+
+	function blocks(x, y) {
+		for (const village of villages) {
+			for (const house of village.houses) {
+				const inside = Math.abs(x - house.x) < house.width / 2 + 5 && Math.abs(y - house.y) < house.height / 2 + 5;
+				const doorway = Math.abs(x - house.x) < 11 && y > house.y + house.height / 2 - 18;
+				if (inside && !doorway) return true;
+			}
+		}
+		return craftingTables.some((table) => Math.abs(x - table.x) < 22 && Math.abs(y - table.y) < 17);
+	}
+
 	function useSelected() {
 		const item = itemInfo[selectedItem];
 		if (!item || !(player.inventory[selectedItem] > 0)) return;
@@ -272,6 +300,9 @@ const FernfallSurvival = (() => {
 			show(item.raw && sickUntil > Date.now() ? "Raw food helped a little, but you feel unwell." : `Ate ${item.name.toLowerCase()}.`);
 		} else if (selectedItem === "campfire_kit") {
 			placeCampfire();
+			return;
+		} else if (selectedItem === "crafting_table") {
+			placeCraftingTable();
 			return;
 		} else if (selectedItem === "cooking_pot" || selectedItem === "frying_pan") {
 			const fire = campfires.find((entry) => near(entry, player, 74));
@@ -304,6 +335,23 @@ const FernfallSurvival = (() => {
 		if (fire) {
 			if (collectFire(fire)) return true;
 			openPanel("cook", fire);
+			return true;
+		}
+		if (craftingTables.some((table) => near(table, player, 62))) {
+			openPanel("craft");
+			return true;
+		}
+		const villager = villagers.find((resident) => near(resident, player, 58));
+		if (villager) {
+			const dialogue = {
+				mayor: "Welcome to our little forest village. Keep an eye out for nightfall.",
+				shopkeeper: "Gather berries and herbs. They are always useful on the trail.",
+				blacksmith: "Stone and wood make sturdy tools. Try the crafting table.",
+				farmer: "Carrots, potatoes, and grain grow well near the village.",
+				innkeeper: "A warm meal and a quiet night can restore your spirits.",
+				healer: "Cooked meals are safer and more nourishing than raw food.",
+			};
+			show(dialogue[villager.role] || "Welcome to the village!");
 			return true;
 		}
 		const jimothy = animals.find((animal) => animal.type === "jimothy" && near(animal, player, 58));
@@ -451,6 +499,47 @@ const FernfallSurvival = (() => {
 			ctx.ellipse(pond.x - camera.x, pond.y - camera.y - 2, 39, 22, -0.2, 0, Math.PI * 2);
 			ctx.fill();
 		}
+		drawVillages();
+	}
+
+	function drawVillages() {
+		const settlementArt = window.fernfallSettlementArt;
+		for (const village of villages) {
+			for (const house of village.houses) {
+				const x = house.x - camera.x;
+				const y = house.y - camera.y;
+				const image = settlementArt?.village_assets?.[house.asset];
+				if (!drawArt(ctx, image, x, y, 132, 112)) {
+					const left = x - house.width / 2;
+					const top = y - house.height / 2;
+					ctx.fillStyle = "#d5bd8a";
+					ctx.fillRect(left, top + 8, house.width, house.height - 8);
+					ctx.fillStyle = "#77544a";
+					ctx.beginPath();
+					ctx.moveTo(left - 6, top + 10);
+					ctx.lineTo(x, top - 13);
+					ctx.lineTo(left + house.width + 6, top + 10);
+					ctx.closePath();
+					ctx.fill();
+				}
+			}
+		}
+		for (const villager of villagers) {
+			const image = settlementArt?.villagers?.[villager.role]?.[villager.direction];
+			const y = villager.y - camera.y + Math.sin(performance.now() / 360 + villager.phase) * 1.5;
+			if (!drawArt(ctx, image, villager.x - camera.x, y, 42, 48)) {
+				ctx.fillStyle = "#49674655";
+				ctx.beginPath();
+				ctx.ellipse(villager.x - camera.x, y + 12, 12, 4, 0, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.fillStyle = "#7860a1";
+				ctx.fillRect(villager.x - camera.x - 7, y - 9, 14, 18);
+				ctx.fillStyle = "#edc0a3";
+				ctx.beginPath();
+				ctx.arc(villager.x - camera.x, y - 14, 7, 0, Math.PI * 2);
+				ctx.fill();
+			}
+		}
 	}
 
 	function drawStations() {
@@ -473,6 +562,27 @@ const FernfallSurvival = (() => {
 				ctx.fillStyle = fire.cooking.ready ? "#92bd66" : "#e4bc57";
 				ctx.fillRect(fire.x - 20, fire.y - 52, 40 * progress, 5);
 			}
+		}
+		for (const table of craftingTables) {
+			const tableImage = window.fernfallSettlementArt?.placeables?.crafting_table;
+			if (drawArt(ctx, tableImage, table.x, table.y, 52, 48)) continue;
+			const x = table.x - 20;
+			const y = table.y - 12;
+			ctx.fillStyle = "#62472f";
+			ctx.fillRect(x + 4, y + 10, 5, 15);
+			ctx.fillRect(x + 31, y + 10, 5, 15);
+			ctx.fillStyle = "#9a7448";
+			ctx.fillRect(x, y, 40, 13);
+			ctx.strokeStyle = "#57402e";
+			ctx.lineWidth = 2;
+			ctx.strokeRect(x, y, 40, 13);
+			ctx.strokeStyle = "#c2a16b";
+			ctx.beginPath();
+			ctx.moveTo(x + 13, y + 1);
+			ctx.lineTo(x + 13, y + 11);
+			ctx.moveTo(x + 26, y + 1);
+			ctx.lineTo(x + 26, y + 11);
+			ctx.stroke();
 		}
 	}
 
@@ -511,7 +621,7 @@ const FernfallSurvival = (() => {
 		const useButton = document.querySelector("#use-selected-button");
 		const hasSelected = selectedItem && (player.inventory[selectedItem] || 0) > 0;
 		useButton.disabled = !hasSelected;
-		useButton.textContent = selectedItem === "campfire_kit" ? "Place campfire" : ["cooking_pot", "frying_pan"].includes(selectedItem) ? "Place cookware" : itemInfo[selectedItem]?.category === "food" ? "Eat selected" : "Equip selected";
+		useButton.textContent = selectedItem === "campfire_kit" ? "Place campfire" : selectedItem === "crafting_table" ? "Place crafting table" : ["cooking_pot", "frying_pan"].includes(selectedItem) ? "Place cookware" : itemInfo[selectedItem]?.category === "food" ? "Eat selected" : "Equip selected";
 		const status = document.querySelector("#survival-status");
 		if (status) status.textContent = selectedItem ? `Selected: ${label(selectedItem)} x${player.inventory[selectedItem] || 0}` : "Select an item to use or place it.";
 	}
@@ -536,6 +646,43 @@ const FernfallSurvival = (() => {
 					if (!collides(resource.x, resource.y) && Math.hypot(player.x - resource.x, player.y - resource.y) > 85) resources.push(resource);
 				}
 				if (random() < 0.22) ponds.push({ x: cx * WORLD_CHUNK_SIZE + 100 + random() * 300, y: cy * WORLD_CHUNK_SIZE + 100 + random() * 300 });
+				generateVillage(random, cx, cy);
+			}
+		}
+	}
+
+	function generateVillage(random, chunkX, chunkY) {
+		const key = `${chunkX},${chunkY}`;
+		if (villageChunks.has(key)) return;
+		villageChunks.add(key);
+		if (random() > 0.2) return;
+		const center = { x: chunkX * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE / 2, y: chunkY * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE / 2 };
+		const layouts = [[-96, -72], [96, -72], [-96, 72], [96, 72], [0, -150]];
+		const houseCount = 3 + Math.floor(random() * 3);
+		const houses = [];
+		const roles = [{ role: "mayor", asset: "town_hall" }, { role: "shopkeeper", asset: "general_store" }, { role: "blacksmith", asset: "blacksmith_building" }, { role: "farmer", asset: "farmer_cottage" }, { role: "innkeeper", asset: "inn" }, { role: "healer", asset: "healer_house" }];
+		for (const [offsetX, offsetY] of layouts) {
+			if (houses.length >= houseCount) break;
+			const role = roles[houses.length];
+			const house = { x: center.x + offsetX, y: center.y + offsetY, width: 88, height: 76, doorSide: "center", role: role.role, asset: role.asset };
+			if (collides(house.x, house.y) || houses.some((other) => Math.abs(other.x - house.x) < 96 && Math.abs(other.y - house.y) < 84)) continue;
+			houses.push(house);
+			villagers.push({ id: `${key}-${role.role}`, role: role.role, x: house.x, y: house.y + house.height / 2 + 20, direction: "down", phase: random() * 6, villageId: key });
+		}
+		if (houses.length < 3) return;
+		villages.push({ id: `village-${key}`, ...center, houses });
+		craftingTables.push({ id: `village-table-${key}`, x: center.x, y: center.y + 8, village: true });
+	}
+
+	function generateVillageChunks() {
+		const centerX = Math.floor(player.x / WORLD_CHUNK_SIZE);
+		const centerY = Math.floor(player.y / WORLD_CHUNK_SIZE);
+		for (let cy = centerY - 1; cy <= centerY + 1; cy += 1) {
+			for (let cx = centerX - 1; cx <= centerX + 1; cx += 1) {
+				if (villageChunks.has(`${cx},${cy}`)) continue;
+				let seed = (Math.imul(cx, 374761393) ^ Math.imul(cy, 668265263) ^ 1103515245) >>> 0;
+				const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+				generateVillage(random, cx, cy);
 			}
 		}
 	}
@@ -565,6 +712,7 @@ const FernfallSurvival = (() => {
 	}
 
 	function update() {
+		generateVillageChunks();
 		generateResourceChunks();
 		const now = Date.now();
 		const { isNight, nightIndex } = updateWorldClock(now);
@@ -715,9 +863,13 @@ const FernfallSurvival = (() => {
 			state.generatedChunks.forEach((key) => generatedChunks.add(key));
 		}
 		campfires.splice(0, campfires.length, ...(state.campfires || []));
+		villages.splice(0, villages.length, ...(state.villages || []));
+		villagers.splice(0, villagers.length, ...(state.villagers || []));
+		craftingTables.splice(0, craftingTables.length, ...(state.craftingTables || []));
 		ponds.splice(0, ponds.length, ...(state.ponds || []));
 		hostileProjectiles.splice(0, hostileProjectiles.length, ...(state.hostileProjectiles || []));
 		(state.resourceChunks || []).forEach((key) => resourceChunks.add(key));
+		(state.villageChunks || []).forEach((key) => villageChunks.add(key));
 		(state.discoveredRecipes || []).forEach((key) => discoveredRecipes.add(key));
 		jimothyMet = state.jimothyMet ?? jimothyMet;
 		worldEpoch = state.worldEpoch || 0;
@@ -730,16 +882,16 @@ const FernfallSurvival = (() => {
 	function save() {
 		return {
 			inventory: player.inventory, resources, animals, mobs, pickups, obstacles,
-			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], ponds, campfires, hostileProjectiles,
+			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], villageChunks: [...villageChunks],
+			villages, villagers, craftingTables, ponds, campfires, hostileProjectiles,
 			discoveredRecipes: [...discoveredRecipes], jimothyMet, selectedItem, questProgress,
 			completedSurvivalQuests: [...completedSurvivalQuests], worldEpoch,
-			hostileChunks: [...hostileChunks],
 			hostileChunks: [...hostileChunks],
 		};
 	}
 
 	return {
-		setup, update, interact, attackAnimal, drawResource, drawPonds, drawStations, drawProjectiles, drawPickup,
+		setup, update, interact, attackAnimal, blocks, drawResource, drawPonds, drawStations, drawProjectiles, drawPickup,
 		refreshInventory, openCrafting: () => openPanel("craft"), recordQuest, save,
 	};
 })();
