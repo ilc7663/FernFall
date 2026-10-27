@@ -26,3 +26,57 @@
 #fernfall-inventory-root .fi-slot:hover:not(.fi-selected) {
  background-image: url("assets/ui_elements/slot_hover.png") !important;
 }
+
+#fernfall-crafting {
+	background-color: #ead9b4 !important;
+	background-image: url("assets/ui_textures/parchment.png") !important;
+	background-repeat: repeat !important;
+	border: 10px solid transparent !important;
+	border-image: url("assets/ui_elements/panel_frame.png") 12 fill / 10px / 0 stretch !important;
+	border-radius: 0 !important;
+}
+
+#fernfall-crafting .fc-head {
+	background-image: url("assets/ui_textures/wood_oak.png") !important;
+	border-bottom: 3px solid #6b4a2b;
+	color: #fff0c8;
+}
+
+#fernfall-crafting .fc-head button,
+#fernfall-crafting .fc-recipes button,
+#fernfall-crafting .fc-craft {
+	background-image: url("assets/ui_elements/button.png") !important;
+	background-position: center;
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+	border: 0;
+	border-radius: 0;
+}
+
+#fernfall-crafting .fc-recipes button.active {
+	background-image: url("assets/ui_elements/slot_selected.png") !important;
+	background-color: transparent;
+}
+
+#fernfall-crafting .fc-recipes button:hover:not(.active) {
+	background-image: url("assets/ui_elements/slot_hover.png") !important;
+}
+
+#fernfall-crafting .fc-cell,
+#fernfall-crafting .fc-output {
+	border: 0;
+	background-color: transparent;
+	background-image: url("assets/ui_elements/slot_empty.png");
+	background-position: center;
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+}
+
+#fernfall-crafting .fc-output {
+	background-image: url("assets/ui_elements/slot_output.png");
+}
+
+#fernfall-crafting .fc-needs span {
+	background-image: url("assets/ui_textures/parchment_light.png");
+	background-size: cover;
+}

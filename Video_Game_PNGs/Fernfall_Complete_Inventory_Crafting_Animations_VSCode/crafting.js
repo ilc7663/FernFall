@@ -21,7 +21,7 @@ function render(){
 	el.querySelector('.fc-needs').innerHTML=parts.map(([id,n])=>`<span class="${count(id)>=n?'ready':'missing'}">${names[id]||id}: ${count(id)}/${n}</span>`).join('');
 	el.querySelector('.fc-craft').disabled=!window.FernfallInventory||!parts.every(([id,n])=>count(id)>=n);
 }
-function toggle(force){el.hidden=force===undefined?!el.hidden:!force; if(!el.hidden)render();}
+function toggle(force){const wasOpen=!el.hidden;el.hidden=force===undefined?!el.hidden:!force;if(!el.hidden)render();if(wasOpen!==!el.hidden)window.dispatchEvent(new CustomEvent('fernfall:crafting-open',{detail:{open:!el.hidden}}));}
 el.addEventListener('click',e=>{const b=e.target.closest('[data-recipe]');if(b){selected=b.dataset.recipe;render()}if(e.target.closest('.fc-close'))toggle(false);if(e.target.closest('.fc-craft')){const parts=Object.entries(recipes[selected]);if(!parts.every(([id,n])=>count(id)>=n))return render();for(const [id,n] of parts)FernfallInventory.remove(id,n);const left=FernfallInventory.add(selected,1);if(left){for(const [id,n] of parts)FernfallInventory.add(id,n);el.querySelector('.fc-message').textContent='Inventory full';}else{el.querySelector('.fc-message').textContent='Crafted '+(names[selected]||selected);window.dispatchEvent(new CustomEvent('fernfall:item-crafted',{detail:{id:selected}}));}render();}});
 el.querySelector('#fc-search').addEventListener('input',render);
 document.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,[contenteditable]'))return;if(e.key.toLowerCase()==='c'){e.preventDefault();toggle()}if(e.key==='Escape'&&!el.hidden)toggle(false)});
