@@ -742,6 +742,13 @@ const FernfallSurvival = (() => {
 	}
 
 	function drawResource(resource) {
+		if (!resource.available) return true;
+		const bob = Math.sin(performance.now() / 260 + resource.x) * 2;
+		ctx.fillStyle = "#49674655";
+		ctx.beginPath();
+		ctx.ellipse(resource.x, resource.y + 9, 12, 4, 0, 0, Math.PI * 2);
+		ctx.fill();
+		if (drawPackItemIcon(resource.type, resource.x, resource.y + bob, 36)) return true;
 		if (resource.type === "stone") {
 			const sprite = art.forest.rock_moss || art.forest.rock_small;
 			if (drawArt(ctx, sprite, resource.x, resource.y, 36, 36)) return true;

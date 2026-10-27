@@ -12,6 +12,7 @@ const generatedChunks = new Set(["0,0"]);
 const loadingChunks = new Set();
 const chunkRetryAfter = new Map();
 const animalSpriteBounds = new WeakMap();
+const packItemIconCache = new Map();
 
 const itemInfo = {
 	berry: { name: "Wild berry", icon: "●" },
@@ -257,6 +258,19 @@ function drawTree(tree) {
 	}
 }
 
+function drawPackItemIcon(itemType, x, y, size) {
+	const iconId = { berry: "berries", herb: "herbs", gel: "slime_gel", tonic: "item_potion" }[itemType] || itemType;
+	const source = window.FERNFALL_ITEM_IMAGES?.[iconId];
+	if (!source) return false;
+	let sprite = packItemIconCache.get(iconId);
+	if (!sprite) {
+		sprite = new Image();
+		sprite.src = source;
+		packItemIconCache.set(iconId, sprite);
+	}
+	return drawArt(ctx, sprite, x, y, size, size);
+}
+
 function drawResource(resource) {
 	if (!resource.available) return;
 	const bob = Math.sin(performance.now() / 260 + resource.x) * 2;
@@ -264,8 +278,7 @@ function drawResource(resource) {
 	ctx.beginPath();
 	ctx.ellipse(resource.x, resource.y + 8, 15, 5, 0, 0, Math.PI * 2);
 	ctx.fill();
-	const sprite = resource.type === "wood" ? art.item.wood : art.item.herb;
-	if (!drawArt(ctx, sprite, resource.x, resource.y + bob, 30, 30)) {
+	if (!drawPackItemIcon(resource.type, resource.x, resource.y + bob, 34)) {
 		ctx.fillStyle = resource.type === "wood" ? "#805538" : "#d85f59";
 		ctx.beginPath();
 		ctx.arc(resource.x, resource.y + bob, 9, 0, Math.PI * 2);
@@ -467,10 +480,10 @@ function render() {
 	obstacles.filter((tree) => visible(tree, 140) && tree.y < player.y).forEach(drawTree);
 	pickups.forEach((pickup) => {
 		if (!visible(pickup)) return;
-		if (!drawArt(ctx, art.item.coin, pickup.x, pickup.y, 24, 24)) {
-			ctx.fillStyle = "#f1cd66";
+		if (!drawPackItemIcon(pickup.type, pickup.x, pickup.y, 26)) {
+			ctx.fillStyle = itemInfo[pickup.type]?.category === "food" ? "#d85f59" : "#d1ad62";
 			ctx.beginPath();
-			ctx.arc(pickup.x, pickup.y, 6, 0, Math.PI * 2);
+			ctx.arc(pickup.x, pickup.y, 7, 0, Math.PI * 2);
 			ctx.fill();
 		}
 	});
