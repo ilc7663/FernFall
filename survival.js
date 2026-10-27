@@ -94,7 +94,7 @@ const FernfallSurvival = (() => {
 	};
 	const villagerQuestStates = {};
 	const craftingSlots = Array(9).fill("");
-	const NIGHT_CYCLE_MS = 60000;
+	const NIGHT_CYCLE_MS = 240000;
 	const hostileChunks = new Set();
 	let selectedCategory = "food";
 	let selectedItem = "";
@@ -502,15 +502,39 @@ const FernfallSurvival = (() => {
 		saveGame();
 	}
 
-	function blocks(x, y) {
-		for (const village of villages) {
-			for (const house of village.houses) {
-				const inside = Math.abs(x - house.x) < house.width / 2 + 5 && Math.abs(y - house.y) < house.height / 2 + 5;
-				const doorway = Math.abs(x - house.x) < 11 && y > house.y + house.height / 2 - 18;
-				if (inside && !doorway) return true;
+	function blocks(x, y, animalType = "") {
+		if (animalType !== "rabbit") {
+			for (const village of villages) {
+				for (const house of village.houses) {
+					const halfWidth = house.width / 2 + (animalType ? 46 : 5);
+					const halfHeight = house.height / 2 + (animalType ? 42 : 5);
+					const inside = Math.abs(x - house.x) < halfWidth && Math.abs(y - house.y) < halfHeight;
+					const doorway = !animalType && Math.abs(x - house.x) < 11 && y > house.y + house.height / 2 - 18;
+					if (inside && !doorway) return true;
+				}
 			}
 		}
 		return craftingTables.some((table) => Math.abs(x - table.x) < 22 && Math.abs(y - table.y) < 17);
+	}
+
+	function keepAnimalsOffRoofs() {
+		for (const animal of animals) {
+			if (animal.type === "rabbit") continue;
+			for (const village of villages) {
+				for (const house of village.houses) {
+					const halfWidth = house.width / 2 + 46;
+					const halfHeight = house.height / 2 + 42;
+					const dx = animal.x - house.x;
+					const dy = animal.y - house.y;
+					if (Math.abs(dx) >= halfWidth || Math.abs(dy) >= halfHeight) continue;
+					if (halfWidth - Math.abs(dx) < halfHeight - Math.abs(dy)) {
+						animal.x = house.x + (dx < 0 ? -halfWidth : halfWidth);
+					} else {
+						animal.y = house.y + (dy < 0 ? -halfHeight : halfHeight);
+					}
+				}
+			}
+		}
 	}
 
 	function useSelected() {
@@ -941,7 +965,7 @@ const FernfallSurvival = (() => {
 		const key = `${chunkX},${chunkY}`;
 		if (villageChunks.has(key)) return;
 		villageChunks.add(key);
-		if (random() > 0.2) return;
+		if (random() > 0.08) return;
 		const center = { x: chunkX * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE / 2, y: chunkY * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE / 2 };
 		const layouts = [[-96, -72], [96, -72], [-96, 72], [96, 72], [0, -150]];
 		const houseCount = 3 + Math.floor(random() * 3);
@@ -1059,7 +1083,7 @@ const FernfallSurvival = (() => {
 		if (!worldEpoch) return;
 		const elapsed = ((Date.now() - worldEpoch) % NIGHT_CYCLE_MS + NIGHT_CYCLE_MS) % NIGHT_CYCLE_MS;
 		const phase = elapsed / NIGHT_CYCLE_MS;
-		const maxOpacity = 0.28;
+		const maxOpacity = 0.42;
 		let opacity = 0;
 		if (phase >= 0.62 && phase < 0.68) opacity = (phase - 0.62) / 0.06 * maxOpacity;
 		else if (phase >= 0.68 || phase < 0.1) opacity = maxOpacity;
@@ -1074,6 +1098,7 @@ const FernfallSurvival = (() => {
 	function update() {
 		generateVillageChunks();
 		generateResourceChunks();
+		keepAnimalsOffRoofs();
 		const now = Date.now();
 		updateVillagers(now);
 		const { isNight, nightIndex } = updateWorldClock(now);

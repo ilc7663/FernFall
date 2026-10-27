@@ -76,8 +76,8 @@ update = function () {
 };
 
 const originalCollides = collides;
-collides = function (x, y) {
-	return originalCollides(x, y) || Boolean(survivalModule?.blocks(x, y));
+collides = function (x, y, animalType) {
+	return originalCollides(x, y) || Boolean(survivalModule?.blocks(x, y, animalType));
 };
 
 const originalCheckQuest = checkQuest;

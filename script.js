@@ -561,8 +561,8 @@ function updateAnimal(animal) {
 			const speed = 0.95;
 			const dx = (player.x - animal.x) / distance * speed;
 			const dy = (player.y - animal.y) / distance * speed;
-			if (!collides(animal.x + dx, animal.y)) animal.x += dx;
-			if (!collides(animal.x, animal.y + dy)) animal.y += dy;
+			if (!collides(animal.x + dx, animal.y, animal.type)) animal.x += dx;
+			if (!collides(animal.x, animal.y + dy, animal.type)) animal.y += dy;
 			animal.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : (dy < 0 ? "up" : "down");
 			animal.moving = true;
 		} else {
@@ -577,7 +577,7 @@ function updateAnimal(animal) {
 	const speed = animal.type === "rabbit" ? 0.52 : 0.3;
 	const nextX = animal.x + Math.cos(animal.roamAngle) * speed;
 	const nextY = animal.y + Math.sin(animal.roamAngle) * speed;
-	if (collides(nextX, nextY)) {
+	if (collides(nextX, nextY, animal.type)) {
 		animal.roamAngle += Math.PI * (0.65 + Math.random() * 0.7);
 		animal.turnTimer = 20;
 		animal.moving = false;
