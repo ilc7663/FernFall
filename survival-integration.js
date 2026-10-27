@@ -101,6 +101,7 @@ updateHud = function () {
 const originalDrawGround = drawGround;
 drawGround = function () {
 	originalDrawGround();
+	survivalModule?.drawCraftingTablesBehindTrees();
 	survivalModule?.drawPonds();
 };
 

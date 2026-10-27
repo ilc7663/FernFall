@@ -852,6 +852,34 @@ const FernfallSurvival = (() => {
 		}
 	}
 
+	function drawCraftingTable(table, x, y) {
+		const tableImage = window.fernfallSettlementArt?.placeables?.crafting_table;
+		if (drawArt(ctx, tableImage, x, y, 52, 48)) return;
+		const left = x - 20;
+		const top = y - 12;
+		ctx.fillStyle = "#62472f";
+		ctx.fillRect(left + 4, top + 10, 5, 15);
+		ctx.fillRect(left + 31, top + 10, 5, 15);
+		ctx.fillStyle = "#9a7448";
+		ctx.fillRect(left, top, 40, 13);
+		ctx.strokeStyle = "#57402e";
+		ctx.lineWidth = 2;
+		ctx.strokeRect(left, top, 40, 13);
+		ctx.strokeStyle = "#c2a16b";
+		ctx.beginPath();
+		ctx.moveTo(left + 13, top + 1);
+		ctx.lineTo(left + 13, top + 11);
+		ctx.moveTo(left + 26, top + 1);
+		ctx.lineTo(left + 26, top + 11);
+		ctx.stroke();
+	}
+
+	function drawCraftingTablesBehindTrees() {
+		for (const table of craftingTables) {
+			if (table.id === "village-table-spawn") drawCraftingTable(table, table.x - camera.x, table.y - camera.y);
+		}
+	}
+
 	function drawStations() {
 		for (const fire of campfires) {
 			const x = fire.x - 39;
@@ -874,25 +902,8 @@ const FernfallSurvival = (() => {
 			}
 		}
 		for (const table of craftingTables) {
-			const tableImage = window.fernfallSettlementArt?.placeables?.crafting_table;
-			if (drawArt(ctx, tableImage, table.x, table.y, 52, 48)) continue;
-			const x = table.x - 20;
-			const y = table.y - 12;
-			ctx.fillStyle = "#62472f";
-			ctx.fillRect(x + 4, y + 10, 5, 15);
-			ctx.fillRect(x + 31, y + 10, 5, 15);
-			ctx.fillStyle = "#9a7448";
-			ctx.fillRect(x, y, 40, 13);
-			ctx.strokeStyle = "#57402e";
-			ctx.lineWidth = 2;
-			ctx.strokeRect(x, y, 40, 13);
-			ctx.strokeStyle = "#c2a16b";
-			ctx.beginPath();
-			ctx.moveTo(x + 13, y + 1);
-			ctx.lineTo(x + 13, y + 11);
-			ctx.moveTo(x + 26, y + 1);
-			ctx.lineTo(x + 26, y + 11);
-			ctx.stroke();
+			if (table.id === "village-table-spawn") continue;
+			drawCraftingTable(table, table.x, table.y);
 		}
 	}
 
@@ -1010,7 +1021,11 @@ const FernfallSurvival = (() => {
 			})));
 		}
 		if (!craftingTables.some((table) => table.id === tableId)) {
-			craftingTables.push({ id: tableId, x: center.x + 52, y: center.y, village: true });
+			craftingTables.push({ id: tableId, x: center.x - 58, y: center.y - 112, village: true });
+		} else {
+			const table = craftingTables.find((entry) => entry.id === tableId);
+			table.x = center.x - 58;
+			table.y = center.y - 112;
 		}
 		villageChunks.add("0,0");
 	}
@@ -1317,7 +1332,7 @@ const FernfallSurvival = (() => {
 	}
 
 	return {
-		setup, update, interact, attackAnimal, blocks, drawResource, drawPonds, drawStations, drawProjectiles, drawPickup, drawNightOverlay,
+		setup, update, interact, attackAnimal, blocks, drawResource, drawPonds, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
 		refreshInventory, openCrafting: () => openPanel("craft"), recordQuest, recordVillagerQuestProgress, save,
 	};
 })();
