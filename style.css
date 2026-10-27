@@ -1080,13 +1080,46 @@ kbd {
 #fernfall-crafting {
 	position: absolute !important;
 	top: 4% !important;
+	left: 3.5% !important;
 	right: 3.5% !important;
-	left: auto !important;
-	width: min(47%, 760px) !important;
+	width: auto !important;
+	height: calc(100% - 104px) !important;
 	max-height: calc(100% - 104px) !important;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden !important;
 	transform: none !important;
 	z-index: 100002 !important;
 	box-shadow: 0 16px 38px #09110d88 !important;
+}
+
+#fernfall-crafting .fc-body {
+	grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+}
+
+#fernfall-crafting .fc-body aside,
+#fernfall-crafting .fc-body > section {
+	min-width: 0;
+	min-height: 0;
+	max-height: none;
+	overflow: auto;
+}
+
+#fernfall-crafting .fc-recipes {
+	grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+}
+
+#fernfall-crafting .fc-recipes button {
+	min-width: 0;
+	width: 100%;
+}
+
+#fernfall-crafting .fc-recipes button span {
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 #fernfall-crafting .fc-head {
@@ -1103,12 +1136,12 @@ kbd {
 
 	#fernfall-crafting .fc-body {
 		grid-template-columns: minmax(0, 1fr) !important;
+		grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
 		min-width: 0;
 	}
 
 	#fernfall-crafting .fc-body aside {
 		max-width: 100%;
-		max-height: 26vh;
 		border-right: 0;
 		border-bottom: 2px solid #786347;
 	}
@@ -1149,6 +1182,79 @@ kbd {
 }
 
 @media (max-width: 760px) {
+	#fernfall-crafting {
+		top: 3% !important;
+		right: 3.5% !important;
+		bottom: 50px !important;
+		left: 3.5% !important;
+		width: auto !important;
+		height: auto !important;
+		max-height: calc(100% - 60px) !important;
+	}
+
+	#fernfall-crafting .fc-head {
+		min-height: 36px;
+		padding: 4px 10px;
+		font-size: 16px;
+	}
+
+	#fernfall-crafting .fc-head button {
+		width: 28px;
+		height: 28px;
+		font-size: 20px;
+	}
+
+	#fernfall-crafting .fc-body {
+		grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
+		grid-template-rows: minmax(0, 1fr);
+	}
+
+	#fernfall-crafting .fc-body aside {
+		padding: 6px;
+		border-right: 1px solid #786347;
+		border-bottom: 0;
+	}
+
+	#fernfall-crafting .fc-body > section {
+		padding: 6px;
+	}
+
+	#fernfall-crafting .fc-recipes {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	#fernfall-crafting .fc-recipes button {
+		min-height: 32px;
+		gap: 3px;
+		padding: 2px;
+		font-size: 10px;
+	}
+
+	#fernfall-crafting .fc-recipes img {
+		width: 26px;
+		height: 26px;
+	}
+
+	#fernfall-crafting .fc-work {
+		grid-template-columns: minmax(0, 1fr) 18px 42px;
+		width: 100%;
+		margin: 6px auto 0;
+		gap: 2px;
+	}
+
+	#fernfall-crafting .fc-grid {
+		gap: 2px;
+	}
+
+	#fernfall-crafting .fc-output {
+		width: 42px;
+		height: 42px;
+	}
+
+	#fernfall-crafting .fc-arrow {
+		font-size: 20px;
+	}
+
 	#fernfall-inventory-root.fi-open {
 		overflow: hidden;
 		padding: 0;
