@@ -708,7 +708,7 @@ const FernfallSurvival = (() => {
 		const key = `${chunkX},${chunkY}`;
 		if (villageChunks.has(key)) return;
 		villageChunks.add(key);
-		if (random() > 0.2) return;
+		if (random() > 0.45) return;
 		const center = { x: chunkX * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE / 2, y: chunkY * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE / 2 };
 		const layouts = [[-96, -72], [96, -72], [-96, 72], [96, 72], [0, -150]];
 		const houseCount = 3 + Math.floor(random() * 3);
