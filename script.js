@@ -31,6 +31,8 @@ const player = {
 	swing: 0,
 	hurt: 0,
 };
+camera.x = player.x - WIDTH / 2;
+camera.y = player.y - HEIGHT / 2;
 
 const obstacles = [
 	{ x: 120, y: 110, r: 39 }, { x: 276, y: 95, r: 34 }, { x: 470, y: 106, r: 41 },
@@ -51,11 +53,15 @@ function indexObstacle(obstacle) {
 }
 
 function addObstacle(obstacle) {
+	obstacle.variant ??= Math.abs(Math.floor(obstacle.x * 17 + obstacle.y * 31)) % 3 === 0 ? "pine" : "oak";
 	obstacles.push(obstacle);
 	indexObstacle(obstacle);
 }
 
-obstacles.forEach(indexObstacle);
+obstacles.forEach((obstacle, index) => {
+	obstacle.variant = index % 3 === 0 ? "pine" : "oak";
+	indexObstacle(obstacle);
+});
 
 const resources = [
 	{ x: 167, y: 190, type: "berry", available: true },
@@ -196,8 +202,8 @@ function drawGround() {
 	drawFernfallGround(ctx, WIDTH, HEIGHT);
 }
 
-function drawTree(tree, index) {
-	const sprite = index % 3 === 0 ? art.forest.tree_pine : art.forest.tree_oak;
+function drawTree(tree) {
+	const sprite = tree.variant === "pine" ? art.forest.tree_pine : art.forest.tree_oak;
 	if (!drawArt(ctx, sprite, tree.x, tree.y - 16, 108, 120)) {
 		ctx.fillStyle = "#6c4a32";
 		ctx.fillRect(tree.x - 8, tree.y + 6, 16, 24);
@@ -347,9 +353,23 @@ function drawMobHealth(mob, x, y) {
 	ctx.fillRect(x - 15, y - 23, 30 * mob.hp / mob.maxHp, 4);
 }
 
+function updateCamera() {
+	const deadZoneX = 90;
+	const deadZoneY = 65;
+	const screenX = player.x - camera.x;
+	const screenY = player.y - camera.y;
+	let targetX = camera.x;
+	let targetY = camera.y;
+	if (screenX < WIDTH / 2 - deadZoneX) targetX = player.x - (WIDTH / 2 - deadZoneX);
+	if (screenX > WIDTH / 2 + deadZoneX) targetX = player.x - (WIDTH / 2 + deadZoneX);
+	if (screenY < HEIGHT / 2 - deadZoneY) targetY = player.y - (HEIGHT / 2 - deadZoneY);
+	if (screenY > HEIGHT / 2 + deadZoneY) targetY = player.y - (HEIGHT / 2 + deadZoneY);
+	camera.x += (targetX - camera.x) * 0.12;
+	camera.y += (targetY - camera.y) * 0.12;
+}
+
 function render() {
-	camera.x = player.x - WIDTH / 2;
-	camera.y = player.y - HEIGHT / 2;
+	updateCamera();
 	drawGround();
 	ctx.save();
 	ctx.translate(-camera.x, -camera.y);
