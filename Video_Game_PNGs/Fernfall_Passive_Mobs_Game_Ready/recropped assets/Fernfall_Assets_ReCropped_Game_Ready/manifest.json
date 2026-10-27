@@ -1,0 +1,1100 @@
+{
+  "bush": {
+    "file": "assets/bush.png",
+    "tight_file": "assets_tight/bush.png",
+    "canvas": [
+      294,
+      228
+    ],
+    "trim": [
+      7,
+      30,
+      273,
+      222
+    ],
+    "tight_size": [
+      266,
+      192
+    ]
+  },
+  "fern": {
+    "file": "assets/fern.png",
+    "tight_file": "assets_tight/fern.png",
+    "canvas": [
+      299,
+      231
+    ],
+    "trim": [
+      5,
+      33,
+      276,
+      224
+    ],
+    "tight_size": [
+      271,
+      191
+    ]
+  },
+  "flowers_white": {
+    "file": "assets/flowers_white.png",
+    "tight_file": "assets_tight/flowers_white.png",
+    "canvas": [
+      220,
+      213
+    ],
+    "trim": [
+      50,
+      54,
+      220,
+      204
+    ],
+    "tight_size": [
+      170,
+      150
+    ]
+  },
+  "flowers_yellow": {
+    "file": "assets/flowers_yellow.png",
+    "tight_file": "assets_tight/flowers_yellow.png",
+    "canvas": [
+      230,
+      213
+    ],
+    "trim": [
+      57,
+      59,
+      217,
+      205
+    ],
+    "tight_size": [
+      160,
+      146
+    ]
+  },
+  "ground_dirt": {
+    "file": "assets/ground_dirt.png",
+    "tight_file": "assets_tight/ground_dirt.png",
+    "canvas": [
+      256,
+      256
+    ],
+    "trim": [
+      3,
+      10,
+      253,
+      246
+    ],
+    "tight_size": [
+      250,
+      236
+    ]
+  },
+  "ground_grass": {
+    "file": "assets/ground_grass.png",
+    "tight_file": "assets_tight/ground_grass.png",
+    "canvas": [
+      256,
+      256
+    ],
+    "trim": [
+      3,
+      6,
+      253,
+      249
+    ],
+    "tight_size": [
+      250,
+      243
+    ]
+  },
+  "ground_moss": {
+    "file": "assets/ground_moss.png",
+    "tight_file": "assets_tight/ground_moss.png",
+    "canvas": [
+      256,
+      256
+    ],
+    "trim": [
+      10,
+      3,
+      246,
+      253
+    ],
+    "tight_size": [
+      236,
+      250
+    ]
+  },
+  "ground_stone": {
+    "file": "assets/ground_stone.png",
+    "tight_file": "assets_tight/ground_stone.png",
+    "canvas": [
+      256,
+      256
+    ],
+    "trim": [
+      3,
+      15,
+      253,
+      241
+    ],
+    "tight_size": [
+      250,
+      226
+    ]
+  },
+  "item_arrows": {
+    "file": "assets/item_arrows.png",
+    "tight_file": "assets_tight/item_arrows.png",
+    "canvas": [
+      96,
+      96
+    ],
+    "trim": [
+      26,
+      4,
+      74,
+      63
+    ],
+    "tight_size": [
+      48,
+      59
+    ]
+  },
+  "item_coin": {
+    "file": "assets/item_coin.png",
+    "tight_file": "assets_tight/item_coin.png",
+    "canvas": [
+      96,
+      96
+    ],
+    "trim": [
+      26,
+      4,
+      65,
+      51
+    ],
+    "tight_size": [
+      39,
+      47
+    ]
+  },
+  "item_gem": {
+    "file": "assets/item_gem.png",
+    "tight_file": "assets_tight/item_gem.png",
+    "canvas": [
+      96,
+      96
+    ],
+    "trim": [
+      36,
+      20,
+      67,
+      60
+    ],
+    "tight_size": [
+      31,
+      40
+    ]
+  },
+  "item_heart": {
+    "file": "assets/item_heart.png",
+    "tight_file": "assets_tight/item_heart.png",
+    "canvas": [
+      96,
+      96
+    ],
+    "trim": [
+      32,
+      24,
+      66,
+      59
+    ],
+    "tight_size": [
+      34,
+      35
+    ]
+  },
+  "item_herb": {
+    "file": "assets/item_herb.png",
+    "tight_file": "assets_tight/item_herb.png",
+    "canvas": [
+      96,
+      96
+    ],
+    "trim": [
+      25,
+      17,
+      74,
+      73
+    ],
+    "tight_size": [
+      49,
+      56
+    ]
+  },
+  "item_key": {
+    "file": "assets/item_key.png",
+    "tight_file": "assets_tight/item_key.png",
+    "canvas": [
+      96,
+      96
+    ],
+    "trim": [
+      33,
+      9,
+      71,
+      59
+    ],
+    "tight_size": [
+      38,
+      50
+    ]
+  },
+  "item_potion": {
+    "file": "assets/item_potion.png",
+    "tight_file": "assets_tight/item_potion.png",
+    "canvas": [
+      96,
+      96
+    ],
+    "trim": [
+      21,
+      13,
+      75,
+      62
+    ],
+    "tight_size": [
+      54,
+      49
+    ]
+  },
+  "item_wood": {
+    "file": "assets/item_wood.png",
+    "tight_file": "assets_tight/item_wood.png",
+    "canvas": [
+      96,
+      96
+    ],
+    "trim": [
+      16,
+      3,
+      89,
+      60
+    ],
+    "tight_size": [
+      73,
+      57
+    ]
+  },
+  "mushroom_brown": {
+    "file": "assets/mushroom_brown.png",
+    "tight_file": "assets_tight/mushroom_brown.png",
+    "canvas": [
+      218,
+      213
+    ],
+    "trim": [
+      55,
+      82,
+      210,
+      201
+    ],
+    "tight_size": [
+      155,
+      119
+    ]
+  },
+  "mushroom_red": {
+    "file": "assets/mushroom_red.png",
+    "tight_file": "assets_tight/mushroom_red.png",
+    "canvas": [
+      223,
+      215
+    ],
+    "trim": [
+      30,
+      43,
+      223,
+      207
+    ],
+    "tight_size": [
+      193,
+      164
+    ]
+  },
+  "ranger_down_attack1": {
+    "file": "assets/ranger_down_attack1.png",
+    "tight_file": "assets_tight/ranger_down_attack1.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      3,
+      34,
+      123,
+      154
+    ],
+    "tight_size": [
+      120,
+      120
+    ]
+  },
+  "ranger_down_attack2": {
+    "file": "assets/ranger_down_attack2.png",
+    "tight_file": "assets_tight/ranger_down_attack2.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      3,
+      21,
+      154,
+      153
+    ],
+    "tight_size": [
+      151,
+      132
+    ]
+  },
+  "ranger_down_idle": {
+    "file": "assets/ranger_down_idle.png",
+    "tight_file": "assets_tight/ranger_down_idle.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      47,
+      33,
+      146,
+      151
+    ],
+    "tight_size": [
+      99,
+      118
+    ]
+  },
+  "ranger_down_walk1": {
+    "file": "assets/ranger_down_walk1.png",
+    "tight_file": "assets_tight/ranger_down_walk1.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      30,
+      31,
+      136,
+      151
+    ],
+    "tight_size": [
+      106,
+      120
+    ]
+  },
+  "ranger_down_walk2": {
+    "file": "assets/ranger_down_walk2.png",
+    "tight_file": "assets_tight/ranger_down_walk2.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      6,
+      32,
+      113,
+      152
+    ],
+    "tight_size": [
+      107,
+      120
+    ]
+  },
+  "ranger_left_attack1": {
+    "file": "assets/ranger_left_attack1.png",
+    "tight_file": "assets_tight/ranger_left_attack1.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      3,
+      28,
+      112,
+      153
+    ],
+    "tight_size": [
+      109,
+      125
+    ]
+  },
+  "ranger_left_attack2": {
+    "file": "assets/ranger_left_attack2.png",
+    "tight_file": "assets_tight/ranger_left_attack2.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      5,
+      29,
+      140,
+      154
+    ],
+    "tight_size": [
+      135,
+      125
+    ]
+  },
+  "ranger_left_idle": {
+    "file": "assets/ranger_left_idle.png",
+    "tight_file": "assets_tight/ranger_left_idle.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      49,
+      26,
+      140,
+      153
+    ],
+    "tight_size": [
+      91,
+      127
+    ]
+  },
+  "ranger_left_walk1": {
+    "file": "assets/ranger_left_walk1.png",
+    "tight_file": "assets_tight/ranger_left_walk1.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      30,
+      26,
+      133,
+      151
+    ],
+    "tight_size": [
+      103,
+      125
+    ]
+  },
+  "ranger_left_walk2": {
+    "file": "assets/ranger_left_walk2.png",
+    "tight_file": "assets_tight/ranger_left_walk2.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      11,
+      26,
+      111,
+      151
+    ],
+    "tight_size": [
+      100,
+      125
+    ]
+  },
+  "ranger_right_attack1": {
+    "file": "assets/ranger_right_attack1.png",
+    "tight_file": "assets_tight/ranger_right_attack1.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      3,
+      24,
+      123,
+      146
+    ],
+    "tight_size": [
+      120,
+      122
+    ]
+  },
+  "ranger_right_attack2": {
+    "file": "assets/ranger_right_attack2.png",
+    "tight_file": "assets_tight/ranger_right_attack2.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      11,
+      22,
+      147,
+      145
+    ],
+    "tight_size": [
+      136,
+      123
+    ]
+  },
+  "ranger_right_idle": {
+    "file": "assets/ranger_right_idle.png",
+    "tight_file": "assets_tight/ranger_right_idle.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      44,
+      16,
+      134,
+      140
+    ],
+    "tight_size": [
+      90,
+      124
+    ]
+  },
+  "ranger_right_walk1": {
+    "file": "assets/ranger_right_walk1.png",
+    "tight_file": "assets_tight/ranger_right_walk1.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      28,
+      14,
+      130,
+      141
+    ],
+    "tight_size": [
+      102,
+      127
+    ]
+  },
+  "ranger_right_walk2": {
+    "file": "assets/ranger_right_walk2.png",
+    "tight_file": "assets_tight/ranger_right_walk2.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      10,
+      15,
+      108,
+      140
+    ],
+    "tight_size": [
+      98,
+      125
+    ]
+  },
+  "ranger_up_attack1": {
+    "file": "assets/ranger_up_attack1.png",
+    "tight_file": "assets_tight/ranger_up_attack1.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      3,
+      11,
+      114,
+      137
+    ],
+    "tight_size": [
+      111,
+      126
+    ]
+  },
+  "ranger_up_attack2": {
+    "file": "assets/ranger_up_attack2.png",
+    "tight_file": "assets_tight/ranger_up_attack2.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      9,
+      12,
+      145,
+      131
+    ],
+    "tight_size": [
+      136,
+      119
+    ]
+  },
+  "ranger_up_idle": {
+    "file": "assets/ranger_up_idle.png",
+    "tight_file": "assets_tight/ranger_up_idle.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      47,
+      5,
+      140,
+      131
+    ],
+    "tight_size": [
+      93,
+      126
+    ]
+  },
+  "ranger_up_walk1": {
+    "file": "assets/ranger_up_walk1.png",
+    "tight_file": "assets_tight/ranger_up_walk1.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      31,
+      9,
+      129,
+      136
+    ],
+    "tight_size": [
+      98,
+      127
+    ]
+  },
+  "ranger_up_walk2": {
+    "file": "assets/ranger_up_walk2.png",
+    "tight_file": "assets_tight/ranger_up_walk2.png",
+    "canvas": [
+      160,
+      160
+    ],
+    "trim": [
+      18,
+      11,
+      112,
+      137
+    ],
+    "tight_size": [
+      94,
+      126
+    ]
+  },
+  "rock_cluster": {
+    "file": "assets/rock_cluster.png",
+    "tight_file": "assets_tight/rock_cluster.png",
+    "canvas": [
+      266,
+      181
+    ],
+    "trim": [
+      19,
+      11,
+      260,
+      181
+    ],
+    "tight_size": [
+      241,
+      170
+    ]
+  },
+  "rock_moss": {
+    "file": "assets/rock_moss.png",
+    "tight_file": "assets_tight/rock_moss.png",
+    "canvas": [
+      270,
+      187
+    ],
+    "trim": [
+      23,
+      30,
+      261,
+      187
+    ],
+    "tight_size": [
+      238,
+      157
+    ]
+  },
+  "rock_small": {
+    "file": "assets/rock_small.png",
+    "tight_file": "assets_tight/rock_small.png",
+    "canvas": [
+      171,
+      156
+    ],
+    "trim": [
+      8,
+      42,
+      171,
+      156
+    ],
+    "tight_size": [
+      163,
+      114
+    ]
+  },
+  "slime_blue_angry": {
+    "file": "assets/slime_blue_angry.png",
+    "tight_file": "assets_tight/slime_blue_angry.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      61,
+      77,
+      134,
+      149
+    ],
+    "tight_size": [
+      73,
+      72
+    ]
+  },
+  "slime_blue_attack": {
+    "file": "assets/slime_blue_attack.png",
+    "tight_file": "assets_tight/slime_blue_attack.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      26,
+      73,
+      175,
+      147
+    ],
+    "tight_size": [
+      149,
+      74
+    ]
+  },
+  "slime_blue_idle1": {
+    "file": "assets/slime_blue_idle1.png",
+    "tight_file": "assets_tight/slime_blue_idle1.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      49,
+      68,
+      143,
+      152
+    ],
+    "tight_size": [
+      94,
+      84
+    ]
+  },
+  "slime_blue_idle2": {
+    "file": "assets/slime_blue_idle2.png",
+    "tight_file": "assets_tight/slime_blue_idle2.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      57,
+      73,
+      137,
+      149
+    ],
+    "tight_size": [
+      80,
+      76
+    ]
+  },
+  "slime_blue_jump1": {
+    "file": "assets/slime_blue_jump1.png",
+    "tight_file": "assets_tight/slime_blue_jump1.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      52,
+      21,
+      140,
+      151
+    ],
+    "tight_size": [
+      88,
+      130
+    ]
+  },
+  "slime_blue_jump2": {
+    "file": "assets/slime_blue_jump2.png",
+    "tight_file": "assets_tight/slime_blue_jump2.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      53,
+      14,
+      138,
+      150
+    ],
+    "tight_size": [
+      85,
+      136
+    ]
+  },
+  "slime_blue_splash": {
+    "file": "assets/slime_blue_splash.png",
+    "tight_file": "assets_tight/slime_blue_splash.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      44,
+      39,
+      147,
+      155
+    ],
+    "tight_size": [
+      103,
+      116
+    ]
+  },
+  "slime_blue_squash": {
+    "file": "assets/slime_blue_squash.png",
+    "tight_file": "assets_tight/slime_blue_squash.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      63,
+      86,
+      139,
+      152
+    ],
+    "tight_size": [
+      76,
+      66
+    ]
+  },
+  "slime_green_angry": {
+    "file": "assets/slime_green_angry.png",
+    "tight_file": "assets_tight/slime_green_angry.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      60,
+      80,
+      133,
+      152
+    ],
+    "tight_size": [
+      73,
+      72
+    ]
+  },
+  "slime_green_attack": {
+    "file": "assets/slime_green_attack.png",
+    "tight_file": "assets_tight/slime_green_attack.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      27,
+      82,
+      177,
+      153
+    ],
+    "tight_size": [
+      150,
+      71
+    ]
+  },
+  "slime_green_idle1": {
+    "file": "assets/slime_green_idle1.png",
+    "tight_file": "assets_tight/slime_green_idle1.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      54,
+      83,
+      137,
+      155
+    ],
+    "tight_size": [
+      83,
+      72
+    ]
+  },
+  "slime_green_idle2": {
+    "file": "assets/slime_green_idle2.png",
+    "tight_file": "assets_tight/slime_green_idle2.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      57,
+      88,
+      136,
+      155
+    ],
+    "tight_size": [
+      79,
+      67
+    ]
+  },
+  "slime_green_jump1": {
+    "file": "assets/slime_green_jump1.png",
+    "tight_file": "assets_tight/slime_green_jump1.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      53,
+      26,
+      136,
+      154
+    ],
+    "tight_size": [
+      83,
+      128
+    ]
+  },
+  "slime_green_jump2": {
+    "file": "assets/slime_green_jump2.png",
+    "tight_file": "assets_tight/slime_green_jump2.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      67,
+      22,
+      136,
+      152
+    ],
+    "tight_size": [
+      69,
+      130
+    ]
+  },
+  "slime_green_splash": {
+    "file": "assets/slime_green_splash.png",
+    "tight_file": "assets_tight/slime_green_splash.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      46,
+      53,
+      145,
+      153
+    ],
+    "tight_size": [
+      99,
+      100
+    ]
+  },
+  "slime_green_squash": {
+    "file": "assets/slime_green_squash.png",
+    "tight_file": "assets_tight/slime_green_squash.png",
+    "canvas": [
+      192,
+      160
+    ],
+    "trim": [
+      62,
+      88,
+      137,
+      153
+    ],
+    "tight_size": [
+      75,
+      65
+    ]
+  },
+  "tree_log": {
+    "file": "assets/tree_log.png",
+    "tight_file": "assets_tight/tree_log.png",
+    "canvas": [
+      447,
+      272
+    ],
+    "trim": [
+      29,
+      22,
+      444,
+      272
+    ],
+    "tight_size": [
+      415,
+      250
+    ]
+  },
+  "tree_oak": {
+    "file": "assets/tree_oak.png",
+    "tight_file": "assets_tight/tree_oak.png",
+    "canvas": [
+      435,
+      487
+    ],
+    "trim": [
+      20,
+      9,
+      435,
+      487
+    ],
+    "tight_size": [
+      415,
+      478
+    ]
+  },
+  "tree_pine": {
+    "file": "assets/tree_pine.png",
+    "tight_file": "assets_tight/tree_pine.png",
+    "canvas": [
+      333,
+      492
+    ],
+    "trim": [
+      5,
+      21,
+      333,
+      492
+    ],
+    "tight_size": [
+      328,
+      471
+    ]
+  },
+  "tree_stump": {
+    "file": "assets/tree_stump.png",
+    "tight_file": "assets_tight/tree_stump.png",
+    "canvas": [
+      257,
+      247
+    ],
+    "trim": [
+      0,
+      11,
+      257,
+      223
+    ],
+    "tight_size": [
+      257,
+      212
+    ]
+  }
+}

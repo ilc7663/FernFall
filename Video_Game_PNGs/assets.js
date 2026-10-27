@@ -9,7 +9,7 @@ const artFiles = {
 for (const [group, names] of Object.entries(artFiles)) {
   art[group] = {};
   for (const [name, filename] of Object.entries(names)) {
-    const img = new Image(); img.src = 'Video_Game_PNGs/assets/' + filename; art[group][name] = img;
+    const img = new Image(); img.src = new URL('Video_Game_PNGs/Fernfall_Passive_Mobs_Game_Ready/recropped assets/Fernfall_Assets_ReCropped_Game_Ready/assets/' + filename, document.baseURI); art[group][name] = img;
   }
 }
 // Canvas helper: draws sprites centered at x, y, returns false until loaded.
