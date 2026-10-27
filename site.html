@@ -31,7 +31,7 @@
 				</div>
 
 				<div class="scene-wrap">
-					<canvas id="game-canvas" width="960" height="600" aria-label="Top-down forest game. Use WASD or arrow keys to move, E to gather, and Space to attack."></canvas>
+					<canvas id="game-canvas" width="960" height="600" aria-label="Top-down forest game with sheep, cows, pigs, rabbits, wolves, and slimes. Use WASD or arrow keys to move, E to gather or tame a wolf with a berry, and Space to attack slimes."></canvas>
 					<div class="scene-topline"><span class="weather-icon">☀</span><span>Clear skies</span><span class="scene-separator">·</span><span id="time-label">Morning</span></div>
 					<div class="toast" id="toast" role="status" aria-live="polite"></div>
 					<div class="mobile-pad" aria-label="Movement controls">
@@ -45,7 +45,7 @@
 
 				<div class="actionbar">
 					<div class="quick-actions">
-						<button class="action-button" id="gather-button" type="button" title="Gather nearby items (E)"><span class="action-icon">⌕</span><span>Gather</span><kbd>E</kbd></button>
+						<button class="action-button" id="gather-button" type="button" title="Gather nearby items or offer a berry to a wolf (E)"><span class="action-icon">⌕</span><span>Gather</span><kbd>E</kbd></button>
 						<button class="action-button attack-action" id="attack-button" type="button" title="Swing your stick (Space)"><span class="action-icon">⚔</span><span>Attack</span><kbd>Space</kbd></button>
 						<button class="action-button" id="potion-button" type="button" title="Drink a berry tonic"><span class="action-icon">✿</span><span>Use tonic</span><kbd>1</kbd></button>
 					</div>
@@ -68,12 +68,13 @@
 				<div class="quest-reward"><span>Reward</span><strong>+ 3 coins</strong></div>
 
 				<div class="panel-rule lower-rule"></div>
-				<div class="tip-row"><span class="tip-icon">☘</span><p><strong>Little tip</strong><br>Look for sparkles near bushes and stumps.</p></div>
+				<div class="tip-row"><span class="tip-icon">☘</span><p><strong>Little tip</strong><br>Offer a wild berry with E to tame the wolf. Jimothy appears only once.</p></div>
 			</aside>
 		</section>
 		<footer class="footer"><span>FERNFALL FOREST CLUB</span><span>Save your progress <b>automatically</b></span></footer>
 	</main>
 	<script src="Video_Game_PNGs/assets.js"></script>
+	<script src="passive-assets.js"></script>
 	<script src="script.js"></script>
 </body>
 </html>

@@ -52,12 +52,22 @@ const mobs = [
 	{ x: 881, y: 333, hp: 3, maxHp: 3, alive: true, phase: 4, hit: 0 },
 ];
 
+const animals = [
+	{ type: "sheep", x: 518, y: 170, phase: 0, roamAngle: 1.8, turnTimer: 0, direction: "down", moving: false },
+	{ type: "cow", x: 340, y: 365, phase: 1, roamAngle: 0.4, turnTimer: 0, direction: "down", moving: false },
+	{ type: "pig", x: 700, y: 390, phase: 2, roamAngle: 2.7, turnTimer: 0, direction: "down", moving: false },
+	{ type: "rabbit", x: 140, y: 330, phase: 3, roamAngle: 5.2, turnTimer: 0, direction: "down", moving: false },
+	{ type: "wolf", x: 520, y: 500, phase: 4, roamAngle: 3.3, turnTimer: 0, direction: "down", moving: false, tamed: saved?.wolfTamed ?? false },
+	...(!saved?.jimothyMet ? [{ type: "jimothy", name: "Jimothy", x: 760, y: 165, phase: 5, roamAngle: 2.2, turnTimer: 0, direction: "down", moving: false }] : []),
+];
+
 const pickups = [];
 let lastAttack = 0;
 let lastDamage = 0;
 let lastSave = 0;
 let toastTimer;
 let questClaimed = saved?.questClaimed ?? false;
+let jimothyMet = saved?.jimothyMet ?? false;
 let soundEnabled = false;
 let audioContext;
 
@@ -74,6 +84,8 @@ function saveGame() {
 		localStorage.setItem(SAVE_KEY, JSON.stringify({
 			x: player.x, y: player.y, health: player.health, coins: player.coins,
 			xp: player.xp, level: player.level, inventory: player.inventory, questClaimed,
+			wolfTamed: animals.find((animal) => animal.type === "wolf")?.tamed ?? false,
+			jimothyMet,
 		}));
 	} catch {
 		showToast("Progress could not be saved in this browser.");
@@ -247,6 +259,38 @@ function drawMob(mob) {
 	}
 }
 
+function drawAnimal(animal) {
+	const now = performance.now();
+	const artType = animal.type === "wolf" && animal.tamed ? "wolf_tamed" : animal.type;
+	const animalArt = passiveArt[artType];
+	const frame = animal.moving ? `walk${Math.floor(now / 220 + animal.phase) % 2 + 1}` : "idle";
+	const pose = animal.happyUntil > now && ["down", "up"].includes(animal.direction) ? "happy" : frame;
+	const sprite = animalArt?.[`${animal.direction}_${pose}`] || animalArt?.[`${animal.direction}_${frame}`] || animalArt?.[`${animal.direction}_idle`];
+	if (!sprite?.complete || !sprite.naturalWidth) return;
+	const size = animal.type === "cow" ? 66 : animal.type === "rabbit" ? 42 : animal.type === "jimothy" ? 58 : 54;
+	ctx.fillStyle = "#49674655";
+	ctx.beginPath();
+	ctx.ellipse(animal.x, animal.y + 13, size * 0.32, 6, 0, 0, Math.PI * 2);
+	ctx.fill();
+	drawArt(ctx, sprite, animal.x, animal.y, size, size);
+	if (animal.type === "wolf" && animal.tamed) {
+		ctx.strokeStyle = "#e7c56e";
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.ellipse(animal.x, animal.y + 8, 11, 4, 0, 0, Math.PI * 2);
+		ctx.stroke();
+	}
+	if (animal.type === "jimothy") {
+		ctx.font = "600 11px 'DM Sans', sans-serif";
+		ctx.textAlign = "center";
+		ctx.lineWidth = 3;
+		ctx.strokeStyle = "#f1e7c9";
+		ctx.strokeText("Jimothy", animal.x, animal.y - size / 2 - 3);
+		ctx.fillStyle = "#30483b";
+		ctx.fillText("Jimothy", animal.x, animal.y - size / 2 - 3);
+	}
+}
+
 function drawMobHealth(mob, x, y) {
 	ctx.fillStyle = "#435c48";
 	ctx.fillRect(x - 15, y - 23, 30, 4);
@@ -257,6 +301,7 @@ function drawMobHealth(mob, x, y) {
 function render() {
 	drawGround();
 	resources.forEach(drawResource);
+	animals.filter((animal) => animal.y < player.y).forEach(drawAnimal);
 	mobs.filter((mob) => mob.alive && mob.y < player.y).forEach(drawMob);
 	obstacles.forEach(drawTree);
 	pickups.forEach((pickup) => {
@@ -267,6 +312,7 @@ function render() {
 			ctx.fill();
 		}
 	});
+	animals.filter((animal) => animal.y >= player.y).forEach(drawAnimal);
 	mobs.filter((mob) => mob.alive && mob.y >= player.y).forEach(drawMob);
 	drawPlayer();
 	requestAnimationFrame(render);
@@ -305,6 +351,7 @@ function update() {
 	const now = performance.now();
 	if (player.swing > 0) player.swing = Math.max(0, player.swing - 0.06);
 	if (player.hurt > 0) player.hurt -= 1;
+	for (const animal of animals) updateAnimal(animal);
 	for (const mob of mobs) {
 		if (!mob.alive) continue;
 		if (mob.hit > 0) mob.hit -= 1;
@@ -344,6 +391,44 @@ function update() {
 	}
 }
 
+function updateAnimal(animal) {
+	if (animal.type === "wolf" && animal.tamed) {
+		const distance = Math.hypot(player.x - animal.x, player.y - animal.y);
+		if (distance > 68) {
+			const speed = 0.95;
+			const dx = (player.x - animal.x) / distance * speed;
+			const dy = (player.y - animal.y) / distance * speed;
+			if (!collides(animal.x + dx, animal.y)) animal.x += dx;
+			if (!collides(animal.x, animal.y + dy)) animal.y += dy;
+			animal.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : (dy < 0 ? "up" : "down");
+			animal.moving = true;
+		} else {
+			animal.moving = false;
+		}
+		return;
+	}
+	if (animal.turnTimer <= 0) {
+		animal.roamAngle += (Math.random() - 0.5) * 1.8;
+		animal.turnTimer = 75 + Math.random() * 100;
+	}
+	const speed = animal.type === "rabbit" ? 0.52 : 0.3;
+	const nextX = animal.x + Math.cos(animal.roamAngle) * speed;
+	const nextY = animal.y + Math.sin(animal.roamAngle) * speed;
+	if (collides(nextX, nextY)) {
+		animal.roamAngle += Math.PI * (0.65 + Math.random() * 0.7);
+		animal.turnTimer = 20;
+		animal.moving = false;
+	} else {
+		animal.x = nextX;
+		animal.y = nextY;
+		animal.direction = Math.abs(Math.cos(animal.roamAngle)) > Math.abs(Math.sin(animal.roamAngle))
+			? (Math.cos(animal.roamAngle) < 0 ? "left" : "right")
+			: (Math.sin(animal.roamAngle) < 0 ? "up" : "down");
+		animal.moving = true;
+	}
+	animal.turnTimer -= 1;
+}
+
 function addItem(type, amount) {
 	player.inventory[type] = (player.inventory[type] || 0) + amount;
 	updateHud();
@@ -351,6 +436,31 @@ function addItem(type, amount) {
 }
 
 function gather() {
+	const nearbyJimothy = animals.find((animal) => animal.type === "jimothy" && Math.hypot(player.x - animal.x, player.y - animal.y) < 58);
+	if (nearbyJimothy) {
+		jimothyMet = true;
+		animals.splice(animals.indexOf(nearbyJimothy), 1);
+		showToast("Jimothy waves goodbye and slips into the woods. That was your one meeting!");
+		saveGame();
+		return;
+	}
+	const nearbyWolf = animals.find((animal) => animal.type === "wolf" && Math.hypot(player.x - animal.x, player.y - animal.y) < 58);
+	if (nearbyWolf) {
+		if (nearbyWolf.tamed) {
+			showToast("Your wolf is already by your side.");
+		} else if (!player.inventory.berry) {
+			showToast("This wolf needs a wild berry to trust you.");
+		} else {
+			player.inventory.berry -= 1;
+			nearbyWolf.tamed = true;
+			nearbyWolf.happyUntil = performance.now() + 1800;
+			playTone(700);
+			showToast("The wolf is tamed and will follow you!");
+			updateHud();
+			saveGame();
+		}
+		return;
+	}
 	const nearbyPickup = pickups.find((pickup) => Math.hypot(player.x - pickup.x, player.y - pickup.y) < 55);
 	if (nearbyPickup) {
 		const index = pickups.indexOf(nearbyPickup);
