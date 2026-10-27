@@ -6,7 +6,21 @@ document.body.append(el);
 let selected='crafting_table';const names=window.FERNFALL_ITEM_LABELS||{}, images=window.FERNFALL_ITEM_IMAGES||{};
 const icon=id=>images[id]?`<img src="${images[id]}" alt="">`:id.replaceAll('_',' ');
 const count=id=>window.FernfallInventory?.count(id)||0;
-function render(){ const search=el.querySelector('#fc-search').value.toLowerCase();el.querySelector('.fc-recipes').innerHTML=Object.keys(recipes).filter(id=>id.includes(search)).map(id=>`<button data-recipe="${id}" class="${selected===id?'active':''}">${icon(id)} <span>${names[id]||id.replaceAll('_',' ')}</span></button>`).join('');const parts=Object.entries(recipes[selected]||{});el.querySelector('.fc-name').textContent=names[selected]||selected.replaceAll('_',' ');el.querySelector('.fc-grid').innerHTML=Array.from({length:9},(_,i)=>`<div class="fc-cell">${parts[i]?icon(parts[i][0]):''}</div>`).join('');el.querySelector('.fc-output').innerHTML=icon(selected);el.querySelector('.fc-needs').innerHTML=parts.map(([id,n])=>`<span class="${count(id)>=n?'ready':'missing'}">${names[id]||id}: ${count(id)}/${n}</span>`).join('');el.querySelector('.fc-craft').disabled=!window.FernfallInventory||!parts.every(([id,n])=>count(id)>=n);}
+function render(){
+	const search=el.querySelector('#fc-search').value.toLowerCase();
+	const filtered=Object.keys(recipes).filter(id=>(names[id]||id.replaceAll('_',' ')).toLowerCase().includes(search));
+	const craftable=filtered.filter(id=>Object.entries(recipes[id]).every(([item,amount])=>count(item)>=amount));
+	const unavailable=filtered.filter(id=>!craftable.includes(id));
+	const button=id=>`<button data-recipe="${id}" class="${selected===id?'active':''} ${craftable.includes(id)?'':'fc-unavailable'}">${icon(id)} <span>${names[id]||id.replaceAll('_',' ')}</span></button>`;
+	const divider=craftable.length&&unavailable.length?'<div class="fc-recipe-break" role="separator"><span>More recipes</span></div>':'';
+	el.querySelector('.fc-recipes').innerHTML=craftable.map(button).join('')+divider+unavailable.map(button).join('');
+	const parts=Object.entries(recipes[selected]||{});
+	el.querySelector('.fc-name').textContent=names[selected]||selected.replaceAll('_',' ');
+	el.querySelector('.fc-grid').innerHTML=Array.from({length:9},(_,i)=>`<div class="fc-cell">${parts[i]?icon(parts[i][0]):''}</div>`).join('');
+	el.querySelector('.fc-output').innerHTML=icon(selected);
+	el.querySelector('.fc-needs').innerHTML=parts.map(([id,n])=>`<span class="${count(id)>=n?'ready':'missing'}">${names[id]||id}: ${count(id)}/${n}</span>`).join('');
+	el.querySelector('.fc-craft').disabled=!window.FernfallInventory||!parts.every(([id,n])=>count(id)>=n);
+}
 function toggle(force){el.hidden=force===undefined?!el.hidden:!force; if(!el.hidden)render();}
 el.addEventListener('click',e=>{const b=e.target.closest('[data-recipe]');if(b){selected=b.dataset.recipe;render()}if(e.target.closest('.fc-close'))toggle(false);if(e.target.closest('.fc-craft')){const parts=Object.entries(recipes[selected]);if(!parts.every(([id,n])=>count(id)>=n))return render();for(const [id,n] of parts)FernfallInventory.remove(id,n);const left=FernfallInventory.add(selected,1);if(left){for(const [id,n] of parts)FernfallInventory.add(id,n);el.querySelector('.fc-message').textContent='Inventory full';}else{el.querySelector('.fc-message').textContent='Crafted '+(names[selected]||selected);window.dispatchEvent(new CustomEvent('fernfall:item-crafted',{detail:{id:selected}}));}render();}});
 el.querySelector('#fc-search').addEventListener('input',render);
