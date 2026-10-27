@@ -27,6 +27,18 @@
  background-image: url("assets/ui_elements/slot_hover.png") !important;
 }
 
+#fernfall-inventory-root .fi-slot img {
+	width: 60% !important;
+	height: 60% !important;
+	max-width: calc(100% - 8px);
+	max-height: calc(100% - 8px);
+	flex: 0 1 auto;
+	object-fit: contain !important;
+	object-position: center;
+	image-rendering: pixelated;
+	margin: auto;
+}
+
 #fernfall-crafting {
 	background-color: #ead9b4 !important;
 	background-image: url("assets/ui_textures/parchment.png") !important;
@@ -79,6 +91,29 @@
 #fernfall-crafting .fc-needs span {
 	background-image: url("assets/ui_textures/parchment_light.png");
 	background-size: cover;
+}
+
+#fernfall-crafting .fc-recipes button img {
+	width: 28px !important;
+	height: 28px !important;
+	max-width: 28px;
+	max-height: 28px;
+	flex: 0 0 28px;
+	object-fit: contain !important;
+	object-position: center;
+	image-rendering: pixelated;
+}
+
+#fernfall-crafting .fc-cell img,
+#fernfall-crafting .fc-output img {
+	width: 66% !important;
+	height: 66% !important;
+	max-width: calc(100% - 10px);
+	max-height: calc(100% - 10px);
+	object-fit: contain !important;
+	object-position: center;
+	image-rendering: pixelated;
+	margin: auto;
 }
 
 #fernfall-inventory-root.fi-open .fi-window {
