@@ -28,10 +28,10 @@
 }
 
 #fernfall-inventory-root .fi-slot img {
-	width: 60% !important;
-	height: 60% !important;
-	max-width: calc(100% - 8px);
-	max-height: calc(100% - 8px);
+	width: 84% !important;
+	height: 84% !important;
+	max-width: calc(100% - 10px);
+	max-height: calc(100% - 10px);
 	flex: 0 1 auto;
 	object-fit: contain !important;
 	object-position: center;
@@ -94,11 +94,11 @@
 }
 
 #fernfall-crafting .fc-recipes button img {
-	width: 28px !important;
-	height: 28px !important;
-	max-width: 28px;
-	max-height: 28px;
-	flex: 0 0 28px;
+	width: 34px !important;
+	height: 34px !important;
+	max-width: 34px;
+	max-height: 34px;
+	flex: 0 0 34px;
 	object-fit: contain !important;
 	object-position: center;
 	image-rendering: pixelated;
@@ -106,8 +106,8 @@
 
 #fernfall-crafting .fc-cell img,
 #fernfall-crafting .fc-output img {
-	width: 66% !important;
-	height: 66% !important;
+	width: 82% !important;
+	height: 82% !important;
 	max-width: calc(100% - 10px);
 	max-height: calc(100% - 10px);
 	object-fit: contain !important;
