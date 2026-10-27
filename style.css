@@ -973,10 +973,12 @@ kbd {
 	min-height: 0 !important;
 	grid-template-rows: minmax(0, 1fr) !important;
 	max-width: calc(100% - 16px) !important;
-	grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+	grid-template-columns: repeat(9, 8.333333%) !important;
 	grid-auto-rows: minmax(0, 1fr) !important;
-	gap: 0 !important;
-	padding: 5px 4.1% !important;
+	column-gap: 2.083333% !important;
+	row-gap: 0 !important;
+	justify-content: center !important;
+	padding: 5px 0 !important;
 	border: 0 !important;
 	transform: translateX(-50%);
 	background: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_elements/hotbar_9slot.png") center / 100% 100% no-repeat !important;
@@ -985,24 +987,36 @@ kbd {
 }
 
 #fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot {
-	width: 76%;
-	height: 100%;
+	width: 100%;
+	height: 62%;
 	min-height: 0;
 	aspect-ratio: auto;
 	justify-self: center;
 	align-self: center;
 	border: 0 !important;
-	background: transparent !important;
+	background-color: #a3a99f !important;
+	background-image: linear-gradient(rgba(163, 169, 159, 0.38), rgba(163, 169, 159, 0.38)), url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_textures/stone.png") !important;
+	background-position: center, center;
+	background-size: 100% 100%, min(48px, 8vw) min(48px, 8vw);
+	background-repeat: no-repeat, repeat;
 	border-radius: 0 !important;
 }
 
 #fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot.fi-selected {
-	background: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_elements/slot_selected.png") center / 100% 100% no-repeat !important;
+	background-color: #bbc3b6 !important;
+	background-image: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_elements/slot_selected.png"), linear-gradient(rgba(187, 195, 182, 0.5), rgba(187, 195, 182, 0.5)), url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_textures/stone.png") !important;
+	background-position: center, center, center;
+	background-size: 100% 100%, 100% 100%, min(48px, 8vw) min(48px, 8vw);
+	background-repeat: no-repeat, no-repeat, repeat;
 	box-shadow: none !important;
 }
 
 #fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot:hover:not(.fi-selected) {
-	background: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_elements/slot_hover.png") center / 100% 100% no-repeat !important;
+	background-color: #8e978b !important;
+	background-image: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_elements/slot_hover.png"), linear-gradient(rgba(142, 151, 139, 0.4), rgba(142, 151, 139, 0.4)), url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_textures/stone.png") !important;
+	background-position: center, center, center;
+	background-size: 100% 100%, 100% 100%, min(48px, 8vw) min(48px, 8vw);
+	background-repeat: no-repeat, no-repeat, repeat;
 }
 
 #fernfall-inventory-root.fi-game-overlay .fi-window {
@@ -1051,10 +1065,12 @@ kbd {
 	min-height: 0 !important;
 	grid-template-rows: minmax(0, 1fr) !important;
 	max-width: calc(100% - 24px) !important;
-	grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+	grid-template-columns: repeat(9, 8.333333%) !important;
 	grid-auto-rows: minmax(0, 1fr) !important;
-	gap: 0 !important;
-	padding: 5px 4.7% !important;
+	column-gap: 2.083333% !important;
+	row-gap: 0 !important;
+	justify-content: center !important;
+	padding: 5px 0 !important;
 	transform: translateX(-50%);
 	background: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_elements/hotbar_9slot.png") center / 100% 100% no-repeat !important;
 	border: 0 !important;
@@ -1063,18 +1079,71 @@ kbd {
 }
 
 #fernfall-inventory-root.fi-open .fi-hotbar .fi-slot {
-	width: 76%;
-	height: 100%;
+	width: 100%;
+	height: 62%;
 	min-height: 0;
 	aspect-ratio: auto;
 	justify-self: center;
 	align-self: center;
 	border: 0 !important;
-	background: transparent !important;
+	background-color: #a3a99f !important;
+	background-image: linear-gradient(rgba(163, 169, 159, 0.38), rgba(163, 169, 159, 0.38)), url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_textures/stone.png") !important;
+	background-position: center, center;
+	background-size: 100% 100%, min(48px, 8vw) min(48px, 8vw);
+	background-repeat: no-repeat, repeat;
 }
 
 #fernfall-inventory-root.fi-open .fi-hotbar .fi-slot.fi-selected {
-	background: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_elements/slot_selected.png") center / 100% 100% no-repeat !important;
+	background-color: #bbc3b6 !important;
+	background-image: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_elements/slot_selected.png"), linear-gradient(rgba(187, 195, 182, 0.5), rgba(187, 195, 182, 0.5)), url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_textures/stone.png") !important;
+	background-position: center, center, center;
+	background-size: 100% 100%, 100% 100%, min(48px, 8vw) min(48px, 8vw);
+	background-repeat: no-repeat, no-repeat, repeat;
+}
+
+#fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot.fi-selected,
+#fernfall-inventory-root.fi-open .fi-hotbar .fi-slot.fi-selected {
+	position: relative;
+	z-index: 1;
+	outline: 2px solid #f1d778 !important;
+	outline-offset: -2px;
+	box-shadow: 0 0 8px #f1d778c9 !important;
+}
+
+#fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot.fi-selected img,
+#fernfall-inventory-root.fi-open .fi-hotbar .fi-slot.fi-selected img {
+	width: 94% !important;
+	height: 94% !important;
+	max-width: none;
+	max-height: none;
+	filter: drop-shadow(0 1px 2px #172318);
+}
+
+#fernfall-inventory-root.fi-open .fi-backpack .fi-slot,
+#fernfall-inventory-root.fi-open .fi-gridbar .fi-slot {
+	border: 2px solid #697168 !important;
+	border-top-color: #c8cec3 !important;
+	border-left-color: #c8cec3 !important;
+	border-radius: 3px !important;
+	background-color: #a3a99f !important;
+	background-image: linear-gradient(rgba(163, 169, 159, 0.48), rgba(163, 169, 159, 0.48)), url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_textures/stone.png") !important;
+	background-position: center, center;
+	background-size: auto, 64px 64px;
+	background-repeat: no-repeat, repeat;
+	box-shadow: inset 0 0 0 1px #92998f !important;
+}
+
+#fernfall-inventory-root.fi-open .fi-backpack .fi-slot.fi-selected,
+#fernfall-inventory-root.fi-open .fi-gridbar .fi-slot.fi-selected {
+	background-color: #bbc3b6 !important;
+	background-image: linear-gradient(rgba(187, 195, 182, 0.64), rgba(187, 195, 182, 0.64)), url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_textures/stone.png") !important;
+	box-shadow: inset 0 0 0 2px #dce5d5 !important;
+}
+
+#fernfall-inventory-root.fi-open .fi-backpack .fi-slot:hover:not(.fi-selected),
+#fernfall-inventory-root.fi-open .fi-gridbar .fi-slot:hover:not(.fi-selected) {
+	background-color: #8e978b !important;
+	background-image: linear-gradient(rgba(142, 151, 139, 0.55), rgba(142, 151, 139, 0.55)), url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_textures/stone.png") !important;
 }
 
 #fernfall-crafting {
