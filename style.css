@@ -871,6 +871,91 @@ kbd {
 	font-size: 17px;
 }
 
+.villager-dialog {
+	width: min(470px, calc(100% - 28px));
+	padding-bottom: 20px;
+	border-color: #c8d6c1;
+	background: var(--paper);
+}
+
+.villager-dialog .survival-dialog-header {
+	padding: 22px 24px 14px;
+	border-bottom: 0;
+	background: linear-gradient(135deg, #edf4e8, #fffdf5);
+}
+
+.villager-dialog .survival-dialog-header h2 {
+	font-size: 20px;
+}
+
+.villager-dialog #villager-greeting {
+	margin: 0 24px 18px;
+	padding: 13px 15px;
+	border-left: 3px solid var(--gold);
+	background: #f3f6ee;
+	color: #47594a;
+	line-height: 1.55;
+}
+
+.villager-dialog .quest-offer {
+	margin: 0 24px 20px;
+	padding: 15px 16px 13px;
+	border: 1px solid #dce5d6;
+	border-radius: 5px;
+	background: #fff;
+}
+
+.villager-dialog .quest-offer h3 {
+	margin: 0 0 7px;
+	color: var(--forest-deep);
+	font-family: "Unbounded", sans-serif;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.villager-dialog .quest-offer p {
+	margin: 0;
+	color: var(--muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.villager-dialog #villager-quest-status {
+	margin-top: 12px;
+	padding-top: 10px;
+	border-top: 1px solid #e8ede3;
+	color: var(--forest);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.villager-dialog .inventory-actions {
+	margin: 0 24px;
+	justify-content: flex-end;
+}
+
+.villager-dialog #villager-quest-action {
+	min-height: 40px;
+	border-color: var(--forest);
+	background: var(--forest);
+	color: #fff;
+}
+
+.villager-dialog #villager-quest-action:hover:not(:disabled) {
+	border-color: var(--forest-deep);
+	background: var(--forest-deep);
+}
+
+.villager-dialog #villager-quest-action:disabled {
+	border-color: #9baa95;
+	background: #9baa95;
+	color: #fff;
+}
+
+.villager-dialog #villager-dialog-close-secondary {
+	background: transparent;
+}
+
 .crafting-workspace {
 	display: grid;
 	grid-template-columns: minmax(210px, 0.9fr) minmax(240px, 1.1fr);
@@ -1156,6 +1241,22 @@ kbd {
 }
 
 @media (max-width: 640px) {
+	.villager-dialog .survival-dialog-header {
+		padding: 18px 18px 12px;
+	}
+
+	.villager-dialog #villager-greeting {
+		margin: 0 18px 14px;
+	}
+
+	.villager-dialog .quest-offer {
+		margin: 0 18px 16px;
+	}
+
+	.villager-dialog .inventory-actions {
+		margin: 0 18px;
+	}
+
 	.survival-dialog-header {
 		padding: 14px;
 	}

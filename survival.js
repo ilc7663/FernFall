@@ -1098,7 +1098,7 @@ const FernfallSurvival = (() => {
 		if (!worldEpoch) return;
 		const elapsed = ((Date.now() - worldEpoch) % NIGHT_CYCLE_MS + NIGHT_CYCLE_MS) % NIGHT_CYCLE_MS;
 		const phase = elapsed / NIGHT_CYCLE_MS;
-		const maxOpacity = 0.42;
+		const maxOpacity = 0.52;
 		let opacity = 0;
 		if (phase >= 0.62 && phase < 0.68) opacity = (phase - 0.62) / 0.06 * maxOpacity;
 		else if (phase >= 0.68 || phase < 0.1) opacity = maxOpacity;
