@@ -289,6 +289,7 @@ function drawPlayer() {
 		if (player.hurt > 0 && Math.floor(now / 90) % 2 === 0) ctx.filter = "brightness(1.8)";
 		drawArt(ctx, ranger, player.x, player.y + bob, 62, 62);
 		ctx.restore();
+		drawToolAction(now);
 		return;
 	}
 	ctx.fillStyle = player.hurt > 0 && Math.floor(performance.now() / 90) % 2 === 0 ? "#fff" : "#df8058";
@@ -318,6 +319,14 @@ function drawPlayer() {
 		ctx.lineTo(player.x + 18, player.y + 11);
 		ctx.stroke();
 	}
+	drawToolAction(now);
+}
+
+function drawToolAction(now) {
+	if (!player.toolAction || now >= player.toolActionUntil || !window.FernfallToolAnimations?.draw) return;
+	const offsets = { up: [0, -13], down: [0, 10], left: [-12, 0], right: [12, 0] };
+	const [offsetX, offsetY] = offsets[player.direction] || offsets.down;
+	window.FernfallToolAnimations.draw(ctx, player.toolAction, player.direction, player.x + offsetX, player.y + offsetY, 64, now);
 }
 
 function drawMob(mob) {
@@ -637,6 +646,7 @@ function gather() {
 		showToast("Nothing to gather nearby. Look for a sparkle!");
 		return;
 	}
+	window.FernfallGameInventory?.animate(resource.type === "wood" ? "chop" : "dig");
 	resource.available = false;
 	addItem(resource.type, 1);
 	playTone(620);
@@ -648,6 +658,7 @@ function attack() {
 	const now = performance.now();
 	if (now - lastAttack < 360) return;
 	lastAttack = now;
+	window.FernfallGameInventory?.animate("attack");
 	player.swing = 1;
 	let hit = false;
 	for (const mob of mobs) {
@@ -738,7 +749,6 @@ document.addEventListener("keydown", (event) => {
 	if (event.repeat) return;
 	if (key === "e") gather();
 	if (key === " " || key === "Spacebar") attack();
-	if (key === "1") useTonic();
 });
 
 document.addEventListener("keyup", (event) => keys.delete(event.key.length === 1 ? event.key.toLowerCase() : event.key));

@@ -6,6 +6,7 @@ const FernfallSurvival = (() => {
 		tonic: { name: "Berry tonic", category: "food", icon: "♧", heal: 2 },
 		seed: { name: "Acorn", category: "materials", icon: "✿" },
 		stone: { name: "Stone", category: "materials", icon: "S" }, carrot: { name: "Carrot", category: "food", icon: "C", heal: 1 },
+		furnace: { name: "Furnace", category: "equipment", icon: "♨" },
 		potato: { name: "Potato", category: "food", icon: "P", heal: 1 }, mushroom: { name: "Forest mushroom", category: "food", icon: "M", heal: 1 },
 		grain: { name: "Grain", category: "materials", icon: "G" }, herb: { name: "Forest herbs", category: "food", icon: "H", heal: 1 },
 		beef_raw: { name: "Raw beef", category: "food", icon: "B", raw: true, art: "beef_raw" },
@@ -73,6 +74,7 @@ const FernfallSurvival = (() => {
 		cooking_pot: "cooking_pot_empty", frying_pan: "frying_pan_empty", bowl: "bowl_empty",
 	};
 	const campfires = [];
+	const packArtCache = new Map();
 	const villages = [];
 	const villageSpriteCache = new WeakMap();
 	const villagers = [];
@@ -377,6 +379,10 @@ const FernfallSurvival = (() => {
 	}
 
 	function openPanel(mode, fire = null) {
+		if (mode === "craft" && window.FernfallCrafting) {
+			window.FernfallCrafting.open();
+			return;
+		}
 		activeMode = mode;
 		activeFireId = fire?.id ?? null;
 		const dialog = document.querySelector("#survival-dialog");
@@ -491,6 +497,18 @@ const FernfallSurvival = (() => {
 		saveGame();
 	}
 
+	function placeFurnace() {
+		const offset = { up: [0, -52], down: [0, 52], left: [-52, 0], right: [52, 0] }[player.direction];
+		const x = player.x + offset[0];
+		const y = player.y + offset[1];
+		if (collides(x, y) || campfires.some((fire) => near(fire, { x, y }, 50))) return show("There is no clear space for a furnace.");
+		campfires.push({ id: `furnace-${Date.now()}-${campfires.length}`, kind: "furnace", x, y, cookware: "", cooking: null });
+		player.inventory.furnace -= 1;
+		show("Furnace placed. Press E nearby to cook.");
+		updateHud();
+		saveGame();
+	}
+
 	function placeCraftingTable() {
 		const offset = { up: [0, -48], down: [0, 48], left: [-48, 0], right: [48, 0] }[player.direction];
 		const table = { x: player.x + offset[0], y: player.y + offset[1], village: false, id: `table-${Date.now()}-${craftingTables.length}` };
@@ -555,6 +573,9 @@ const FernfallSurvival = (() => {
 		} else if (selectedItem === "campfire_kit") {
 			placeCampfire();
 			return;
+		} else if (selectedItem === "furnace") {
+			placeFurnace();
+			return;
 		} else if (selectedItem === "crafting_table") {
 			placeCraftingTable();
 			return;
@@ -570,6 +591,13 @@ const FernfallSurvival = (() => {
 		}
 		updateHud();
 		saveGame();
+	}
+
+	function useItem(id) {
+		if (!itemInfo[id] || !(player.inventory[id] > 0)) return false;
+		selectedItem = id;
+		useSelected();
+		return true;
 	}
 
 	function collectFire(fire) {
@@ -652,6 +680,7 @@ const FernfallSurvival = (() => {
 		}
 		const resource = resources.find((entry) => entry.available && ["stone", "carrot", "potato", "mushroom", "grain", "herb"].includes(entry.type) && near(entry, player, 50));
 		if (resource) {
+			window.FernfallGameInventory?.animate(resource.type === "stone" ? "mine" : ["carrot", "potato", "grain"].includes(resource.type) ? "till" : "dig");
 			resource.available = false;
 			resource.respawnAt = Date.now() + 30000;
 			player.inventory[resource.type] = (player.inventory[resource.type] || 0) + 1;
@@ -664,6 +693,7 @@ const FernfallSurvival = (() => {
 		}
 		const tree = obstacles.find((entry) => !entry.chopped && near(entry, player, 56));
 		if (tree) {
+			window.FernfallGameInventory?.animate("chop");
 			tree.woodHits = (tree.woodHits || 0) + 1;
 			player.inventory.wood = (player.inventory.wood || 0) + 1;
 			recordQuest("gathered");
@@ -689,6 +719,7 @@ const FernfallSurvival = (() => {
 			show("Jimothy dodges away unharmed.");
 			return true;
 		}
+		window.FernfallGameInventory?.animate("attack");
 		player.swing = 1;
 		animal.hp -= 1;
 		animal.hit = 10;
@@ -880,17 +911,43 @@ const FernfallSurvival = (() => {
 		}
 	}
 
+	function drawPackStationArt(id, x, y, size) {
+		const source = window.FERNFALL_ITEM_IMAGES?.[id];
+		if (!source) return false;
+		if (!packArtCache.has(source)) {
+			const image = new Image();
+			image.src = source;
+			packArtCache.set(source, image);
+		}
+		const image = packArtCache.get(source);
+		if (!image.complete || !image.naturalWidth) return false;
+		ctx.save();
+		ctx.imageSmoothingEnabled = false;
+		ctx.drawImage(image, Math.round(x - size / 2), Math.round(y - size / 2), size, size);
+		ctx.restore();
+		return true;
+	}
+
 	function drawStations() {
 		for (const fire of campfires) {
-			const x = fire.x - 39;
-			const y = fire.y - 39;
-			if (!FernfallCooking.drawCampfire(ctx, x, y, performance.now(), 78, true)) {
-				ctx.fillStyle = "#875938";
-				ctx.fillRect(fire.x - 17, fire.y - 6, 34, 12);
-				ctx.fillStyle = "#ef9b4b";
-				ctx.beginPath();
-				ctx.arc(fire.x, fire.y - 5, 9 + Math.sin(performance.now() / 120) * 2, 0, Math.PI * 2);
-				ctx.fill();
+			if (fire.kind === "furnace") {
+				if (!drawPackStationArt(fire.cooking ? "furnace_lit" : "furnace_unlit", fire.x, fire.y, 58)) {
+					ctx.fillStyle = "#77776f";
+					ctx.fillRect(fire.x - 20, fire.y - 20, 40, 40);
+					ctx.fillStyle = fire.cooking ? "#ef9b4b" : "#343b39";
+					ctx.fillRect(fire.x - 9, fire.y - 8, 18, 19);
+				}
+			} else {
+				const x = fire.x - 39;
+				const y = fire.y - 39;
+				if (!FernfallCooking.drawCampfire(ctx, x, y, performance.now(), 78, true)) {
+					ctx.fillStyle = "#875938";
+					ctx.fillRect(fire.x - 17, fire.y - 6, 34, 12);
+					ctx.fillStyle = "#ef9b4b";
+					ctx.beginPath();
+					ctx.arc(fire.x, fire.y - 5, 9 + Math.sin(performance.now() / 120) * 2, 0, Math.PI * 2);
+					ctx.fill();
+				}
 			}
 			if (fire.cookware) FernfallCooking.draw(ctx, fire.cooking ? `${fire.cookware}_food` : `${fire.cookware}_empty`, fire.x - 18, fire.y - 43, 36, 30);
 			if (fire.cooking) {
@@ -1250,11 +1307,6 @@ const FernfallSurvival = (() => {
 		document.querySelector("#villager-quest-action").addEventListener("click", handleVillagerQuestAction);
 		document.querySelector("#villager-dialog-close").addEventListener("click", () => document.querySelector("#villager-dialog").close());
 		document.querySelector("#villager-dialog-close-secondary").addEventListener("click", () => document.querySelector("#villager-dialog").close());
-		document.addEventListener("keydown", (event) => {
-			if (event.key.toLowerCase() !== "i" || event.repeat) return;
-			event.preventDefault();
-			openPanel("craft");
-		});
 		document.querySelector("#survival-list").addEventListener("click", (event) => {
 			const button = event.target.closest("[data-survival-action]");
 			if (!button || button.disabled) return;
@@ -1333,6 +1385,6 @@ const FernfallSurvival = (() => {
 
 	return {
 		setup, update, interact, attackAnimal, blocks, drawResource, drawPonds, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
-		refreshInventory, openCrafting: () => openPanel("craft"), recordQuest, recordVillagerQuestProgress, save,
+		refreshInventory, openCrafting: () => openPanel("craft"), useItem, recordQuest, recordVillagerQuestProgress, save,
 	};
 })();

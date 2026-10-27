@@ -8,6 +8,8 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="Video_Game_PNGs/Fernfall_Complete_Inventory_Crafting_Animations_VSCode/inventory.css">
+	<link rel="stylesheet" href="Video_Game_PNGs/Fernfall_Complete_Inventory_Crafting_Animations_VSCode/crafting.css">
 	<link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -47,9 +49,9 @@
 					<div class="quick-actions">
 						<button class="action-button" id="gather-button" type="button" title="Gather nearby items or offer a berry to a wolf (E)"><span class="action-icon">⌕</span><span>Gather</span><kbd>E</kbd></button>
 						<button class="action-button attack-action" id="attack-button" type="button" title="Swing your stick (Space)"><span class="action-icon">⚔</span><span>Attack</span><kbd>Space</kbd></button>
-						<button class="action-button" id="potion-button" type="button" title="Drink a berry tonic"><span class="action-icon">✿</span><span>Use tonic</span><kbd>1</kbd></button>
+						<button class="action-button" id="potion-button" type="button" title="Drink a berry tonic"><span class="action-icon">✿</span><span>Use tonic</span></button>
 					</div>
-					<p class="control-hint"><span>W A S D</span> move <i>·</i> <span>Click</span> face direction <i>·</i> <span>I</span> inventory</p>
+					<p class="control-hint"><span>W A S D</span> move <i>·</i> <span>I</span> inventory <i>·</i> <span>C</span> craft <i>·</i> <span>1–9</span> hotbar</p>
 				</div>
 			</div>
 
@@ -58,6 +60,11 @@
 					<div><p class="eyebrow">YOUR PACK</p><h1>Inventory</h1></div>
 					<span class="pack-icon" aria-hidden="true">▤</span>
 				</div>
+				<div class="inventory-actions pack-shortcuts">
+					<button class="action-button" id="inventory-open-button" type="button">Open pack <kbd>I</kbd></button>
+					<button class="action-button" id="craft-menu-button" type="button">Craft <kbd>C</kbd></button>
+				</div>
+				<div class="legacy-inventory-content" hidden>
 				<nav class="inventory-tabs" id="inventory-tabs" aria-label="Inventory categories">
 					<button type="button" data-inventory-category="food" aria-pressed="true">Food</button>
 					<button type="button" data-inventory-category="materials" aria-pressed="false">Materials</button>
@@ -68,9 +75,9 @@
 				<p class="inventory-selection" id="survival-status">Select an item to use or place it.</p>
 				<div class="inventory-actions">
 					<button class="action-button" id="use-selected-button" type="button" disabled>Use selected</button>
-					<button class="action-button" id="craft-menu-button" type="button">Craft</button>
 				</div>
 				<div class="pack-note" id="inventory-note">Your pockets are ready for an adventure.</div>
+				</div>
 
 				<div class="panel-rule"></div>
 				<div class="quest-heading"><span class="quest-spark">✦</span><div><p class="eyebrow">TODAY'S TASK</p><h2>Brave the woods</h2></div></div>
@@ -141,5 +148,10 @@
 	<script src="survival.js"></script>
 	<script src="script.js"></script>
 	<script src="survival-integration.js"></script>
+	<script src="Video_Game_PNGs/Fernfall_Complete_Inventory_Crafting_Animations_VSCode/item-catalog.js"></script>
+	<script src="fernfall-pack-assets.js"></script>
+	<script src="Video_Game_PNGs/Fernfall_Complete_Inventory_Crafting_Animations_VSCode/inventory.js"></script>
+	<script src="Video_Game_PNGs/Fernfall_Complete_Inventory_Crafting_Animations_VSCode/crafting.js"></script>
+	<script src="fernfall-game-integration.js"></script>
 </body>
 </html>

@@ -1,0 +1,38 @@
+#fernfall-inventory-root{--fi-outline:#333a31;--fi-cream:#f5ead1;--fi-panel:#a4ae8e;--fi-deep:#596753;font-family:Verdana,sans-serif;position:relative;z-index:9000;color:#263225}
+#fernfall-inventory-root *,#fernfall-inventory-root *::before{box-sizing:border-box}
+#fernfall-inventory-root .fi-hotbar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:grid;grid-template-columns:repeat(9,minmax(30px,54px));gap:3px;padding:7px;border:4px solid #394935;background:#798b73;box-shadow:0 6px 0 #2535258c;border-radius:8px;max-width:calc(100vw - 12px)}
+#fernfall-inventory-root .fi-slot{position:relative;aspect-ratio:1;min-width:0;border:3px solid #566452;border-top-color:#d7ddc4;border-left-color:#d7ddc4;background:#c3c8aa;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:2px;font-size:clamp(17px,2.9vw,29px);padding:2px}
+#fernfall-inventory-root .fi-slot img{width:90%;height:90%;object-fit:contain;image-rendering:pixelated;pointer-events:none}
+#fernfall-inventory-root .fi-slot b{position:absolute;bottom:1px;right:3px;font-size:11px;color:white;text-shadow:1px 1px #151c12,-1px -1px #151c12}
+#fernfall-inventory-root .fi-slot small{position:absolute;top:1px;left:3px;font-size:9px;color:#2b3928}
+#fernfall-inventory-root .fi-slot.fi-selected{outline:3px solid #fbe7a7;outline-offset:-2px;background:#ede2af}
+#fernfall-inventory-root .fi-slot.fi-dim{opacity:.35}
+#fernfall-inventory-root .fi-window{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(580px,calc(100vw - 18px));max-height:90vh;overflow:auto;background:#c7ceb4;border:7px ridge #768866;box-shadow:0 0 0 100vmax #1d2b1c9e,0 16px 36px #10181085;padding:13px 15px;border-radius:5px}
+#fernfall-inventory-root .fi-window[hidden],#fernfall-inventory-root .fi-cursor[hidden],#fernfall-inventory-root .fi-tooltip[hidden]{display:none!important}
+#fernfall-inventory-root .fi-window header{display:flex;justify-content:space-between;align-items:center;font-family:Georgia,serif;font-size:22px;padding:2px 2px 13px;color:#32412d}
+#fernfall-inventory-root .fi-close{font-size:24px;border:2px solid #738164;border-radius:4px;background:#eae4d0;cursor:pointer;width:34px;height:34px}
+#fernfall-inventory-root .fi-tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:15px}
+#fernfall-inventory-root .fi-tabs button{border:2px solid #718067;background:#dbe0c8;border-radius:4px;padding:6px 9px;font-weight:700;color:#394a37;cursor:pointer}
+#fernfall-inventory-root .fi-tabs button.fi-active{background:#697e62;color:white}
+#fernfall-inventory-root .fi-title{font-size:11px;font-weight:800;letter-spacing:.12em;color:#546647;margin:12px 0 7px}
+#fernfall-inventory-root .fi-backpack,#fernfall-inventory-root .fi-gridbar{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px}
+#fernfall-inventory-root .fi-backpack .fi-slot,#fernfall-inventory-root .fi-gridbar .fi-slot{font-size:clamp(15px,3vw,30px)}
+#fernfall-inventory-root .fi-hint{font-size:11px;line-height:1.6;margin-top:16px;color:#53674b}
+#fernfall-inventory-root .fi-use{display:block;width:100%;margin-top:12px;padding:9px 12px;border:2px solid #536a45;border-radius:4px;background:#667e50;color:#fff4d8;font:700 13px Georgia,serif;cursor:pointer}
+#fernfall-inventory-root .fi-use:hover:not(:disabled){background:#526b40}
+#fernfall-inventory-root .fi-use:disabled{opacity:.5;cursor:default}
+#fernfall-inventory-root .fi-cursor{position:fixed;pointer-events:none;z-index:9300;width:40px;height:40px;text-align:center;font-size:30px;text-shadow:0 2px 4px #0006}
+#fernfall-inventory-root .fi-cursor img{width:100%;image-rendering:pixelated}
+#fernfall-inventory-root .fi-cursor b{position:absolute;right:-2px;bottom:-3px;font-size:12px;color:white;text-shadow:1px 1px black}
+#fernfall-inventory-root .fi-tooltip{position:fixed;z-index:9200;padding:7px 10px;background:#263324;color:#fbf1d4;border:2px solid #9cad87;border-radius:4px;font-size:12px;pointer-events:none}
+@media(max-width:550px){#fernfall-inventory-root .fi-hotbar{gap:1px;padding:4px;border-width:3px;width:calc(100vw - 10px)}#fernfall-inventory-root .fi-slot{border-width:2px}#fernfall-inventory-root .fi-window{padding:7px;max-height:84vh}#fernfall-inventory-root .fi-backpack,#fernfall-inventory-root .fi-gridbar{gap:2px}}
+
+/* Fernfall cottagecore palette */
+#fernfall-inventory-root{--fi-parchment:#f0dfb9;--fi-wood:#5c432e;--fi-olive:#66754c;font-family:Georgia,serif!important}
+#fernfall-inventory-root .fi-window{border:10px ridge #6d5037!important;background:linear-gradient(135deg,#f5e8c9,#e1c99b)!important;color:#3f3629!important;box-shadow:0 24px 80px #111b14c9!important;border-radius:14px!important}
+#fernfall-inventory-root .fi-window header{background:#78553d!important;color:#fff0c8!important}
+#fernfall-inventory-root .fi-hotbar{background:#6b4c32eb!important;border:5px solid #98754c!important;border-radius:12px!important;padding:8px!important}
+#fernfall-inventory-root .fi-slot{background:#b4a185!important;border:3px inset #887459!important;border-radius:4px!important}
+#fernfall-inventory-root .fi-slot.fi-selected{outline:3px solid #d5efba!important;box-shadow:0 0 0 2px #314a2d!important}
+#fernfall-inventory-root .fi-slot img{width:80%!important;height:80%!important;object-fit:contain;image-rendering:pixelated}
+#fernfall-inventory-root .fi-tabs button.fi-active{background:#6a8351!important;color:white!important}
