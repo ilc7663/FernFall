@@ -1022,8 +1022,9 @@ kbd {
 	width: min(45vw, 560px) !important;
 	max-height: 76vh !important;
 	transform: none !important;
-	border: 9px ridge #76573b !important;
-	border-radius: 6px !important;
+	border: 10px solid transparent !important;
+	border-image: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_elements/panel_frame.png") 12 fill / 10px / 0 stretch !important;
+	border-radius: 0 !important;
 	background-image: url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_textures/parchment.png") !important;
 	box-shadow: 0 16px 38px #09110db3 !important;
 	pointer-events: auto;

@@ -116,16 +116,6 @@
 		if (!survivalModule?.useItem(gameId)) showToast("That item can't be used here.");
 	});
 	document.querySelector("#inventory-open-button")?.addEventListener("click", () => window.FernfallInventory.open());
-	window.addEventListener("fernfall:inventory-open", (event) => {
-		const craftingPanel = document.querySelector("#fernfall-crafting");
-		if (event.detail.open && craftingPanel?.hidden) window.FernfallCrafting.open();
-		else if (!event.detail.open && craftingPanel && !craftingPanel.hidden) window.FernfallCrafting.close();
-	});
-	window.addEventListener("fernfall:crafting-open", (event) => {
-		const inventoryPanel = document.querySelector("#fernfall-inventory-root .fi-window");
-		if (event.detail.open && inventoryPanel?.hidden) window.FernfallInventory.open();
-		else if (!event.detail.open && inventoryPanel && !inventoryPanel.hidden) window.FernfallInventory.close();
-	});
 
 	const originalUpdateHud = updateHud;
 	updateHud = function (...args) {
