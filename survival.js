@@ -1405,5 +1405,6 @@ const FernfallSurvival = (() => {
 	return {
 		setup, update, interact, attackAnimal, blocks, drawResource, drawPonds, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
 		refreshInventory, openCrafting: () => openPanel("craft"), useItem, recordQuest, recordVillagerQuestProgress, save,
+		campfires, hostileProjectiles,
 	};
 })();
