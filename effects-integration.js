@@ -166,16 +166,16 @@
 	let knownFires = fires().length;
 	render = function () {
 		baseRender();
+		if (!fx) return;
 		if (fires().length > knownFires) {
 			const fire = fires()[fires().length - 1];
 			spawn("spawn", "activation", 2, fire.x, fire.y, 80, 900);
 		}
-		knownFires = fires().length;knownFires = survival.campfires.length;
-		}
+		knownFires = fires().length;
 		ctx.save();
 		ctx.translate(-camera.x, -camera.y);
-		for (const fire of survival?.campfires || []) {
-			if (!fire.cooking)fires()
+		for (const fire of fires()) {
+			if (!fire.cooking) continue;
 			const group = fire.kind === "furnace" ? "steam" : "smoke";
 			drawSprite(frame("cooking", group, Math.floor(performance.now() / 260) % 3 + 1), fire.x, fire.y - 56, 40);
 		}
