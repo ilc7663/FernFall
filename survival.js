@@ -933,7 +933,7 @@ const FernfallSurvival = (() => {
 			if (!button) return;
 			selectedItem = button.dataset.itemId;
 			refreshInventory();
-		}));
+		});
 		document.querySelector("#crafting-inventory").addEventListener("click", (event) => {
 			const button = event.target.closest("[data-craft-item]");
 			if (!button || button.disabled) return;
@@ -956,9 +956,7 @@ const FernfallSurvival = (() => {
 		document.querySelector("#craft-menu-button").addEventListener("click", () => openPanel("craft"));
 		document.querySelector("#survival-close").addEventListener("click", () => document.querySelector("#survival-dialog").close());
 		document.addEventListener("keydown", (event) => {
-			if (event.key !== "Tab" || event.repeat) return;
-			const dialog = document.querySelector("#survival-dialog");
-			if (dialog.open && activeMode === "craft") return;
+			if (event.key.toLowerCase() !== "i" || event.repeat) return;
 			event.preventDefault();
 			openPanel("craft");
 		});
