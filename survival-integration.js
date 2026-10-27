@@ -3,6 +3,8 @@ const hostileAssetRoot = new URL("Video_Game_PNGs/Fernfall_Passive_Mobs_Game_Rea
 loadFernfallHostileAssets(hostileAssetRoot);
 const settlementAssetRoot = new URL("Video_Game_PNGs/Fernfall_Passive_Mobs_Game_Ready/recropped assets/Fernfall_Assets_ReCropped_Game_Ready/assets/Fernfall_Settlement_and_Crafting_Game_Ready/", document.baseURI).href;
 const settlementAssetsReady = loadFernfallSettlementAssets(settlementAssetRoot).catch(() => null);
+const survivalAssetRoot = new URL("Video_Game_PNGs/Fernfall_Passive_Mobs_Game_Ready/recropped assets/Fernfall_Assets_ReCropped_Game_Ready/assets/Fernfall_Survival_Expansion_Game_Ready/", document.baseURI).href;
+const survivalAssetsReady = loadFernfallSurvivalAssets(survivalAssetRoot).catch(() => null);
 const hostileMotion = new WeakMap();
 const hostileTypes = ["skeleton", "witch", "spider", "bat", "zombie"];
 
@@ -214,4 +216,5 @@ drawMob = function (mob) {
 if (survivalModule) {
 	survivalModule.setup(saved);
 	updateHud();
+	survivalAssetsReady.then(() => survivalModule.refreshInventory());
 }

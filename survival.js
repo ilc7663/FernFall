@@ -63,6 +63,15 @@ const FernfallSurvival = (() => {
 	const meatTypes = ["beef_raw", "pork_raw", "mutton_raw", "rabbit_raw"];
 	const hostileTypes = ["skeleton", "witch", "spider", "bat", "zombie"];
 	const categories = ["food", "materials", "equipment", "other"];
+	const inventoryIconKeys = {
+		berry: "berries", wood: "wood", stone: "stone", carrot: "carrot", potato: "potato", mushroom: "mushroom", grain: "grain", herb: "herbs",
+		beef_raw: "beef_raw", pork_raw: "pork_raw", mutton_raw: "mutton_raw", rabbit_raw: "rabbit_raw", wool: "wool", wooden_stick: "stick",
+		beef_cooked: "beef_cooked", pork_cooked: "pork_cooked", mutton_cooked: "mutton_cooked", rabbit_cooked: "rabbit_cooked",
+		cooked_steak: "cooked_steak", steak_veggies: "steak_veggies", pork_chop: "pork_chop", roasted_pork: "roasted_pork",
+		lamb_stew: "lamb_stew", meat_stew: "meat_stew", rabbit_stew: "rabbit_stew", berry_hand_pie: "berry_hand_pie",
+		campfire_kit: "campfire_0", bucket_empty: "bucket_empty", bucket_milk: "bucket_milk", bucket_water: "bucket_water",
+		cooking_pot: "cooking_pot_empty", frying_pan: "frying_pan_empty", bowl: "bowl_empty",
+	};
 	const campfires = [];
 	const villages = [];
 	const villagers = [];
@@ -89,6 +98,19 @@ const FernfallSurvival = (() => {
 
 	function label(id) {
 		return itemInfo[id]?.name || id.replaceAll("_", " ");
+	}
+
+	function inventoryImageSource(id) {
+		const survivalKey = inventoryIconKeys[id];
+		const survivalImages = typeof fernfallSurvival === "undefined" ? null : fernfallSurvival;
+		const survivalImage = survivalKey && survivalImages?.[`inventory_64_${survivalKey}`];
+		if (survivalImage?.src) return survivalImage.src;
+		const cookingImage = FernfallCooking.images[itemInfo[id]?.art || id];
+		if (cookingImage?.src) return cookingImage.src;
+		if (id === "crafting_table") return window.fernfallSettlementArt?.placeables?.crafting_table?.src || "";
+		if (id === "gel") return art.slime.green_idle1?.src || "";
+		if (id === "tonic") return art.item.potion?.src || "";
+		return "";
 	}
 
 	function show(message) {
@@ -243,8 +265,9 @@ const FernfallSurvival = (() => {
 		if (workspace.hidden) return;
 		const grid = document.querySelector("#crafting-grid");
 		grid.innerHTML = craftingSlots.map((id, index) => {
-			const icon = id && itemInfo[id]?.art && FernfallCooking.images[itemInfo[id].art]?.src
-				? `<img class="item-texture" src="${FernfallCooking.images[itemInfo[id].art].src}" alt="">`
+			const image = id ? inventoryImageSource(id) : "";
+			const icon = image
+				? `<img class="item-texture" src="${image}" alt="">`
 				: id ? `<span class="item-icon">${itemInfo[id]?.icon || id[0].toUpperCase()}</span>` : "";
 			return `<button type="button" class="crafting-slot${id ? " filled" : ""}" data-craft-slot="${index}" aria-label="${id ? `Remove ${label(id)}` : `Empty slot ${index + 1}`}">${icon}</button>`;
 		}).join("");
@@ -252,8 +275,9 @@ const FernfallSurvival = (() => {
 		const inventory = document.querySelector("#crafting-inventory");
 		inventory.innerHTML = Object.entries(player.inventory).filter(([id, amount]) => amount > 0 && ingredients.has(id)).map(([id, amount]) => {
 			const placed = craftingGridCounts()[id] || 0;
-			const icon = itemInfo[id]?.art && FernfallCooking.images[itemInfo[id].art]?.src
-				? `<img class="item-texture" src="${FernfallCooking.images[itemInfo[id].art].src}" alt="">`
+			const image = inventoryImageSource(id);
+			const icon = image
+				? `<img class="item-texture" src="${image}" alt="">`
 				: `<span class="item-icon">${itemInfo[id]?.icon || id[0].toUpperCase()}</span>`;
 			return `<button type="button" class="crafting-material" data-craft-item="${id}" ${placed >= amount ? "disabled" : ""}>${icon}<span>${label(id)}</span><span class="crafting-material-count">${amount - placed}</span></button>`;
 		}).join("") || `<p class="inventory-empty">Gather wood and stone to craft.</p>`;
@@ -673,7 +697,7 @@ const FernfallSurvival = (() => {
 		const grid = document.querySelector("#inventory-grid");
 		const entries = Object.entries(player.inventory).filter(([id, amount]) => amount > 0 && categories.includes(itemInfo[id]?.category || "other") && (itemInfo[id]?.category || "other") === selectedCategory);
 		grid.innerHTML = entries.length ? entries.map(([id, amount]) => {
-			const image = itemInfo[id]?.art ? FernfallCooking.images[itemInfo[id].art]?.src : "";
+			const image = inventoryImageSource(id);
 			const icon = image ? `<img class="item-texture" src="${image}" alt="">` : `<span class="item-icon">${itemInfo[id]?.icon || id.slice(0, 1).toUpperCase()}</span>`;
 			return `<button type="button" class="item-slot filled${selectedItem === id ? " selected" : ""}" data-item-id="${id}" title="${label(id)}: ${amount}" aria-pressed="${selectedItem === id}">${icon}<span class="item-count">${amount}</span></button>`;
 		}).join("") : `<p class="inventory-empty">No ${selectedCategory} items yet.</p>`;
