@@ -757,6 +757,37 @@ const FernfallSurvival = (() => {
 		craftingTables.push({ id: `village-table-${key}`, x: center.x, y: center.y + 8, village: true });
 	}
 
+	function ensureSpawnVillage() {
+		const villageId = "village-spawn";
+		const tableId = "village-table-spawn";
+		const center = { x: 478, y: 322 };
+		if (!villages.some((village) => village.id === villageId)) {
+			const legacyVillageIndex = villages.findIndex((village) => village.id === "village-0,0");
+			if (legacyVillageIndex >= 0) villages.splice(legacyVillageIndex, 1);
+			villagers.splice(0, villagers.length, ...villagers.filter((villager) => villager.villageId !== "0,0"));
+			craftingTables.splice(0, craftingTables.length, ...craftingTables.filter((table) => table.id !== "village-table-0,0"));
+			const houses = [
+				{ x: 338, y: 322, width: 88, height: 76, doorSide: "center", role: "mayor", asset: "town_hall" },
+				{ x: 618, y: 322, width: 88, height: 76, doorSide: "center", role: "shopkeeper", asset: "general_store" },
+				{ x: 478, y: 462, width: 88, height: 76, doorSide: "center", role: "blacksmith", asset: "blacksmith_building" },
+			];
+			villages.push({ id: villageId, ...center, houses });
+			villagers.push(...houses.map((house) => ({
+				id: `${villageId}-${house.role}`,
+				role: house.role,
+				x: house.x,
+				y: house.y + house.height / 2 + 20,
+				direction: "down",
+				phase: 0,
+				villageId,
+			})));
+		}
+		if (!craftingTables.some((table) => table.id === tableId)) {
+			craftingTables.push({ id: tableId, x: center.x + 52, y: center.y, village: true });
+		}
+		villageChunks.add("0,0");
+	}
+
 	function generateVillageChunks() {
 		const centerX = Math.floor(player.x / WORLD_CHUNK_SIZE);
 		const centerY = Math.floor(player.y / WORLD_CHUNK_SIZE);
@@ -888,6 +919,7 @@ const FernfallSurvival = (() => {
 		Object.assign(itemInfo, itemDefinitions);
 		for (const id of Object.keys(itemDefinitions)) player.inventory[id] ??= 0;
 		restore(state);
+		ensureSpawnVillage();
 		if (!worldEpoch) {
 			worldEpoch = Date.now();
 			mobs.splice(0, mobs.length, ...mobs.filter((mob) => !hostileTypes.includes(mob.type)));
