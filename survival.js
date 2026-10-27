@@ -74,6 +74,7 @@ const FernfallSurvival = (() => {
 	};
 	const campfires = [];
 	const villages = [];
+	const villageSpriteCache = new WeakMap();
 	const villagers = [];
 	const craftingTables = [];
 	const ponds = [];
@@ -585,6 +586,65 @@ const FernfallSurvival = (() => {
 		drawVillages();
 	}
 
+	function villageSpriteWithoutBackground(image) {
+		if (!image?.complete || !image.naturalWidth) return null;
+		if (villageSpriteCache.has(image)) return villageSpriteCache.get(image);
+
+		const canvas = document.createElement("canvas");
+		canvas.width = image.naturalWidth;
+		canvas.height = image.naturalHeight;
+		const context = canvas.getContext("2d", { willReadFrequently: true });
+		context.drawImage(image, 0, 0);
+		const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+		const pixels = imageData.data;
+		const visited = new Uint8Array(canvas.width * canvas.height);
+		const background = [pixels[0], pixels[1], pixels[2]];
+		const pending = [];
+		const matchesBackground = (offset) =>
+			Math.abs(pixels[offset] - background[0]) <= 18 &&
+			Math.abs(pixels[offset + 1] - background[1]) <= 18 &&
+			Math.abs(pixels[offset + 2] - background[2]) <= 18;
+		const addBackgroundPixel = (index) => {
+			if (visited[index]) return;
+			visited[index] = 1;
+			const offset = index * 4;
+			if (matchesBackground(offset)) pending.push(index);
+		};
+
+		for (let x = 0; x < canvas.width; x += 1) {
+			addBackgroundPixel(x);
+			addBackgroundPixel((canvas.height - 1) * canvas.width + x);
+		}
+		for (let y = 0; y < canvas.height; y += 1) {
+			addBackgroundPixel(y * canvas.width);
+			addBackgroundPixel(y * canvas.width + canvas.width - 1);
+		}
+		while (pending.length) {
+			const index = pending.pop();
+			pixels[index * 4 + 3] = 0;
+			const x = index % canvas.width;
+			const y = Math.floor(index / canvas.width);
+			if (x > 0) addBackgroundPixel(index - 1);
+			if (x < canvas.width - 1) addBackgroundPixel(index + 1);
+			if (y > 0) addBackgroundPixel(index - canvas.width);
+			if (y < canvas.height - 1) addBackgroundPixel(index + canvas.width);
+		}
+
+		context.putImageData(imageData, 0, 0);
+		villageSpriteCache.set(image, canvas);
+		return canvas;
+	}
+
+	function drawVillageSprite(image, x, y, width, height) {
+		const sprite = villageSpriteWithoutBackground(image);
+		if (!sprite) return false;
+		ctx.save();
+		ctx.imageSmoothingEnabled = false;
+		ctx.drawImage(sprite, Math.round(x - width / 2), Math.round(y - height / 2), width, height);
+		ctx.restore();
+		return true;
+	}
+
 	function drawVillages() {
 		const settlementArt = window.fernfallSettlementArt;
 		for (const village of villages) {
@@ -592,7 +652,7 @@ const FernfallSurvival = (() => {
 				const x = house.x - camera.x;
 				const y = house.y - camera.y;
 				const image = settlementArt?.village_assets?.[house.asset];
-				if (!drawArt(ctx, image, x, y, 132, 112)) {
+				if (!drawVillageSprite(image, x, y, 132, 112)) {
 					const left = x - house.width / 2;
 					const top = y - house.height / 2;
 					ctx.fillStyle = "#d5bd8a";
