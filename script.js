@@ -11,6 +11,7 @@ const camera = { x: 0, y: 0 };
 const generatedChunks = new Set(["0,0"]);
 const loadingChunks = new Set();
 const chunkRetryAfter = new Map();
+const animalSpriteBounds = new WeakMap();
 
 const itemInfo = {
 	berry: { name: "Wild berry", icon: "●" },
@@ -364,12 +365,44 @@ function drawAnimal(animal) {
 	const pose = animal.happyUntil > now && ["down", "up"].includes(animal.direction) ? "happy" : frame;
 	const sprite = animalArt?.[`${animal.direction}_${pose}`] || animalArt?.[`${animal.direction}_${frame}`] || animalArt?.[`${animal.direction}_idle`];
 	if (!sprite?.complete || !sprite.naturalWidth) return;
-	const size = animal.type === "cow" ? 66 : animal.type === "rabbit" ? 42 : animal.type === "jimothy" ? 58 : 54;
+	const size = animal.type === "cow" ? 58 : animal.type === "rabbit" ? 37 : animal.type === "jimothy" ? 51 : 48;
+	let bounds = animalSpriteBounds.get(sprite);
+	if (!bounds) {
+		const source = document.createElement("canvas");
+		source.width = sprite.naturalWidth;
+		source.height = sprite.naturalHeight;
+		const sourceContext = source.getContext("2d", { willReadFrequently: true });
+		sourceContext.drawImage(sprite, 0, 0);
+		const pixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
+		let left = source.width;
+		let top = source.height;
+		let right = -1;
+		let bottom = -1;
+		for (let y = 0; y < source.height; y += 1) {
+			for (let x = 0; x < source.width; x += 1) {
+				if (pixels[(y * source.width + x) * 4 + 3] <= 8) continue;
+				left = Math.min(left, x);
+				top = Math.min(top, y);
+				right = Math.max(right, x);
+				bottom = Math.max(bottom, y);
+			}
+		}
+		bounds = right >= left && bottom >= top
+			? { left, top, width: right - left + 1, height: bottom - top + 1 }
+			: { left: 0, top: 0, width: source.width, height: source.height };
+		animalSpriteBounds.set(sprite, bounds);
+	}
+	const scale = size / Math.max(bounds.width, bounds.height);
+	const drawWidth = bounds.width * scale;
+	const drawHeight = bounds.height * scale;
 	ctx.fillStyle = "#49674655";
 	ctx.beginPath();
-	ctx.ellipse(animal.x, animal.y + 13, size * 0.32, 6, 0, 0, Math.PI * 2);
+	ctx.ellipse(animal.x, animal.y + size * 0.24, size * 0.32, size * 0.1, 0, 0, Math.PI * 2);
 	ctx.fill();
-	drawArt(ctx, sprite, animal.x, animal.y, size, size);
+	ctx.save();
+	ctx.imageSmoothingEnabled = false;
+	ctx.drawImage(sprite, bounds.left, bounds.top, bounds.width, bounds.height, Math.round(animal.x - drawWidth / 2), Math.round(animal.y - drawHeight / 2), Math.round(drawWidth), Math.round(drawHeight));
+	ctx.restore();
 	if (animal.type === "wolf" && animal.tamed) {
 		ctx.strokeStyle = "#e7c56e";
 		ctx.lineWidth = 2;
