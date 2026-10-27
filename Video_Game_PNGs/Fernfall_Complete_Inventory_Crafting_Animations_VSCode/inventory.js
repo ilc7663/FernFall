@@ -23,7 +23,8 @@
   let cursor=null, open=false, category='all';
   const root=document.createElement('div');root.id='fernfall-inventory-root';
   root.innerHTML=`<div class="fi-hotbar" aria-label="Item hotbar"></div><div class="fi-window" hidden role="dialog" aria-label="Inventory"><header><strong>✦ Ranger's Pack</strong><button class="fi-close" aria-label="Close inventory">×</button></header><div class="fi-tabs"><button data-cat="all">All</button><button data-cat="food">Food</button><button data-cat="materials">Materials</button><button data-cat="tools">Tools</button><button data-cat="placeables">Placeables</button></div><div class="fi-title">BACKPACK · 27 SLOTS</div><div class="fi-backpack"></div><div class="fi-title">HOTBAR · 9 SLOTS</div><div class="fi-gridbar"></div><button class="fi-use" type="button">Use selected</button><div class="fi-hint">Click: pick up / place · Shift+click: move stack · Right-click: split / place one · 1–9: select hotbar · I: inventory</div></div><div class="fi-cursor" hidden></div><div class="fi-tooltip" hidden></div>`;
-  document.body.append(root);
+  const gameWindow=document.querySelector('.scene-wrap');
+  if(gameWindow){root.classList.add('fi-game-overlay');gameWindow.append(root)}else document.body.append(root);
   const hotbar=root.querySelector('.fi-hotbar'), backpack=root.querySelector('.fi-backpack'), gridbar=root.querySelector('.fi-gridbar');
   const panel=root.querySelector('.fi-window'), cur=root.querySelector('.fi-cursor'),tip=root.querySelector('.fi-tooltip');
   const esc = s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
