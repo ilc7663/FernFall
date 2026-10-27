@@ -1,0 +1,560 @@
+{
+  "version": "1.0",
+  "assets": {
+    "beef_raw": "assets/food/raw/beef_raw.png",
+    "pork_raw": "assets/food/raw/pork_raw.png",
+    "mutton_raw": "assets/food/raw/mutton_raw.png",
+    "rabbit_raw": "assets/food/raw/rabbit_raw.png",
+    "bird_raw": "assets/food/raw/bird_raw.png",
+    "deer_raw": "assets/food/raw/deer_raw.png",
+    "boar_raw": "assets/food/raw/boar_raw.png",
+    "fish_raw": "assets/food/raw/fish_raw.png",
+    "beef_cooked": "assets/food/cooked/beef_cooked.png",
+    "pork_cooked": "assets/food/cooked/pork_cooked.png",
+    "mutton_cooked": "assets/food/cooked/mutton_cooked.png",
+    "rabbit_cooked": "assets/food/cooked/rabbit_cooked.png",
+    "bird_cooked": "assets/food/cooked/bird_cooked.png",
+    "deer_cooked": "assets/food/cooked/deer_cooked.png",
+    "boar_cooked": "assets/food/cooked/boar_cooked.png",
+    "fish_cooked": "assets/food/cooked/fish_cooked.png",
+    "cooked_steak": "assets/food/recipes/cooked_steak.png",
+    "steak_veggies": "assets/food/recipes/steak_veggies.png",
+    "pork_chop": "assets/food/recipes/pork_chop.png",
+    "roasted_pork": "assets/food/recipes/roasted_pork.png",
+    "lamb_stew": "assets/food/recipes/lamb_stew.png",
+    "mutton_chops": "assets/food/recipes/mutton_chops.png",
+    "rabbit_stew": "assets/food/recipes/rabbit_stew.png",
+    "meat_stew": "assets/food/recipes/meat_stew.png",
+    "fish_stew": "assets/food/recipes/fish_stew.png",
+    "campfire_0": "assets/campfire/campfire_0.png",
+    "campfire_1": "assets/campfire/campfire_1.png",
+    "campfire_2": "assets/campfire/campfire_2.png",
+    "campfire_3": "assets/campfire/campfire_3.png",
+    "campfire_4": "assets/campfire/campfire_4.png",
+    "campfire_5": "assets/campfire/campfire_5.png",
+    "campfire_6": "assets/campfire/campfire_6.png",
+    "cooking_pot_empty": "assets/cookware/cooking_pot_empty.png",
+    "cooking_pot_food": "assets/cookware/cooking_pot_food.png",
+    "frying_pan_empty": "assets/cookware/frying_pan_empty.png",
+    "frying_pan_food": "assets/cookware/frying_pan_food.png",
+    "pot_lid": "assets/cookware/pot_lid.png",
+    "small_pan": "assets/cookware/small_pan.png",
+    "bowl_empty": "assets/cookware/bowl_empty.png",
+    "bowl_food": "assets/cookware/bowl_food.png",
+    "bucket_empty": "assets/bucket/bucket_empty.png",
+    "bucket_water": "assets/bucket/bucket_water.png",
+    "berry_hand_pie": "assets/food/recipes/berry_hand_pie.png"
+  },
+  "source": "Fernfall pixel-art cooking reference sheet",
+  "details": {
+    "beef_raw": {
+      "width": 114,
+      "height": 91,
+      "coverage": 0.6499903605166764,
+      "rect": [
+        20,
+        52,
+        143,
+        168
+      ],
+      "category": "food/raw"
+    },
+    "pork_raw": {
+      "width": 105,
+      "height": 91,
+      "coverage": 0.6875981161695447,
+      "rect": [
+        153,
+        52,
+        276,
+        168
+      ],
+      "category": "food/raw"
+    },
+    "mutton_raw": {
+      "width": 114,
+      "height": 102,
+      "coverage": 0.5451496388028896,
+      "rect": [
+        286,
+        52,
+        411,
+        168
+      ],
+      "category": "food/raw"
+    },
+    "rabbit_raw": {
+      "width": 98,
+      "height": 97,
+      "coverage": 0.5088365243004418,
+      "rect": [
+        423,
+        52,
+        549,
+        168
+      ],
+      "category": "food/raw"
+    },
+    "bird_raw": {
+      "width": 97,
+      "height": 95,
+      "coverage": 0.5025501899077591,
+      "rect": [
+        20,
+        201,
+        143,
+        317
+      ],
+      "category": "food/raw"
+    },
+    "deer_raw": {
+      "width": 106,
+      "height": 91,
+      "coverage": 0.6341488699979266,
+      "rect": [
+        153,
+        201,
+        276,
+        317
+      ],
+      "category": "food/raw"
+    },
+    "boar_raw": {
+      "width": 108,
+      "height": 97,
+      "coverage": 0.640225276823215,
+      "rect": [
+        286,
+        201,
+        411,
+        317
+      ],
+      "category": "food/raw"
+    },
+    "fish_raw": {
+      "width": 108,
+      "height": 98,
+      "coverage": 0.5177626606198035,
+      "rect": [
+        423,
+        201,
+        549,
+        317
+      ],
+      "category": "food/raw"
+    },
+    "beef_cooked": {
+      "width": 107,
+      "height": 91,
+      "coverage": 0.6464003286433193,
+      "rect": [
+        571,
+        52,
+        697,
+        168
+      ],
+      "category": "food/cooked"
+    },
+    "pork_cooked": {
+      "width": 113,
+      "height": 91,
+      "coverage": 0.5849460274239036,
+      "rect": [
+        705,
+        52,
+        828,
+        168
+      ],
+      "category": "food/cooked"
+    },
+    "mutton_cooked": {
+      "width": 108,
+      "height": 99,
+      "coverage": 0.5924055368499813,
+      "rect": [
+        832,
+        52,
+        955,
+        168
+      ],
+      "category": "food/cooked"
+    },
+    "rabbit_cooked": {
+      "width": 100,
+      "height": 98,
+      "coverage": 0.6030612244897959,
+      "rect": [
+        963,
+        52,
+        1077,
+        168
+      ],
+      "category": "food/cooked"
+    },
+    "bird_cooked": {
+      "width": 108,
+      "height": 107,
+      "coverage": 0.7462789892696434,
+      "rect": [
+        571,
+        201,
+        697,
+        317
+      ],
+      "category": "food/cooked"
+    },
+    "deer_cooked": {
+      "width": 110,
+      "height": 95,
+      "coverage": 0.516555023923445,
+      "rect": [
+        705,
+        201,
+        828,
+        317
+      ],
+      "category": "food/cooked"
+    },
+    "boar_cooked": {
+      "width": 114,
+      "height": 90,
+      "coverage": 0.6551656920077973,
+      "rect": [
+        832,
+        201,
+        955,
+        317
+      ],
+      "category": "food/cooked"
+    },
+    "fish_cooked": {
+      "width": 106,
+      "height": 105,
+      "coverage": 0.8663072776280324,
+      "rect": [
+        963,
+        201,
+        1077,
+        317
+      ],
+      "category": "food/cooked"
+    },
+    "cooked_steak": {
+      "width": 107,
+      "height": 83,
+      "coverage": 0.6696317982209211,
+      "rect": [
+        1100,
+        52,
+        1231,
+        164
+      ],
+      "category": "food/recipes"
+    },
+    "steak_veggies": {
+      "width": 126,
+      "height": 90,
+      "coverage": 0.6631393298059964,
+      "rect": [
+        1241,
+        52,
+        1373,
+        164
+      ],
+      "category": "food/recipes"
+    },
+    "pork_chop": {
+      "width": 107,
+      "height": 83,
+      "coverage": 0.655669406598356,
+      "rect": [
+        1383,
+        52,
+        1521,
+        164
+      ],
+      "category": "food/recipes"
+    },
+    "roasted_pork": {
+      "width": 112,
+      "height": 83,
+      "coverage": 0.7092297762478486,
+      "rect": [
+        1100,
+        187,
+        1231,
+        301
+      ],
+      "category": "food/recipes"
+    },
+    "lamb_stew": {
+      "width": 114,
+      "height": 84,
+      "coverage": 0.7375730994152047,
+      "rect": [
+        1241,
+        187,
+        1373,
+        301
+      ],
+      "category": "food/recipes"
+    },
+    "mutton_chops": {
+      "width": 118,
+      "height": 95,
+      "coverage": 0.6043710972346119,
+      "rect": [
+        1383,
+        187,
+        1521,
+        301
+      ],
+      "category": "food/recipes"
+    },
+    "rabbit_stew": {
+      "width": 109,
+      "height": 82,
+      "coverage": 0.7255538151711792,
+      "rect": [
+        1100,
+        329,
+        1231,
+        440
+      ],
+      "category": "food/recipes"
+    },
+    "meat_stew": {
+      "width": 111,
+      "height": 88,
+      "coverage": 0.7117117117117117,
+      "rect": [
+        1241,
+        329,
+        1373,
+        440
+      ],
+      "category": "food/recipes"
+    },
+    "fish_stew": {
+      "width": 108,
+      "height": 81,
+      "coverage": 0.718907178783722,
+      "rect": [
+        1383,
+        329,
+        1521,
+        440
+      ],
+      "category": "food/recipes"
+    },
+    "campfire_0": {
+      "width": 98,
+      "height": 89,
+      "coverage": 0.5776198119697317,
+      "rect": [
+        21,
+        402,
+        146,
+        517
+      ],
+      "category": "campfire"
+    },
+    "campfire_1": {
+      "width": 99,
+      "height": 108,
+      "coverage": 0.6853722409277965,
+      "rect": [
+        156,
+        402,
+        280,
+        517
+      ],
+      "category": "campfire"
+    },
+    "campfire_2": {
+      "width": 99,
+      "height": 108,
+      "coverage": 0.691638608305275,
+      "rect": [
+        293,
+        402,
+        417,
+        517
+      ],
+      "category": "campfire"
+    },
+    "campfire_3": {
+      "width": 99,
+      "height": 108,
+      "coverage": 0.686026936026936,
+      "rect": [
+        430,
+        402,
+        556,
+        517
+      ],
+      "category": "campfire"
+    },
+    "campfire_4": {
+      "width": 98,
+      "height": 108,
+      "coverage": 0.6635487528344671,
+      "rect": [
+        568,
+        402,
+        693,
+        517
+      ],
+      "category": "campfire"
+    },
+    "campfire_5": {
+      "width": 95,
+      "height": 109,
+      "coverage": 0.6923225494929985,
+      "rect": [
+        699,
+        402,
+        825,
+        517
+      ],
+      "category": "campfire"
+    },
+    "campfire_6": {
+      "width": 97,
+      "height": 108,
+      "coverage": 0.6602710958381062,
+      "rect": [
+        831,
+        402,
+        956,
+        517
+      ],
+      "category": "campfire"
+    },
+    "cooking_pot_empty": {
+      "width": 112,
+      "height": 94,
+      "coverage": 0.6734422492401215,
+      "rect": [
+        22,
+        583,
+        177,
+        704
+      ],
+      "category": "cookware"
+    },
+    "cooking_pot_food": {
+      "width": 119,
+      "height": 99,
+      "coverage": 0.6729479670656141,
+      "rect": [
+        185,
+        583,
+        332,
+        704
+      ],
+      "category": "cookware"
+    },
+    "frying_pan_empty": {
+      "width": 124,
+      "height": 101,
+      "coverage": 0.504870648355158,
+      "rect": [
+        340,
+        583,
+        481,
+        704
+      ],
+      "category": "cookware"
+    },
+    "frying_pan_food": {
+      "width": 123,
+      "height": 99,
+      "coverage": 0.5112096575511209,
+      "rect": [
+        492,
+        583,
+        632,
+        704
+      ],
+      "category": "cookware"
+    },
+    "pot_lid": {
+      "width": 102,
+      "height": 84,
+      "coverage": 0.6823062558356676,
+      "rect": [
+        643,
+        583,
+        779,
+        704
+      ],
+      "category": "cookware"
+    },
+    "small_pan": {
+      "width": 107,
+      "height": 98,
+      "coverage": 0.4544154110242228,
+      "rect": [
+        783,
+        583,
+        924,
+        704
+      ],
+      "category": "cookware"
+    },
+    "bowl_empty": {
+      "width": 104,
+      "height": 82,
+      "coverage": 0.7169324577861164,
+      "rect": [
+        926,
+        583,
+        1077,
+        704
+      ],
+      "category": "cookware"
+    },
+    "bowl_food": {
+      "width": 105,
+      "height": 89,
+      "coverage": 0.6985553772070626,
+      "rect": [
+        1082,
+        583,
+        1210,
+        704
+      ],
+      "category": "cookware"
+    },
+    "bucket_empty": {
+      "width": 103,
+      "height": 113,
+      "coverage": 0.7738637339977661,
+      "rect": [
+        1239,
+        534,
+        1376,
+        680
+      ],
+      "category": "bucket"
+    },
+    "bucket_water": {
+      "width": 108,
+      "height": 130,
+      "coverage": 0.7794871794871795,
+      "rect": [
+        1377,
+        534,
+        1522,
+        680
+      ],
+      "category": "bucket"
+    },
+    "berry_hand_pie": {
+      "width": 127,
+      "height": 130,
+      "category": "food/recipes"
+    }
+  }
+}

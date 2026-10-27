@@ -366,6 +366,8 @@ function updateCamera() {
 	if (screenY > HEIGHT / 2 + deadZoneY) targetY = player.y - (HEIGHT / 2 + deadZoneY);
 	camera.x += (targetX - camera.x) * 0.12;
 	camera.y += (targetY - camera.y) * 0.12;
+	camera.x = Math.round(camera.x);
+	camera.y = Math.round(camera.y);
 }
 
 function render() {
@@ -378,7 +380,7 @@ function render() {
 	resources.filter((resource) => visible(resource)).forEach(drawResource);
 	animals.filter((animal) => visible(animal) && animal.y < player.y).forEach(drawAnimal);
 	mobs.filter((mob) => mob.alive && visible(mob) && mob.y < player.y).forEach(drawMob);
-	obstacles.filter((tree) => visible(tree, 140)).forEach(drawTree);
+	obstacles.filter((tree) => visible(tree, 140) && tree.y < player.y).forEach(drawTree);
 	pickups.forEach((pickup) => {
 		if (!visible(pickup)) return;
 		if (!drawArt(ctx, art.item.coin, pickup.x, pickup.y, 24, 24)) {
@@ -391,6 +393,7 @@ function render() {
 	animals.filter((animal) => visible(animal) && animal.y >= player.y).forEach(drawAnimal);
 	mobs.filter((mob) => mob.alive && visible(mob) && mob.y >= player.y).forEach(drawMob);
 	drawPlayer();
+	obstacles.filter((tree) => visible(tree, 140) && tree.y >= player.y).forEach(drawTree);
 	ctx.restore();
 	requestAnimationFrame(render);
 }
