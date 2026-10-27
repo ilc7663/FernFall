@@ -924,10 +924,11 @@ const FernfallSurvival = (() => {
 		document.querySelector("#craft-menu-button").addEventListener("click", () => openPanel("craft"));
 		document.querySelector("#survival-close").addEventListener("click", () => document.querySelector("#survival-dialog").close());
 		document.addEventListener("keydown", (event) => {
-			if (event.key === "Tab" && !event.repeat && !document.querySelector("#survival-dialog").open) {
-				event.preventDefault();
-				openPanel("craft");
-			}
+			if (event.key !== "Tab" || event.repeat) return;
+			const dialog = document.querySelector("#survival-dialog");
+			if (dialog.open && activeMode === "craft") return;
+			event.preventDefault();
+			openPanel("craft");
 		});
 		document.querySelector("#survival-list").addEventListener("click", (event) => {
 			const button = event.target.closest("[data-survival-action]");
