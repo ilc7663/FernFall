@@ -545,20 +545,19 @@ const FernfallSurvival = (() => {
 		const centerY = Math.floor(player.y / WORLD_CHUNK_SIZE);
 		for (let cy = centerY - 1; cy <= centerY + 1; cy += 1) {
 			for (let cx = centerX - 1; cx <= centerX + 1; cx += 1) {
-			const type = roll < 0.12 ? "witch" : roll < 0.33 ? "spider" : roll < 0.48 ? "bat" : roll < 0.7 ? "skeleton" : roll < 0.82 ? "zombie" : "slime";
+				const key = `${nightIndex}:${cx},${cy}`;
 				if (hostileChunks.has(key)) continue;
 				hostileChunks.add(key);
 				let seed = (Math.imul(cx, 374761393) ^ Math.imul(cy, 668265263) ^ Math.imul(nightIndex + 1, 2246822519)) >>> 0;
 				const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
 				if (random() > 0.62) continue;
 				const roll = random();
-				const type = roll < 0.12 ? "witch" : roll < 0.32 ? "spider" : roll < 0.48 ? "bat" : roll < 0.76 ? "skeleton" : "zombie";
+				const type = roll < 0.12 ? "witch" : roll < 0.33 ? "spider" : roll < 0.48 ? "bat" : roll < 0.7 ? "skeleton" : roll < 0.82 ? "zombie" : "slime";
 				const position = {
 					x: cx * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
 					y: cy * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
 				};
 				if (collides(position.x, position.y) || Math.hypot(player.x - position.x, player.y - position.y) < 120) continue;
-				const hp = type === "witch" ? 5 : type === "zombie" ? 4 : type === "bat" ? 2 : 3;
 				const hp = type === "witch" ? 5 : type === "zombie" ? 4 : type === "bat" || type === "slime" ? 2 : 3;
 				mobs.push({ ...position, type, hp, maxHp: hp, alive: true, phase: random() * 6, hit: 0, lastSpell: 0 });
 			}
