@@ -21,12 +21,14 @@
   let slots = Array.from({length:SIZE},(_,i)=> {const v=saved?.slots?.[i];return v && catalog[v.id] && Number.isInteger(v.count) && v.count>0 ? {id:v.id,count:Math.min(v.count,maxFor(v.id))}:null});
   let selected = Number.isInteger(saved?.selected) ? Math.max(0,Math.min(8,saved.selected)) : 0;
   let cursor=null, open=false, category='all';
+  let portraitPainter=null;
   const root=document.createElement('div');root.id='fernfall-inventory-root';
-  root.innerHTML=`<div class="fi-hotbar" aria-label="Item hotbar"></div><div class="fi-window" hidden role="dialog" aria-label="Inventory"><header><strong>✦ Ranger's Pack</strong><button class="fi-close" aria-label="Close inventory">×</button></header><div class="fi-tabs"><button data-cat="all">All</button><button data-cat="food">Food</button><button data-cat="materials">Materials</button><button data-cat="tools">Tools</button><button data-cat="placeables">Placeables</button></div><div class="fi-title">BACKPACK · 27 SLOTS</div><div class="fi-backpack"></div><div class="fi-title">HOTBAR · 9 SLOTS</div><div class="fi-gridbar"></div><button class="fi-use" type="button">Use selected</button><div class="fi-hint">Click: pick up / place · Shift+click: move stack · Right-click: split / place one · 1–9: select hotbar · I: inventory</div></div><div class="fi-cursor" hidden></div><div class="fi-tooltip" hidden></div>`;
+  root.innerHTML=`<div class="fi-hotbar" aria-label="Item hotbar"></div><div class="fi-window" hidden role="dialog" aria-label="Inventory"><header><strong>✦ Ranger's Pack</strong><button class="fi-close" aria-label="Close inventory">×</button></header><div class="fi-content"><aside class="fi-character"><div class="fi-character-title">ADVENTURER</div><div class="fi-avatar-frame"><canvas class="fi-avatar" width="128" height="160" aria-label="Ranger character preview"></canvas></div><strong>Little Ranger</strong></aside><section class="fi-storage"><div class="fi-tabs"><button data-cat="all">All</button><button data-cat="food">Food</button><button data-cat="materials">Materials</button><button data-cat="tools">Tools</button><button data-cat="placeables">Placeables</button></div><div class="fi-title">BACKPACK · 27 SLOTS</div><div class="fi-backpack"></div><div class="fi-title">HOTBAR · 9 SLOTS</div><div class="fi-gridbar"></div><button class="fi-use" type="button">Use selected</button><div class="fi-hint">Click: pick up / place · Shift+click: move stack · Right-click: split / place one · 1–9: select hotbar · I: inventory</div></section></div></div><div class="fi-cursor" hidden></div><div class="fi-tooltip" hidden></div>`;
   const gameWindow=document.querySelector('.scene-wrap');
   if(gameWindow){root.classList.add('fi-game-overlay');gameWindow.append(root)}else document.body.append(root);
   const hotbar=root.querySelector('.fi-hotbar'), backpack=root.querySelector('.fi-backpack'), gridbar=root.querySelector('.fi-gridbar');
   const panel=root.querySelector('.fi-window'), cur=root.querySelector('.fi-cursor'),tip=root.querySelector('.fi-tooltip');
+  const portrait=root.querySelector('.fi-avatar');
   const esc = s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function icon(id){const path=window.FERNFALL_ITEM_IMAGES?.[id]; return path?`<img draggable="false" src="${esc(path)}" alt="">`:`<span>${catalog[id]?.[1]||'❔'}</span>`}
   function tile(i,bar=false){const s=slots[i],hidden=s && category!=='all'&&catalog[s.id]?.[2]!==category && open&&!bar;
@@ -37,7 +39,8 @@
   function render(){hotbar.innerHTML=Array.from({length:9},(_,i)=>tile(i,true)).join(''); gridbar.innerHTML=Array.from({length:9},(_,i)=>tile(i,true)).join('');backpack.innerHTML=Array.from({length:27},(_,i)=>tile(i+9)).join('');
     root.querySelectorAll('.fi-tabs button').forEach(x=>x.classList.toggle('fi-active',x.dataset.cat===category));
     root.querySelector('.fi-use').disabled=!slots[selected];
-    cur.innerHTML=cursor?icon(cursor.id)+`<b>${cursor.count>1?cursor.count:''}</b>`:'';cur.hidden=!cursor;}
+    cur.innerHTML=cursor?icon(cursor.id)+`<b>${cursor.count>1?cursor.count:''}</b>`:'';cur.hidden=!cursor;
+    if(portraitPainter){const context=portrait.getContext('2d');context.clearRect(0,0,portrait.width,portrait.height);portraitPainter(context,portrait.width,portrait.height)}}
   function add(id,count=1){if(!catalog[id]||!Number.isInteger(count)||count<=0)return count;let left=count;
     for(let i=0;i<SIZE;i++){const s=slots[i];if(s?.id===id&&s.count<maxFor(id)){const n=Math.min(left,maxFor(id)-s.count);s.count+=n;left-=n;if(!left)break}}
     for(let i=0;i<SIZE&&left;i++)if(!slots[i]){const n=Math.min(left,maxFor(id));slots[i]={id,count:n};left-=n}
@@ -66,7 +69,7 @@
     if(e.key.toLowerCase()==='i'){e.preventDefault();setOpen(!open)}
     if(e.key==='Escape'&&open){e.preventDefault();setOpen(false)}
     if(/^Digit[1-9]$/.test(e.code)){select(Number(e.code.slice(-1))-1)}});
-  window.FernfallInventory={add,remove,count:countItem,setCount,replace,getSlots,hasCursor,select,toggle:()=>setOpen(!open),open:()=>setOpen(true),close:()=>setOpen(false),getSelected:()=>slots[selected]?{...slots[selected]}:null,
+  window.FernfallInventory={add,remove,count:countItem,setCount,replace,getSlots,hasCursor,setPortrait(painter){portraitPainter=painter;render()},select,toggle:()=>setOpen(!open),open:()=>setOpen(true),close:()=>setOpen(false),getSelected:()=>slots[selected]?{...slots[selected]}:null,
     register:(id,name,emoji='📦',type='materials')=>{catalog[id]=[name,emoji,type]},
     useSelected:()=>{const s=slots[selected];if(!s)return false;window.dispatchEvent(new CustomEvent('fernfall:item-use',{detail:{id:s.id,slot:selected}}));return true}};
   render();

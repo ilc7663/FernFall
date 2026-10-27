@@ -99,6 +99,13 @@
 			return true;
 		},
 	};
+	window.FernfallInventory.setPortrait((context, width, height) => {
+		const sprite = art.ranger[`${player.direction}_idle`] || art.ranger.down_idle;
+		if (!sprite?.complete || !sprite.naturalWidth) return;
+		const size = Math.min(width - 12, height - 12);
+		context.imageSmoothingEnabled = false;
+		context.drawImage(sprite, Math.round((width - size) / 2), Math.round(height - size - 4), size, size);
+	});
 
 	syncPackFromGame();
 	window.addEventListener("fernfall:inventory-change", () => {
