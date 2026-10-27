@@ -59,6 +59,7 @@ const FernfallSurvival = (() => {
 		{ id: "rabbit_stew", name: "Rabbit stew", ingredients: { rabbit_raw: 1, carrot: 1, potato: 1 }, station: "pot", seconds: 9, waterOptional: true },
 	];
 	const meatTypes = ["beef_raw", "pork_raw", "mutton_raw", "rabbit_raw"];
+	const hostileTypes = ["skeleton", "witch", "spider", "bat", "zombie"];
 	const categories = ["food", "materials", "equipment", "other"];
 	const campfires = [];
 	const ponds = [];
@@ -67,6 +68,8 @@ const FernfallSurvival = (() => {
 	const discoveredRecipes = new Set();
 	const questProgress = { gathered: 0, campfire: 0, meal: 0, milk: 0, wolf: 0, jimothy: 0 };
 	const completedSurvivalQuests = new Set();
+	const NIGHT_CYCLE_MS = 180000;
+	const hostileChunks = new Set();
 	let selectedCategory = "food";
 	let selectedItem = "";
 	let activeMode = "craft";
@@ -74,6 +77,8 @@ const FernfallSurvival = (() => {
 	let lastRefresh = 0;
 	let sickUntil = 0;
 	let nextSicknessDamage = 0;
+	let worldEpoch = 0;
+	let currentNightIndex = -1;
 
 	function label(id) {
 		return itemInfo[id]?.name || id.replaceAll("_", " ");
@@ -81,6 +86,18 @@ const FernfallSurvival = (() => {
 
 	function show(message) {
 		showToast(message);
+	}
+
+	function updateWorldClock(now) {
+		if (!worldEpoch) worldEpoch = now;
+		const elapsed = Math.max(0, now - worldEpoch);
+		const phase = (elapsed % NIGHT_CYCLE_MS) / NIGHT_CYCLE_MS;
+		const isNight = phase >= 0.68 || phase < 0.16;
+		const timeLabel = document.querySelector("#time-label");
+		if (timeLabel) timeLabel.textContent = isNight ? "Night" : phase < 0.24 ? "Dawn" : phase < 0.5 ? "Morning" : phase < 0.68 ? "Evening" : "Night";
+		const dayLabel = document.querySelector("#day-count");
+		if (dayLabel) dayLabel.textContent = String(Math.floor(elapsed / NIGHT_CYCLE_MS) + 1);
+		return { isNight, nightIndex: Math.floor(elapsed / NIGHT_CYCLE_MS) };
 	}
 
 	function recordQuest(id, amount = 1) {
@@ -519,16 +536,31 @@ const FernfallSurvival = (() => {
 					if (!collides(resource.x, resource.y) && Math.hypot(player.x - resource.x, player.y - resource.y) > 85) resources.push(resource);
 				}
 				if (random() < 0.22) ponds.push({ x: cx * WORLD_CHUNK_SIZE + 100 + random() * 300, y: cy * WORLD_CHUNK_SIZE + 100 + random() * 300 });
-				if (random() < 0.55) {
-					const roll = random();
-					const type = roll < 0.14 ? "witch" : roll < 0.44 ? "spider" : roll < 0.74 ? "skeleton" : "zombie";
-					const position = {
-						x: cx * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
-						y: cy * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
-					};
-					const hp = type === "witch" ? 5 : type === "zombie" ? 4 : 3;
-					mobs.push({ ...position, type, hp, maxHp: hp, alive: true, phase: random() * 6, hit: 0, lastSpell: 0 });
-				}
+			}
+		}
+	}
+
+	function generateHostileChunks(nightIndex) {
+		const centerX = Math.floor(player.x / WORLD_CHUNK_SIZE);
+		const centerY = Math.floor(player.y / WORLD_CHUNK_SIZE);
+		for (let cy = centerY - 1; cy <= centerY + 1; cy += 1) {
+			for (let cx = centerX - 1; cx <= centerX + 1; cx += 1) {
+			const type = roll < 0.12 ? "witch" : roll < 0.33 ? "spider" : roll < 0.48 ? "bat" : roll < 0.7 ? "skeleton" : roll < 0.82 ? "zombie" : "slime";
+				if (hostileChunks.has(key)) continue;
+				hostileChunks.add(key);
+				let seed = (Math.imul(cx, 374761393) ^ Math.imul(cy, 668265263) ^ Math.imul(nightIndex + 1, 2246822519)) >>> 0;
+				const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+				if (random() > 0.62) continue;
+				const roll = random();
+				const type = roll < 0.12 ? "witch" : roll < 0.32 ? "spider" : roll < 0.48 ? "bat" : roll < 0.76 ? "skeleton" : "zombie";
+				const position = {
+					x: cx * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
+					y: cy * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
+				};
+				if (collides(position.x, position.y) || Math.hypot(player.x - position.x, player.y - position.y) < 120) continue;
+				const hp = type === "witch" ? 5 : type === "zombie" ? 4 : type === "bat" ? 2 : 3;
+				const hp = type === "witch" ? 5 : type === "zombie" ? 4 : type === "bat" || type === "slime" ? 2 : 3;
+				mobs.push({ ...position, type, hp, maxHp: hp, alive: true, phase: random() * 6, hit: 0, lastSpell: 0 });
 			}
 		}
 	}
@@ -536,6 +568,9 @@ const FernfallSurvival = (() => {
 	function update() {
 		generateResourceChunks();
 		const now = Date.now();
+		const { isNight, nightIndex } = updateWorldClock(now);
+		if (isNight && nightIndex !== currentNightIndex) currentNightIndex = nightIndex;
+		if (isNight) generateHostileChunks(nightIndex);
 		for (const animal of animals) {
 			const health = { cow: 4, pig: 3, sheep: 3, rabbit: 2, wolf: 5, jimothy: 3 }[animal.type] || 3;
 			animal.maxHp ??= health;
@@ -555,7 +590,7 @@ const FernfallSurvival = (() => {
 						target.alive = false;
 						player.coins += 1;
 						player.xp += 1;
-						if (!["skeleton", "witch"].includes(target.type)) addDrop(target.x, target.y, "gel");
+						if (!hostileTypes.includes(target.type)) addDrop(target.x, target.y, "gel");
 						show(`Your wolf helped defeat a ${target.type || "slime"}!`);
 						checkQuest();
 						updateHud();
@@ -623,6 +658,10 @@ const FernfallSurvival = (() => {
 		Object.assign(itemInfo, itemDefinitions);
 		for (const id of Object.keys(itemDefinitions)) player.inventory[id] ??= 0;
 		restore(state);
+		if (!worldEpoch) {
+			worldEpoch = Date.now();
+			mobs.splice(0, mobs.length, ...mobs.filter((mob) => !hostileTypes.includes(mob.type)));
+		}
 		document.querySelectorAll("[data-inventory-category]").forEach((button) => button.addEventListener("click", () => {
 			selectedCategory = button.dataset.inventoryCategory;
 			refreshInventory();
@@ -682,6 +721,8 @@ const FernfallSurvival = (() => {
 		(state.resourceChunks || []).forEach((key) => resourceChunks.add(key));
 		(state.discoveredRecipes || []).forEach((key) => discoveredRecipes.add(key));
 		jimothyMet = state.jimothyMet ?? jimothyMet;
+		worldEpoch = state.worldEpoch || 0;
+		(state.hostileChunks || []).forEach((key) => hostileChunks.add(key));
 		Object.assign(questProgress, state.questProgress || {});
 		(state.completedSurvivalQuests || []).forEach((id) => completedSurvivalQuests.add(id));
 		selectedItem = state.selectedItem || "";
@@ -692,7 +733,9 @@ const FernfallSurvival = (() => {
 			inventory: player.inventory, resources, animals, mobs, pickups, obstacles,
 			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], ponds, campfires, hostileProjectiles,
 			discoveredRecipes: [...discoveredRecipes], jimothyMet, selectedItem, questProgress,
-			completedSurvivalQuests: [...completedSurvivalQuests],
+			completedSurvivalQuests: [...completedSurvivalQuests], worldEpoch,
+			hostileChunks: [...hostileChunks],
+			hostileChunks: [...hostileChunks],
 		};
 	}
 

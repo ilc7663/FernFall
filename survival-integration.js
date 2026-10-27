@@ -1,3 +1,34 @@
+const hostileAssetRoot = new URL("Video_Game_PNGs/Fernfall_Passive_Mobs_Game_Ready/recropped assets/Fernfall_Assets_ReCropped_Game_Ready/assets/Fernfall_Hostile_Mobs_Game_Ready/", document.baseURI).href;
+loadFernfallHostileAssets(hostileAssetRoot);
+const hostileMotion = new WeakMap();
+const hostileTypes = ["skeleton", "witch", "spider", "bat", "zombie"];
+
+function drawHostileSprite(mob, x, y) {
+	const frames = fernfallHostileArt[mob.type];
+	if (!frames) return false;
+	const previous = hostileMotion.get(mob);
+	const moving = previous && Math.hypot(mob.x - previous.x, mob.y - previous.y) > 0.25;
+	hostileMotion.set(mob, { x: mob.x, y: mob.y });
+	const dx = player.x - mob.x;
+	const dy = player.y - mob.y;
+	const direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : dy < 0 ? "up" : "down";
+	const walkFrame = Math.floor(performance.now() / 170 + mob.phase) % 2 + 1;
+	const action = mob.type === "witch" && performance.now() - (mob.lastSpell || 0) < 650
+		? "cast"
+		: mob.hit > 0 ? "attack"
+			: moving ? (mob.type === "bat" ? `fly${walkFrame}` : `walk${walkFrame}`)
+				: mob.type === "bat" ? `fly${walkFrame}` : "idle";
+	const sprite = frames[`${direction}_${action}`] || frames[`${direction}_idle`];
+	if (!sprite?.complete || !sprite.naturalWidth) return false;
+	ctx.save();
+	if (mob.hit > 0) ctx.filter = "brightness(1.7)";
+	const size = mob.type === "bat" ? 46 : mob.type === "spider" ? 52 : 56;
+	const drawn = drawArt(ctx, sprite, x, y, size, size);
+	ctx.restore();
+	if (mob.hp < mob.maxHp) drawMobHealth(mob, x, y);
+	return drawn;
+}
+
 const originalGather = gather;
 gather = function () {
 	if (FernfallSurvival.interact()) return;
@@ -5,8 +36,6 @@ gather = function () {
 	originalGather();
 	if (untamedWolves.some((animal) => animal.tamed)) FernfallSurvival.recordQuest("wolf");
 };
-
-const hostileTypes = ["skeleton", "witch", "spider", "zombie"];
 
 const originalAttack = attack;
 attack = function () {
@@ -96,6 +125,7 @@ drawMob = function (mob) {
 	if (!hostileTypes.includes(mob.type)) return originalDrawMob(mob);
 	const x = mob.x;
 	const y = mob.y + Math.sin(performance.now() / 170 + mob.phase) * 1.5;
+	if (drawHostileSprite(mob, x, y)) return;
 	ctx.fillStyle = "#30483b55";
 	ctx.beginPath();
 	ctx.ellipse(x, y + 13, 17, 6, 0, 0, Math.PI * 2);

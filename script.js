@@ -73,11 +73,7 @@ const resources = [
 	{ x: 739, y: 365, type: "seed", available: true },
 ];
 
-const mobs = [
-	{ x: 596, y: 325, hp: 2, maxHp: 2, alive: true, phase: 0, hit: 0 },
-	{ x: 386, y: 510, hp: 2, maxHp: 2, alive: true, phase: 2, hit: 0 },
-	{ x: 881, y: 333, hp: 3, maxHp: 3, alive: true, phase: 4, hit: 0 },
-];
+const mobs = [];
 
 const animals = [
 	{ type: "sheep", x: 518, y: 170, phase: 0, roamAngle: 1.8, turnTimer: 0, direction: "down", moving: false },
@@ -118,8 +114,6 @@ function generateWorldChunk(chunkX, chunkY) {
 	for (let index = 0; index < 3; index += 1) {
 		resources.push({ ...randomChunkPosition(random, chunkX, chunkY), type: ["berry", "wood", "seed"][Math.floor(random() * 3)], available: true });
 	}
-	const mobPosition = randomChunkPosition(random, chunkX, chunkY);
-	mobs.push({ ...mobPosition, hp: 2, maxHp: 2, alive: true, phase: random() * 6, hit: 0 });
 	const animalTypes = ["sheep", "cow", "pig", "rabbit", "wolf"];
 	for (let index = 0; index < 2; index += 1) {
 		animals.push({
