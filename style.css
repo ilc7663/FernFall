@@ -1003,6 +1003,13 @@ kbd {
 	border-radius: 0 !important;
 }
 
+#fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot img[src*="slime_gel.png"],
+#fernfall-inventory-root.fi-open .fi-hotbar .fi-slot img[src*="slime_gel.png"] {
+	transform: scaleX(1.4);
+	transform-origin: center;
+	mix-blend-mode: multiply;
+}
+
 #fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot.fi-selected {
 	background-color: #bbc3b6 !important;
 	background-image: linear-gradient(rgba(187, 195, 182, 0.5), rgba(187, 195, 182, 0.5)), url("Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/assets/ui_textures/stone.png") !important;

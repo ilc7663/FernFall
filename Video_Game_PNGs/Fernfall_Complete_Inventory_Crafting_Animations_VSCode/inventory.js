@@ -29,8 +29,42 @@
   const hotbar=root.querySelector('.fi-hotbar'), backpack=root.querySelector('.fi-backpack'), gridbar=root.querySelector('.fi-gridbar');
   const panel=root.querySelector('.fi-window'), cur=root.querySelector('.fi-cursor'),tip=root.querySelector('.fi-tooltip');
   const portrait=root.querySelector('.fi-avatar');
+  const cleanedSlimeGelIcons=new Map();
   const esc = s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function icon(id){const path=window.FERNFALL_ITEM_IMAGES?.[id]; return path?`<img draggable="false" src="${esc(path)}" alt="">`:`<span>${catalog[id]?.[1]||'❔'}</span>`}
+  function icon(id){const path=window.FERNFALL_ITEM_IMAGES?.[id]; return path?`<img draggable="false"${id==='slime_gel'?' data-clean-slime-gel':''} src="${esc(path)}" alt="">`:`<span>${catalog[id]?.[1]||'❔'}</span>`}
+  root.addEventListener('load',event=>{
+    const image=event.target;
+    if(!image.matches?.('img[data-clean-slime-gel]')||image.dataset.cleaned)return;
+    const source=image.currentSrc||image.src;
+    image.dataset.cleaned='true';
+    const cached=cleanedSlimeGelIcons.get(source);
+    if(cached){image.src=cached;return}
+    const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+    const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(image,0,0);
+    const imageData=context.getImageData(0,0,canvas.width,canvas.height),pixels=imageData.data;
+    const pixelCount=canvas.width*canvas.height,visited=new Uint8Array(pixelCount),background=[];
+    const isBackdrop=index=>{const offset=index*4,min=Math.min(pixels[offset],pixels[offset+1],pixels[offset+2]),max=Math.max(pixels[offset],pixels[offset+1],pixels[offset+2]);return pixels[offset+3]>0&&min>=210&&max-min<=55};
+    for(let start=0;start<pixelCount;start++){
+      if(visited[start])continue;
+      visited[start]=1;
+      if(!isBackdrop(start))continue;
+      const component=[start];
+      for(let cursor=0;cursor<component.length;cursor++){
+        const index=component[cursor],x=index%canvas.width,y=Math.floor(index/canvas.width);
+        for(const neighbor of [x?index-1:-1,x<canvas.width-1?index+1:-1,y?index-canvas.width:-1,y<canvas.height-1?index+canvas.width:-1]){
+          if(neighbor<0||visited[neighbor])continue;
+          visited[neighbor]=1;
+          if(isBackdrop(neighbor))component.push(neighbor);
+        }
+      }
+      if(component.length>=64)background.push(...component);
+    }
+    for(const index of background)pixels[index*4+3]=0;
+    if(background.length)context.putImageData(imageData,0,0);
+    const cleaned=background.length?canvas.toDataURL('image/png'):source;
+    cleanedSlimeGelIcons.set(source,cleaned);
+    if(cleaned!==source)image.src=cleaned;
+  },true);
   function tile(i,bar=false){const s=slots[i],hidden=s && category!=='all'&&catalog[s.id]?.[2]!==category && open&&!bar;
     return `<button class="fi-slot ${selected===i&&bar?'fi-selected':''} ${hidden?'fi-dim':''}" data-index="${i}" aria-label="Slot ${i+1}${s?' '+catalog[s.id][0]+' '+s.count:''}">${bar?`<small>${i+1}</small>`:''}${s?icon(s.id)+`<b>${s.count>1?s.count:''}</b>`:''}</button>`}
   function save(){try{localStorage.setItem(KEY,JSON.stringify({slots,selected}))}catch{} window.dispatchEvent(new CustomEvent('fernfall:inventory-change',{detail:{slots:getSlots(),selected}}))}
