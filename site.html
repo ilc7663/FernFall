@@ -19,7 +19,10 @@
 		<header class="topbar">
 			<a class="wordmark" href="#" aria-label="Fernfall home"><span class="wordmark-mark">✳</span> fernfall</a>
 			<div class="location"><span class="location-dot"></span><span>Whispering Woods</span><span class="location-divider">/</span><span class="day-label">Day <span id="day-count">1</span></span></div>
-			<button class="icon-button sound-button" id="sound-toggle" type="button" aria-label="Toggle sound" title="Toggle sound"><span id="sound-icon">♫</span></button>
+			<div class="topbar-tools">
+				<button class="icon-button sound-button" id="sound-toggle" type="button" aria-label="Toggle sound" title="Toggle sound"><span id="sound-icon">♫</span></button>
+				<button class="icon-button" id="game-menu-button" type="button" aria-label="Pause game" title="Pause game"><span aria-hidden="true">Ⅱ</span></button>
+			</div>
 		</header>
 
 		<section class="game-layout" aria-label="Forest adventure">
@@ -99,6 +102,20 @@
 		</section>
 		<footer class="footer"><span>FERNFALL FOREST CLUB</span><span>Save your progress <b>automatically</b></span></footer>
 	</main>
+	<dialog class="game-menu-dialog" id="game-menu-dialog" aria-labelledby="game-menu-title">
+		<div class="game-menu-panel">
+			<div class="game-menu-wordmark"><span aria-hidden="true">✳</span> fernfall</div>
+			<p class="eyebrow" id="game-menu-kicker">WHISPERING WOODS</p>
+			<h2 id="game-menu-title">The forest awaits</h2>
+			<p class="game-menu-copy" id="game-menu-copy">A quiet trail, a little shelter, and a fresh start.</p>
+			<div class="game-menu-actions">
+				<button class="game-menu-primary" id="game-menu-primary" type="button">Enter the forest</button>
+				<button class="game-menu-secondary" id="game-menu-home" type="button" hidden>Return to home</button>
+				<button class="game-menu-secondary" id="game-menu-sound" type="button">Sound: Off</button>
+			</div>
+			<p class="game-menu-hint">WASD / arrows to move · E to gather · Space to defend</p>
+		</div>
+	</dialog>
 	<dialog class="survival-dialog" id="survival-dialog" aria-labelledby="survival-title">
 		<div class="survival-dialog-header">
 			<div><p class="eyebrow">FERNFALL FIELDCRAFT</p><h2 id="survival-title">Crafting bench</h2></div>

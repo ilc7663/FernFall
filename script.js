@@ -182,6 +182,9 @@ let questClaimed = saved?.questClaimed ?? false;
 let jimothyMet = saved?.jimothyMet ?? false;
 let soundEnabled = false;
 let audioContext;
+let gamePaused = true;
+let gameMenuView = "home";
+const gameMenuDialog = document.querySelector("#game-menu-dialog");
 
 function loadSave() {
 	if (window.FERNFALL_SERVER_MODE && window.FERNFALL_SERVER_SAVE) return window.FERNFALL_SERVER_SAVE;
@@ -500,6 +503,7 @@ function updateCamera() {
 }
 
 function render() {
+	if (gamePaused) return;
 	updateCamera();
 	drawGround();
 	ctx.save();
@@ -777,6 +781,46 @@ function useTonic() {
 	}
 }
 
+function syncGameMenuSound() {
+	const button = document.querySelector("#game-menu-sound");
+	if (!button) return;
+	button.textContent = `Sound: ${soundEnabled ? "On" : "Off"}`;
+	button.setAttribute("aria-pressed", String(soundEnabled));
+}
+
+function showGameMenu(view) {
+	gamePaused = true;
+	gameMenuView = view;
+	keys.clear();
+	heldDirections.clear();
+	if (view === "paused") {
+		window.FernfallInventory?.close();
+		window.FernfallCrafting?.close();
+		for (const id of ["survival-dialog", "villager-dialog"]) {
+			const dialog = document.querySelector(`#${id}`);
+			if (dialog?.open) dialog.close();
+		}
+	}
+	const isHome = view === "home";
+	document.querySelector("#game-menu-kicker").textContent = isHome ? "FERNFALL · WHISPERING WOODS" : "TAKE A BREATHER";
+	document.querySelector("#game-menu-title").textContent = isHome ? "The trail awaits" : "Adventure paused";
+	document.querySelector("#game-menu-copy").textContent = isHome
+		? "A quiet trail, a little shelter, and a fresh start."
+		: "Your trail is waiting right where you left it.";
+	document.querySelector("#game-menu-primary").textContent = isHome ? "Enter the forest" : "Resume adventure";
+	document.querySelector("#game-menu-home").hidden = isHome;
+	syncGameMenuSound();
+	if (!gameMenuDialog.open) gameMenuDialog.showModal();
+}
+
+function resumeGameMenu() {
+	if (gameMenuDialog.open) gameMenuDialog.close();
+	gamePaused = false;
+	keys.clear();
+	heldDirections.clear();
+	render();
+}
+
 function resetCharacter() {
 	const resetPoints = [
 		{ x: 160, y: 192 }, { x: 224, y: 192 }, { x: 96, y: 192 },
@@ -845,6 +889,20 @@ function setDirectionFromPointer(event) {
 
 document.addEventListener("keydown", (event) => {
 	const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+	if (key === "Escape") {
+		if (gameMenuDialog.open) {
+			event.preventDefault();
+			if (gameMenuView === "paused") resumeGameMenu();
+			return;
+		}
+		const inventoryOpen = document.querySelector("#fernfall-inventory-root")?.classList.contains("fi-open");
+		const crafting = document.querySelector("#fernfall-crafting");
+		if (inventoryOpen || (crafting && !crafting.hidden) || [...document.querySelectorAll("dialog")].some((dialog) => dialog.open)) return;
+		event.preventDefault();
+		showGameMenu("paused");
+		return;
+	}
+	if (gamePaused) return;
 	if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
 	keys.add(key);
 	if (event.repeat) return;
@@ -859,6 +917,10 @@ document.querySelector("#gather-button").addEventListener("click", gather);
 document.querySelector("#attack-button").addEventListener("click", attack);
 document.querySelector("#potion-button").addEventListener("click", useTonic);
 document.querySelector("#reset-character-button").addEventListener("click", resetCharacter);
+document.querySelector("#game-menu-button").addEventListener("click", () => showGameMenu("paused"));
+document.querySelector("#game-menu-primary").addEventListener("click", resumeGameMenu);
+document.querySelector("#game-menu-home").addEventListener("click", () => showGameMenu("home"));
+document.querySelector("#game-menu-sound").addEventListener("click", () => document.querySelector("#sound-toggle").click());
 document.querySelector("#mobile-attack").addEventListener("pointerdown", (event) => { event.preventDefault(); attack(); });
 document.querySelectorAll("[data-move]").forEach((button) => {
 	const direction = button.dataset.move;
@@ -879,14 +941,16 @@ document.querySelector("#sound-toggle").addEventListener("click", (event) => {
 		playTone(520);
 	}
 	showToast(soundEnabled ? "Game sounds are on." : "Game sounds are off.");
+	syncGameMenuSound();
 });
 
 function gameLoop() {
-	update();
+	if (!gamePaused) update();
 	requestAnimationFrame(gameLoop);
 }
 
 document.querySelector("#day-count").textContent = String(Math.max(1, Math.floor((saved?.xp ?? 0) / 3) + 1));
 updateHud();
+showGameMenu("home");
 render();
 gameLoop();
