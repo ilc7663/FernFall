@@ -758,6 +758,7 @@ function gather() {
 		showToast(`Picked up ${itemName.toLowerCase()}${amount > 1 ? ` ×${amount}` : ""}.`);
 		return true;
 	}
+	if (window.FernfallGameInventory?.placeSelectedItem()) return true;
 	const resource = resources.find((item) => item.available && Math.hypot(player.x - item.x, player.y - item.y) < 48);
 	if (!resource) return false;
 	window.FernfallGameInventory?.animate(resource.type === "wood" ? "chop" : "dig");
