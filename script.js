@@ -957,6 +957,15 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener("keyup", (event) => keys.delete(event.key.length === 1 ? event.key.toLowerCase() : event.key));
 window.addEventListener("blur", () => { keys.clear(); heldDirections.clear(); });
+canvas.addEventListener("pointerdown", (event) => {
+	if (event.button !== 0 || !window.FernfallSurvival?.pickupAt) return;
+	const bounds = canvas.getBoundingClientRect();
+	const x = (event.clientX - bounds.left) * WIDTH / bounds.width + camera.x;
+	const y = (event.clientY - bounds.top) * HEIGHT / bounds.height + camera.y;
+	if (!window.FernfallSurvival.pickupAt(x, y)) return;
+	event.preventDefault();
+	event.stopImmediatePropagation();
+}, { capture: true });
 canvas.addEventListener("pointerdown", setDirectionFromPointer);
 document.querySelector("#gather-button").addEventListener("click", gather);
 document.querySelector("#attack-button").addEventListener("click", attack);

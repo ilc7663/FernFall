@@ -707,6 +707,27 @@ const FernfallSurvival = (() => {
 		return true;
 	}
 
+	function pickupAt(x, y) {
+		const resource = resources.find((entry) => entry.available && Math.hypot(entry.x - x, entry.y - y) < 30);
+		if (resource) {
+			resource.available = false;
+			resource.respawnAt = Date.now() + 30000;
+			player.inventory[resource.type] = (player.inventory[resource.type] || 0) + 1;
+			recordVillagerQuestProgress(resource.type);
+			show(`Gathered ${label(resource.type)}.`);
+			return true;
+		}
+
+		const tableIndex = craftingTables.findIndex((table) => !table.village && Math.hypot(table.x - x, table.y - y) < 36);
+		if (tableIndex >= 0) {
+			craftingTables.splice(tableIndex, 1);
+			player.inventory.crafting_table = (player.inventory.crafting_table || 0) + 1;
+			show("Picked up crafting table.");
+			return true;
+		}
+		return false;
+	}
+
 	function interact() {
 		const fire = campfires.find((entry) => near(entry, player, 68));
 		if (fire) {
@@ -1579,7 +1600,7 @@ const FernfallSurvival = (() => {
 	}
 
 	return {
-		setup, update, interact, attackAnimal, blocks, drawResource, drawPonds, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
+		setup, update, interact, pickupAt, attackAnimal, blocks, drawResource, drawPonds, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
 		refreshInventory, openCrafting: () => openPanel("craft"), useItem, recordQuest, recordVillagerQuestProgress, save,
 		campfires, hostileProjectiles,
 	};
