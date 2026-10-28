@@ -1003,7 +1003,7 @@ kbd {
 	width: 46%;
 	min-width: 0;
 	display: grid;
-	grid-template-columns: 28px minmax(0, 1fr) 29px;
+	grid-template-columns: 28px minmax(0, 1fr);
 	align-items: center;
 	gap: 4px;
 }
@@ -1012,14 +1012,6 @@ kbd {
 	color: #eef1e8;
 	font-size: 8px;
 	font-weight: 800;
-	text-shadow: 0 1px 3px #102019;
-}
-
-#fernfall-inventory-root .fi-vital-value {
-	color: #f3f4ed;
-	font-size: 8px;
-	font-variant-numeric: tabular-nums;
-	text-align: right;
 	text-shadow: 0 1px 3px #102019;
 }
 
