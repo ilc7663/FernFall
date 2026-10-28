@@ -171,6 +171,7 @@ const pickups = [];
 let lastAttack = 0;
 let lastDamage = 0;
 let lastSave = 0;
+const toastQueue = [];
 let toastTimer;
 let questClaimed = saved?.questClaimed ?? false;
 let jimothyMet = saved?.jimothyMet ?? false;
@@ -222,10 +223,28 @@ function saveGame() {
 
 function showToast(message) {
 	const toast = document.querySelector("#toast");
+	if (!toast) return;
+	toastQueue.push(message);
+	if (!toastTimer) showNextToast();
+}
+
+function showNextToast() {
+	const toast = document.querySelector("#toast");
+	const message = toastQueue.shift();
+	if (!toast || !message) {
+		toast?.classList.remove("show");
+		toastTimer = null;
+		return;
+	}
 	toast.textContent = message;
 	toast.classList.add("show");
-	clearTimeout(toastTimer);
-	toastTimer = setTimeout(() => toast.classList.remove("show"), 1700);
+	toastTimer = setTimeout(() => {
+		toast.classList.remove("show");
+		toastTimer = setTimeout(() => {
+			toastTimer = null;
+			showNextToast();
+		}, 180);
+	}, 2400);
 }
 
 function playTone(frequency, duration = 0.12) {
@@ -665,7 +684,7 @@ function gather() {
 			nearbyWolf.tamed = true;
 			nearbyWolf.happyUntil = performance.now() + 1800;
 			playTone(700);
-			showToast("The wolf is tamed and will follow you!");
+			showToast("A wolf joined your party!");
 			updateHud();
 			saveGame();
 		}
@@ -675,8 +694,10 @@ function gather() {
 	if (nearbyPickup) {
 		const index = pickups.indexOf(nearbyPickup);
 		pickups.splice(index, 1);
-		addItem(nearbyPickup.type, 1);
-		showToast(`Picked up ${itemInfo[nearbyPickup.type].name.toLowerCase()}.`);
+		const amount = nearbyPickup.amount || 1;
+		addItem(nearbyPickup.type, amount);
+		const itemName = itemInfo[nearbyPickup.type]?.name || nearbyPickup.type.replaceAll("_", " ");
+		showToast(`Picked up ${itemName.toLowerCase()}${amount > 1 ? ` ×${amount}` : ""}.`);
 		return;
 	}
 	const resource = resources.find((item) => item.available && Math.hypot(player.x - item.x, player.y - item.y) < 48);
