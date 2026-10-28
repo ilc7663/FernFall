@@ -140,6 +140,27 @@
 				<div class="crafting-inventory" id="crafting-inventory"></div>
 			</section>
 		</div>
+			<div class="furnace-workspace" id="furnace-workspace" hidden>
+				<section class="furnace-input-panel" aria-label="Furnace input and fuel">
+					<h3>Smeltable food</h3>
+					<div class="furnace-recipe-list" id="furnace-recipe-list"></div>
+					<h3>Fuel</h3>
+					<p class="furnace-fuel-status" id="furnace-fuel-status">Add coal, wood, or sticks for fuel.</p>
+					<div class="furnace-fuel-list" id="furnace-fuel-list"></div>
+				</section>
+				<section class="furnace-machine-panel" aria-label="Furnace progress and output">
+					<div class="furnace-machine">
+						<div class="furnace-slot-group"><span>INPUT</span><div class="furnace-slot" id="furnace-input-slot"></div></div>
+						<span class="furnace-fire" aria-hidden="true">♨</span>
+						<div class="furnace-slot-group"><span>FUEL</span><div class="furnace-slot" id="furnace-fuel-slot"></div></div>
+						<span class="furnace-arrow" aria-hidden="true">➜</span>
+						<div class="furnace-slot-group"><span>OUTPUT</span><div class="furnace-slot furnace-output-slot" id="furnace-output-slot"></div></div>
+					</div>
+					<div class="progress-track furnace-progress"><div class="progress-fill" id="furnace-progress-fill"></div></div>
+					<p class="furnace-status" id="furnace-status">Choose raw meat to smelt.</p>
+					<button class="recipe-action furnace-collect" id="furnace-collect" type="button" hidden>Collect output</button>
+				</section>
+			</div>
 		<div class="survival-list" id="survival-list"></div>
 	</dialog>
 	<dialog class="survival-dialog villager-dialog" id="villager-dialog" aria-labelledby="villager-dialog-name">

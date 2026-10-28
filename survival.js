@@ -5,6 +5,8 @@ const FernfallSurvival = (() => {
 		gel: { name: "Slime gel", category: "other", icon: "●" },
 		tonic: { name: "Berry tonic", category: "food", icon: "♧", heal: 2 },
 		seed: { name: "Acorn", category: "materials", icon: "✿" },
+		coal: { name: "Coal", category: "materials", icon: "●" },
+		coal: { name: "Coal", category: "materials", icon: "C" },
 		stone: { name: "Stone", category: "materials", icon: "S" }, carrot: { name: "Carrot", category: "food", icon: "C", heal: 1 },
 		furnace: { name: "Furnace", category: "equipment", icon: "♨" },
 		potato: { name: "Potato", category: "food", icon: "P", heal: 1 }, mushroom: { name: "Forest mushroom", category: "food", icon: "M", heal: 1 },
@@ -61,6 +63,8 @@ const FernfallSurvival = (() => {
 		{ id: "meat_pie", name: "Meat pie", ingredients: { grain: 1, potato: 1 }, anyMeat: 1, station: "either", seconds: 12 },
 		{ id: "rabbit_stew", name: "Rabbit stew", ingredients: { rabbit_raw: 1, carrot: 1, potato: 1 }, station: "pot", seconds: 9, waterOptional: true },
 	];
+	const furnaceRecipeIds = new Set(["beef_cooked", "pork_cooked", "mutton_cooked", "rabbit_cooked"]);
+	const furnaceFuelMs = { coal: 32000, wood: 12000, wooden_stick: 2000 };
 	const meatTypes = ["beef_raw", "pork_raw", "mutton_raw", "rabbit_raw"];
 	const hostileTypes = ["skeleton", "witch", "spider", "bat", "zombie"];
 	const categories = ["food", "materials", "equipment", "other"];
@@ -385,6 +389,80 @@ const FernfallSurvival = (() => {
 		return campfires.find((fire) => fire.id === activeFireId);
 	}
 
+	function addFurnaceFuel(fire, fuelId) {
+		const burnMs = furnaceFuelMs[fuelId];
+		if (!fire || fire.kind !== "furnace" || !burnMs || !(player.inventory[fuelId] > 0)) return false;
+		if ((fire.furnaceFuelMs || 0) >= 120000) return show("The furnace is already full of fuel."), false;
+		player.inventory[fuelId] -= 1;
+		fire.furnaceFuelMs = Math.min(120000, (fire.furnaceFuelMs || 0) + burnMs);
+		fire.furnaceFuelType = fuelId;
+		show(`${label(fuelId)} added to the furnace.`);
+		updateHud();
+		saveGame();
+		refreshPanel();
+		return true;
+	}
+
+	function startFurnaceCook(recipeId, fire) {
+		const recipe = recipes.find((entry) => entry.id === recipeId && furnaceRecipeIds.has(entry.id));
+		if (!recipe || !fire || fire.kind !== "furnace" || fire.cooking) return false;
+		const [inputId, inputCount] = Object.entries(recipe.ingredients)[0] || [];
+		if (!inputId || (player.inventory[inputId] || 0) < inputCount) return show(`You need ${label(inputId || "raw meat")} to smelt this.`), false;
+		const duration = recipe.seconds * 1000;
+		if ((fire.furnaceFuelMs || 0) < duration) return show("Add more furnace fuel before smelting."), false;
+		player.inventory[inputId] -= inputCount;
+		fire.furnaceFuelMs -= duration;
+		if (fire.furnaceFuelMs <= 0) fire.furnaceFuelType = "";
+		fire.cooking = { recipeId: recipe.id, inputId, startedAt: Date.now(), duration, ready: false, notified: false };
+		discoveredRecipes.add(recipe.id);
+		updateHud();
+		saveGame();
+		refreshPanel();
+		return true;
+	}
+
+	function renderFurnaceWorkspace(fire) {
+		const workspace = document.querySelector("#furnace-workspace");
+		workspace.hidden = activeMode !== "furnace";
+		if (workspace.hidden) return;
+		const smeltRecipes = recipes.filter((recipe) => furnaceRecipeIds.has(recipe.id));
+		const cooking = fire?.cooking;
+		const inputList = document.querySelector("#furnace-recipe-list");
+		inputList.innerHTML = smeltRecipes.map((recipe) => {
+			const inputId = Object.keys(recipe.ingredients)[0];
+			const image = inventoryImageSource(inputId);
+			const icon = image ? `<img class="item-texture" src="${image}" alt="">` : `<span class="item-icon">${itemInfo[inputId]?.icon || "?"}</span>`;
+			const count = player.inventory[inputId] || 0;
+			const fuelReady = (fire?.furnaceFuelMs || 0) >= recipe.seconds * 1000;
+			return `<button type="button" class="furnace-recipe" data-furnace-recipe="${recipe.id}" ${!fire || fire.cooking || count < 1 || !fuelReady ? "disabled" : ""}>${icon}<span>${label(inputId)} → ${recipe.name}</span><small>${count}</small></button>`;
+		}).join("");
+		const fuelList = document.querySelector("#furnace-fuel-list");
+		fuelList.innerHTML = Object.entries(furnaceFuelMs).map(([id, burnMs]) => {
+			const image = inventoryImageSource(id);
+			const icon = image ? `<img class="item-texture" src="${image}" alt="">` : `<span class="item-icon">${itemInfo[id]?.icon || "?"}</span>`;
+			const count = player.inventory[id] || 0;
+			return `<button type="button" class="furnace-fuel" data-furnace-fuel="${id}" ${!fire || count < 1 || (fire.furnaceFuelMs || 0) >= 120000 ? "disabled" : ""}>${icon}<span>${label(id)}</span><small>${count} · ${Math.round(burnMs / 1000)}s</small></button>`;
+		}).join("");
+		const imageMarkup = (id) => {
+			if (!id) return "";
+			const image = inventoryImageSource(id);
+			return image ? `<img class="item-texture" src="${image}" alt="">` : `<span class="item-icon">${itemInfo[id]?.icon || "?"}</span>`;
+		};
+		const inputId = cooking?.inputId || "";
+		const outputId = cooking?.recipeId || "";
+		document.querySelector("#furnace-input-slot").innerHTML = imageMarkup(inputId);
+		document.querySelector("#furnace-output-slot").innerHTML = imageMarkup(outputId);
+		document.querySelector("#furnace-fuel-slot").innerHTML = fire?.furnaceFuelType ? imageMarkup(fire.furnaceFuelType) : "";
+		const fuelSeconds = Math.ceil((fire?.furnaceFuelMs || 0) / 1000);
+		document.querySelector("#furnace-fuel-status").textContent = fuelSeconds ? `${label(fire.furnaceFuelType || "coal")} · ${fuelSeconds}s fuel remaining` : "Add coal, wood, or sticks for fuel.";
+		const progress = cooking ? Math.min(100, (Date.now() - cooking.startedAt) / cooking.duration * 100) : 0;
+		document.querySelector("#furnace-progress-fill").style.width = `${progress}%`;
+		document.querySelector("#furnace-status").textContent = cooking ? cooking.ready ? `${label(cooking.recipeId)} is ready.` : `Smelting ${label(cooking.inputId)}…` : "Choose raw meat to smelt.";
+		const collect = document.querySelector("#furnace-collect");
+		collect.hidden = !cooking?.ready;
+		collect.disabled = !cooking?.ready;
+	}
+
 	function openPanel(mode, fire = null) {
 		if (mode === "craft" && window.FernfallCrafting) {
 			window.FernfallCrafting.open();
@@ -393,7 +471,7 @@ const FernfallSurvival = (() => {
 		activeMode = mode;
 		activeFireId = fire?.id ?? null;
 		const dialog = document.querySelector("#survival-dialog");
-		document.querySelector("#survival-title").textContent = mode === "cook" ? "Campfire cooking" : "Crafting bench";
+		document.querySelector("#survival-title").textContent = mode === "furnace" ? "Furnace" : mode === "cook" ? "Campfire cooking" : "Crafting bench";
 		if (!dialog.open) dialog.showModal();
 		refreshPanel();
 	}
@@ -454,6 +532,8 @@ const FernfallSurvival = (() => {
 	function refreshPanel() {
 		const list = document.querySelector("#survival-list");
 		if (!list) return;
+		const furnaceWorkspace = document.querySelector("#furnace-workspace");
+		if (furnaceWorkspace && activeMode !== "furnace") furnaceWorkspace.hidden = true;
 		const fire = currentFire();
 		if (activeMode === "craft") {
 			renderCraftingWorkspace();
@@ -461,6 +541,11 @@ const FernfallSurvival = (() => {
 			return;
 		}
 		renderCraftingWorkspace();
+		if (activeMode === "furnace") {
+			renderFurnaceWorkspace(fire);
+			list.innerHTML = "";
+			return;
+		}
 		if (!fire) {
 			list.innerHTML = "<p class=menu-intro>That campfire is no longer nearby.</p>";
 			return;
@@ -626,7 +711,7 @@ const FernfallSurvival = (() => {
 		const fire = campfires.find((entry) => near(entry, player, 68));
 		if (fire) {
 			if (collectFire(fire)) return true;
-			openPanel("cook", fire);
+			openPanel(fire.kind === "furnace" ? "furnace" : "cook", fire);
 			return true;
 		}
 		const villager = villagers.find((resident) => near(resident, player, 58));
@@ -1383,6 +1468,14 @@ const FernfallSurvival = (() => {
 		document.querySelector("#villager-dialog-close-secondary").addEventListener("click", () => document.querySelector("#villager-dialog").close());
 		document.querySelector("#survival-list").addEventListener("click", (event) => {
 			const button = event.target.closest("[data-survival-action]");
+			const furnaceRecipe = event.target.closest("[data-furnace-recipe]");
+			const furnaceFuel = event.target.closest("[data-furnace-fuel]");
+			if (furnaceRecipe && !furnaceRecipe.disabled) return startFurnaceCook(furnaceRecipe.dataset.furnaceRecipe, currentFire());
+			if (furnaceFuel && !furnaceFuel.disabled) return addFurnaceFuel(currentFire(), furnaceFuel.dataset.furnaceFuel);
+			if (event.target.closest("#furnace-collect")) {
+				if (collectFire(currentFire())) refreshPanel();
+				return;
+			}
 			if (!button || button.disabled) return;
 			if (button.dataset.survivalAction === "craft") addCraftedItem(craftingRecipes.find((entry) => entry.id === button.dataset.recipe));
 			if (button.dataset.survivalAction === "cook") startCook(button.dataset.recipe, currentFire());
