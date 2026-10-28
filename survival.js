@@ -480,11 +480,12 @@ const FernfallSurvival = (() => {
 	function addCraftedItem(recipe) {
 		if (!recipe || !craftingGridMatches(recipe)) return show("Place the exact recipe ingredients in the grid first.");
 		if (Object.entries(recipe.ingredients).some(([id, count]) => (player.inventory[id] || 0) < count)) return show("You do not have enough materials.");
+		const amount = Number.isInteger(recipe.amount) && recipe.amount > 0 ? recipe.amount : 1;
 		for (const [id, count] of Object.entries(recipe.ingredients)) player.inventory[id] -= count;
 		craftingSlots.fill("");
-		player.inventory[recipe.id] = (player.inventory[recipe.id] || 0) + (recipe.amount || 1);
+		player.inventory[recipe.id] = (player.inventory[recipe.id] || 0) + amount;
 		if (recipe.id === "campfire_kit") recordQuest("campfire");
-		show(`Crafted ${recipe.name}.`);
+		show(`Crafted ${recipe.name}${amount > 1 ? ` ×${amount}` : ""}.`);
 		updateHud();
 		saveGame();
 		refreshPanel();
