@@ -7,7 +7,9 @@ const keys = new Set();
 const heldDirections = new Set();
 const MAX_HEALTH = 10;
 const MAX_HUNGER = 100;
-const HUNGER_DRAIN_MS = 12000;
+const HUNGER_DRAIN_MS = 20000;
+const HUNGER_REGEN_MS = 6000;
+const STARVATION_DAMAGE_MS = 8000;
 const WORLD_CHUNK_SIZE = 512;
 const camera = { x: 0, y: 0 };
 const generatedChunks = new Set(["0,0"]);
@@ -176,6 +178,9 @@ let lastAttack = 0;
 let lastDamage = 0;
 let lastSave = 0;
 let lastHungerDrain = performance.now();
+let lastHungerRegen = performance.now();
+let lastStarvationDamage = performance.now();
+let starvationWarned = false;
 const toastQueue = [];
 let toastTimer;
 let questClaimed = saved?.questClaimed ?? false;
@@ -596,6 +601,44 @@ function update() {
 		lastHungerDrain += drain * HUNGER_DRAIN_MS;
 		updateHud();
 	}
+	if (player.hunger >= MAX_HUNGER && player.health < MAX_HEALTH) {
+		if (now - lastHungerRegen >= HUNGER_REGEN_MS) {
+			player.health = Math.min(MAX_HEALTH, player.health + 1);
+			lastHungerRegen = now;
+			updateHud();
+			saveGame();
+		}
+	} else {
+		lastHungerRegen = now;
+	}
+	if (player.hunger === 0) {
+		if (!starvationWarned) {
+			starvationWarned = true;
+			lastStarvationDamage = now;
+			showToast("You are starving. Find food soon.");
+		} else if (now - lastStarvationDamage >= STARVATION_DAMAGE_MS) {
+			lastStarvationDamage = now;
+			player.health = Math.max(0, player.health - 1);
+			player.hurt = 14;
+			if (player.health === 0) {
+				player.health = MAX_HEALTH;
+				player.hunger = Math.ceil(MAX_HUNGER / 4);
+				player.x = 160;
+				player.y = 192;
+				camera.x = player.x - WIDTH / 2;
+				camera.y = player.y - HEIGHT / 2;
+				keys.clear();
+				heldDirections.clear();
+				starvationWarned = false;
+				showToast("You collapsed from hunger and woke at camp.");
+			}
+			updateHud();
+			saveGame();
+		}
+	} else {
+		starvationWarned = false;
+		lastStarvationDamage = now;
+	}
 	if (player.swing > 0) player.swing = Math.max(0, player.swing - 0.06);
 	if (player.hurt > 0) player.hurt -= 1;
 	for (const animal of animals) {
@@ -814,6 +857,9 @@ function showGameMenu(view) {
 function resumeGameMenu() {
 	if (gameMenuDialog.open) gameMenuDialog.close();
 	gamePaused = false;
+	lastHungerDrain = performance.now();
+	lastHungerRegen = lastHungerDrain;
+	lastStarvationDamage = lastHungerDrain;
 	keys.clear();
 	heldDirections.clear();
 	render();
