@@ -1,6 +1,7 @@
 (() => {
 	const gameToPack = {
 		berry: "berries",
+		herb: "herbs",
 		gel: "slime_gel",
 		tonic: "item_potion",
 		wooden_stick: "stick",
