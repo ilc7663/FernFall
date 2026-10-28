@@ -180,6 +180,7 @@ let lastSave = 0;
 let lastHungerDrain = performance.now();
 let lastHungerRegen = performance.now();
 let lastStarvationDamage = performance.now();
+let starvationWarningShown = false;
 let starvationWarned = false;
 const toastQueue = [];
 let toastTimer;
@@ -237,6 +238,7 @@ function saveGame() {
 function showToast(message) {
 	const toast = document.querySelector("#toast");
 	if (!toast) return;
+	if (toastQueue.includes(message) || (toastTimer && toast.textContent === message)) return;
 	toastQueue.push(message);
 	if (!toastTimer) showNextToast();
 }
@@ -611,11 +613,15 @@ function update() {
 	} else {
 		lastHungerRegen = now;
 	}
+	if (player.hunger > 0) starvationWarningShown = false;
 	if (player.hunger === 0) {
 		if (!starvationWarned) {
 			starvationWarned = true;
 			lastStarvationDamage = now;
-			showToast("You are starving. Find food soon.");
+			if (!starvationWarningShown) {
+				starvationWarningShown = true;
+				showToast("You are starving. Find food soon.");
+			}
 		} else if (now - lastStarvationDamage >= STARVATION_DAMAGE_MS) {
 			lastStarvationDamage = now;
 			player.health = Math.max(0, player.health - 1);
