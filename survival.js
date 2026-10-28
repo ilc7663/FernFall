@@ -1095,14 +1095,27 @@ const FernfallSurvival = (() => {
 		for (const [offsetX, offsetY] of layouts) {
 			if (houses.length >= houseCount) break;
 			const role = roles[houses.length];
-			const house = { x: center.x + offsetX, y: center.y + offsetY, width: 88, height: 76, doorSide: "center", role: role.role, asset: role.asset };
-			if (collides(house.x, house.y) || houses.some((other) => Math.abs(other.x - house.x) < 96 && Math.abs(other.y - house.y) < 84)) continue;
+			const position = findVillageHousePosition(center.x + offsetX, center.y + offsetY, houses);
+			if (!position) continue;
+			const house = { ...position, width: 88, height: 76, doorSide: "center", role: role.role, asset: role.asset };
 			houses.push(house);
 			villagers.push({ id: `${key}-${role.role}`, role: role.role, x: house.x, y: house.y + house.height / 2 + 20, direction: "down", phase: random() * 6, villageId: key });
 		}
 		if (houses.length < 3) return;
 		villages.push({ id: `village-${key}`, ...center, houses });
 		craftingTables.push({ id: `village-table-${key}`, x: center.x, y: center.y + 8, village: true });
+	}
+
+	function findVillageHousePosition(x, y, houses) {
+		const offsets = [[0, 0], [0, -160], [0, 160], [0, -224], [0, 224], [-160, 0], [160, 0], [0, -320], [0, 320]];
+		for (const [offsetX, offsetY] of offsets) {
+			const candidate = { x: x + offsetX, y: y + offsetY };
+			if (window.fernfallPathOverlaps?.(candidate.x, candidate.y, 132, 112)) continue;
+			if (collides(candidate.x, candidate.y)) continue;
+			if (houses.some((house) => Math.abs(house.x - candidate.x) < 132 && Math.abs(house.y - candidate.y) < 112)) continue;
+			return candidate;
+		}
+		return null;
 	}
 
 	function ensureSpawnVillage() {
@@ -1114,11 +1127,16 @@ const FernfallSurvival = (() => {
 			if (legacyVillageIndex >= 0) villages.splice(legacyVillageIndex, 1);
 			villagers.splice(0, villagers.length, ...villagers.filter((villager) => villager.villageId !== "0,0"));
 			craftingTables.splice(0, craftingTables.length, ...craftingTables.filter((table) => table.id !== "village-table-0,0"));
-			const houses = [
+			const houseSpecs = [
 				{ x: 338, y: 322, width: 88, height: 76, doorSide: "center", role: "mayor", asset: "town_hall" },
 				{ x: 618, y: 322, width: 88, height: 76, doorSide: "center", role: "shopkeeper", asset: "general_store" },
 				{ x: 478, y: 462, width: 88, height: 76, doorSide: "center", role: "blacksmith", asset: "blacksmith_building" },
 			];
+			const houses = [];
+			for (const house of houseSpecs) {
+				const position = findVillageHousePosition(house.x, house.y, houses);
+				if (position) houses.push({ ...house, ...position });
+			}
 			villages.push({ id: villageId, ...center, houses });
 			villagers.push(...houses.map((house) => ({
 				id: `${villageId}-${house.role}`,
@@ -1393,7 +1411,10 @@ const FernfallSurvival = (() => {
 		if (Array.isArray(state.mobs)) mobs.splice(0, mobs.length, ...state.mobs);
 		if (Array.isArray(state.pickups)) pickups.splice(0, pickups.length, ...state.pickups);
 		if (Array.isArray(state.obstacles)) {
-			obstacles.splice(0, obstacles.length, ...state.obstacles);
+			const pathSafeObstacles = state.obstacles.filter((obstacle) =>
+				!window.fernfallPathOverlaps?.(obstacle.x, obstacle.y + 5, (obstacle.r || 42) * 2, (obstacle.r || 42) * 2),
+			);
+			obstacles.splice(0, obstacles.length, ...pathSafeObstacles);
 			obstacleChunks.clear();
 			obstacles.forEach(indexObstacle);
 		}
@@ -1402,8 +1423,33 @@ const FernfallSurvival = (() => {
 			state.generatedChunks.forEach((key) => generatedChunks.add(key));
 		}
 		campfires.splice(0, campfires.length, ...(state.campfires || []));
-		villages.splice(0, villages.length, ...(state.villages || []));
-		villagers.splice(0, villagers.length, ...(state.villagers || []));
+		const houseMoves = new Map();
+		const restoredVillages = (state.villages || []).map((village) => {
+			const houses = [];
+			for (const house of village.houses || []) {
+				const position = findVillageHousePosition(house.x, house.y, houses);
+				if (!position) continue;
+				const restoredHouse = { ...house, ...position };
+				houses.push(restoredHouse);
+				const move = { x: position.x - house.x, y: position.y - house.y };
+				houseMoves.set(`${village.id}:${house.role}`, move);
+				houseMoves.set(`${village.id.replace(/^village-/, "")}:${house.role}`, move);
+			}
+			return { ...village, houses };
+		});
+		villages.splice(0, villages.length, ...restoredVillages);
+		const restoredVillagers = (state.villagers || []).flatMap((villager) => {
+			const move = houseMoves.get(`${villager.villageId}:${villager.role}`);
+			if (!move) return [];
+			return [{
+				...villager,
+				x: villager.x + move.x,
+				y: villager.y + move.y,
+				homeX: villager.homeX === undefined ? undefined : villager.homeX + move.x,
+				homeY: villager.homeY === undefined ? undefined : villager.homeY + move.y,
+			}];
+		});
+		villagers.splice(0, villagers.length, ...restoredVillagers);
 		craftingTables.splice(0, craftingTables.length, ...(state.craftingTables || []));
 		ponds.splice(0, ponds.length, ...(state.ponds || []));
 		hostileProjectiles.splice(0, hostileProjectiles.length, ...(state.hostileProjectiles || []));

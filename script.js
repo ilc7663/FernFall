@@ -40,8 +40,8 @@ camera.y = player.y - HEIGHT / 2;
 
 const obstacles = [
 	{ x: 120, y: 110, r: 39 }, { x: 276, y: 95, r: 34 }, { x: 470, y: 106, r: 41 },
-	{ x: 693, y: 95, r: 36 }, { x: 850, y: 128, r: 43 }, { x: 202, y: 268, r: 42 },
-	{ x: 380, y: 242, r: 35 }, { x: 762, y: 270, r: 43 }, { x: 102, y: 440, r: 40 },
+	{ x: 693, y: 95, r: 36 }, { x: 850, y: 128, r: 43 }, { x: 202, y: 200, r: 42 },
+	{ x: 380, y: 180, r: 35 }, { x: 762, y: 270, r: 43 }, { x: 102, y: 440, r: 40 },
 	{ x: 303, y: 465, r: 36 }, { x: 636, y: 452, r: 42 }, { x: 856, y: 455, r: 39 },
 ];
 const obstacleChunks = new Map();
@@ -135,7 +135,8 @@ function generateWorldChunk(chunkX, chunkY) {
 	const random = chunkRandom(chunkX, chunkY);
 	for (let index = 0; index < 5; index += 1) {
 		const position = randomChunkPosition(random, chunkX, chunkY);
-		if (!collides(position.x, position.y) && Math.hypot(player.x - position.x, player.y - position.y) > 90) {
+		const onPath = window.fernfallPathOverlaps?.(position.x, position.y + 5, 84, 84);
+		if (!collides(position.x, position.y) && !onPath && Math.hypot(player.x - position.x, player.y - position.y) > 90) {
 			addObstacle({ ...position, r: 30 + random() * 12 });
 		}
 	}

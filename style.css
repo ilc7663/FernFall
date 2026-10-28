@@ -30,7 +30,7 @@ button {
 }
 
 .game-shell {
-	width: min(1760px, calc(100% - 64px));
+	width: min(1760px, calc(100% - 32px));
 	margin: 0 auto;
 	padding: 20px 0 14px;
 }
@@ -103,9 +103,9 @@ button {
 
 .game-layout {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) 300px;
+	grid-template-columns: minmax(0, 1fr) 280px;
 	align-items: start;
-	gap: 22px;
+	gap: 20px;
 }
 
 .play-column {
@@ -545,7 +545,7 @@ kbd {
 
 @media (max-width: 1100px) {
 	.game-shell {
-		width: min(100% - 40px, 940px);
+		width: min(100% - 24px, 1000px);
 	}
 
 	.game-layout {
@@ -610,7 +610,7 @@ kbd {
 
 @media (max-width: 640px) {
 	.game-shell {
-		width: calc(100% - 24px);
+		width: calc(100% - 16px);
 		padding-top: 10px;
 	}
 
