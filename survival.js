@@ -758,6 +758,7 @@ const FernfallSurvival = (() => {
 		const plantKey = resourcePlantArt[resource.type];
 		const plant = plantKey && typeof fernfallSurvival !== "undefined" ? fernfallSurvival[plantKey] : null;
 		if (plant && drawArt(ctx, plant, resource.x, resource.y - 6, 48, 48)) return true;
+		if (drawPackItemIcon(resource.type, resource.x, resource.y + bob, 36)) return true;
 		if (resource.type === "seed") {
 			ctx.fillStyle = "#8a5a35";
 			ctx.beginPath();
@@ -767,7 +768,6 @@ const FernfallSurvival = (() => {
 			ctx.fillRect(resource.x - 9, resource.y + bob - 9, 18, 6);
 			return true;
 		}
-		if (drawPackItemIcon(resource.type, resource.x, resource.y + bob, 36)) return true;
 		if (resource.type === "stone") {
 			const sprite = art.forest.rock_moss || art.forest.rock_small;
 			if (drawArt(ctx, sprite, resource.x, resource.y, 36, 36)) return true;
