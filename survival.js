@@ -614,6 +614,7 @@ const FernfallSurvival = (() => {
 	}
 
 	function blocks(x, y, animalType = "") {
+		if (animalType !== "rabbit" && campfires.some((fire) => Math.hypot(x - fire.x, y - fire.y) < (fire.kind === "furnace" ? 34 : 27))) return true;
 		if (animalType !== "rabbit") {
 			for (const village of villages) {
 				for (const house of village.houses) {
