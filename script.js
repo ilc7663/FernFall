@@ -851,7 +851,7 @@ function showGameMenu(view) {
 	document.querySelector("#game-menu-primary").textContent = isHome ? "Enter the forest" : "Resume adventure";
 	document.querySelector("#game-menu-home").hidden = isHome;
 	syncGameMenuSound();
-	if (!gameMenuDialog.open) gameMenuDialog.showModal();
+	if (!gameMenuDialog.open) gameMenuDialog.show();
 }
 
 function resumeGameMenu() {
@@ -962,7 +962,10 @@ document.querySelector("#attack-button").addEventListener("click", attack);
 document.querySelector("#potion-button").addEventListener("click", useTonic);
 document.querySelector("#reset-character-button").addEventListener("click", resetCharacter);
 document.querySelector("#game-menu-button").addEventListener("click", () => showGameMenu("paused"));
-document.querySelector("#game-menu-primary").addEventListener("click", resumeGameMenu);
+document.querySelector("#game-menu-primary").addEventListener("click", (event) => {
+	event.preventDefault();
+	resumeGameMenu();
+});
 document.querySelector("#game-menu-home").addEventListener("click", () => showGameMenu("home"));
 document.querySelector("#game-menu-sound").addEventListener("click", () => document.querySelector("#sound-toggle").click());
 document.querySelector("#mobile-attack").addEventListener("pointerdown", (event) => { event.preventDefault(); attack(); });

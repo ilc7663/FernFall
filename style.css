@@ -108,14 +108,14 @@ button {
 }
 
 .game-menu-dialog {
-	position: fixed;
+	position: absolute;
 	inset: 0;
-	width: 100vw;
-	height: 100vh;
+	width: 100%;
+	height: 100%;
 	max-width: none;
 	max-height: none;
 	margin: 0;
-	padding: 24px;
+	padding: 16px;
 	border: 0;
 	background: #14251dcf;
 	color: var(--ink);
@@ -124,9 +124,8 @@ button {
 	z-index: 100200;
 }
 
-.game-menu-dialog::backdrop {
-	background: #102019c7;
-	backdrop-filter: blur(3px);
+.game-menu-dialog:not([open]) {
+	display: none;
 }
 
 .game-menu-panel {

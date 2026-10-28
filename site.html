@@ -48,6 +48,20 @@
 						<button class="pad-button pad-right" data-move="right" aria-label="Move right">→</button>
 					</div>
 					<button class="mobile-action" id="mobile-attack" aria-label="Attack">✦</button>
+					<dialog class="game-menu-dialog" id="game-menu-dialog" aria-labelledby="game-menu-title">
+						<div class="game-menu-panel">
+							<div class="game-menu-wordmark"><span aria-hidden="true">✳</span> fernfall</div>
+							<p class="eyebrow" id="game-menu-kicker">WHISPERING WOODS</p>
+							<h2 id="game-menu-title">The forest awaits</h2>
+							<p class="game-menu-copy" id="game-menu-copy">A quiet trail, a little shelter, and a fresh start.</p>
+							<div class="game-menu-actions">
+								<button class="game-menu-primary" id="game-menu-primary" type="button">Enter the forest</button>
+								<button class="game-menu-secondary" id="game-menu-home" type="button" hidden>Return to home</button>
+								<button class="game-menu-secondary" id="game-menu-sound" type="button">Sound: Off</button>
+							</div>
+							<p class="game-menu-hint">WASD / arrows to move · E to gather · Space to defend</p>
+						</div>
+					</dialog>
 				</div>
 
 				<div class="actionbar">
@@ -102,20 +116,6 @@
 		</section>
 		<footer class="footer"><span>FERNFALL FOREST CLUB</span><span>Save your progress <b>automatically</b></span></footer>
 	</main>
-	<dialog class="game-menu-dialog" id="game-menu-dialog" aria-labelledby="game-menu-title">
-		<div class="game-menu-panel">
-			<div class="game-menu-wordmark"><span aria-hidden="true">✳</span> fernfall</div>
-			<p class="eyebrow" id="game-menu-kicker">WHISPERING WOODS</p>
-			<h2 id="game-menu-title">The forest awaits</h2>
-			<p class="game-menu-copy" id="game-menu-copy">A quiet trail, a little shelter, and a fresh start.</p>
-			<div class="game-menu-actions">
-				<button class="game-menu-primary" id="game-menu-primary" type="button">Enter the forest</button>
-				<button class="game-menu-secondary" id="game-menu-home" type="button" hidden>Return to home</button>
-				<button class="game-menu-secondary" id="game-menu-sound" type="button">Sound: Off</button>
-			</div>
-			<p class="game-menu-hint">WASD / arrows to move · E to gather · Space to defend</p>
-		</div>
-	</dialog>
 	<dialog class="survival-dialog" id="survival-dialog" aria-labelledby="survival-title">
 		<div class="survival-dialog-header">
 			<div><p class="eyebrow">FERNFALL FIELDCRAFT</p><h2 id="survival-title">Crafting bench</h2></div>
