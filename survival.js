@@ -349,8 +349,17 @@ const FernfallSurvival = (() => {
 	}
 
 	function stationReady(recipe, fire) {
-		if (recipe.station === "fire") return true;
-		if (recipe.station === "open_fire_or_pan") return !fire.cookware || fire.cookware === "frying_pan" || fire.cookware === "cooking_pot";
+		const multiPart = Object.keys(recipe.ingredients || {}).length > 1;
+		if (recipe.id === "meat_skewers") return true;
+		if (recipe.station === "fire" && !multiPart) return true;
+		if (multiPart) {
+			if (recipe.station === "pot" || /stew|soup/.test(recipe.id)) return fire.cookware === "cooking_pot";
+			if (recipe.station === "pan" || /pie|steak_veggies|vegetables/.test(recipe.id)) return fire.cookware === "frying_pan";
+			return fire.cookware === "frying_pan" || fire.cookware === "cooking_pot";
+		}
+		if (recipe.station === "open_fire_or_pan") {
+			return !fire.cookware || fire.cookware === "frying_pan" || fire.cookware === "cooking_pot";
+		}
 		if (recipe.station === "pan") return fire.cookware === "frying_pan";
 		if (recipe.station === "pot") return fire.cookware === "cooking_pot";
 		return fire.cookware === "frying_pan" || fire.cookware === "cooking_pot";
@@ -372,7 +381,15 @@ const FernfallSurvival = (() => {
 		const recipe = recipes.find((entry) => entry.id === recipeId);
 		if (!recipe || !fire || fire.cooking) return;
 		if (missingIngredients(recipe).length) return show(`Missing ingredients: ${missingIngredients(recipe).join(", ")}.`);
-		if (!stationReady(recipe, fire)) return show(`Place a ${recipe.station === "pan" ? "frying pan" : "cooking pot"} on this campfire first.`);
+		if (!stationReady(recipe, fire)) {
+			const multiPart = Object.keys(recipe.ingredients || {}).length > 1;
+			const cookware = recipe.station === "pot" || (multiPart && /stew|soup/.test(recipe.id))
+				? "a cooking pot"
+				: recipe.station === "pan" || (multiPart && /pie|steak_veggies|vegetables/.test(recipe.id))
+					? "a frying pan"
+					: "a frying pan or cooking pot";
+			return show(`Place ${cookware} on this campfire first.`);
+		}
 		consumeRecipe(recipe);
 		if (recipe.waterOptional && player.inventory.bucket_water > 0) {
 			player.inventory.bucket_water -= 1;
@@ -472,7 +489,7 @@ const FernfallSurvival = (() => {
 		activeFireId = fire?.id ?? null;
 		const dialog = document.querySelector("#survival-dialog");
 		document.querySelector("#survival-title").textContent = mode === "furnace" ? "Furnace" : mode === "cook" ? "Campfire cooking" : "Crafting bench";
-		if (!dialog.open) dialog.showModal();
+		if (!dialog.open) dialog.show();
 		refreshPanel();
 	}
 
