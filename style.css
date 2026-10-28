@@ -343,11 +343,12 @@ button {
 .toast {
 	position: absolute;
 	left: 50%;
-	bottom: 18px;
-	z-index: 2;
+	top: 52px;
+	bottom: auto;
+	z-index: 10000;
 	max-width: calc(100% - 32px);
 	padding: 10px 15px;
-	transform: translate(-50%, 10px);
+	transform: translate(-50%, -10px);
 	border: 1px solid #ffffff8a;
 	border-radius: 5px;
 	background: #203b31ed;
