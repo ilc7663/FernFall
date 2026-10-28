@@ -713,6 +713,7 @@ const FernfallSurvival = (() => {
 			resource.available = false;
 			resource.respawnAt = Date.now() + 30000;
 			player.inventory[resource.type] = (player.inventory[resource.type] || 0) + 1;
+			recordQuest("gathered");
 			recordVillagerQuestProgress(resource.type);
 			show(`Gathered ${label(resource.type)}.`);
 			return true;
