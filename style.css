@@ -1101,24 +1101,6 @@ kbd {
 	background-repeat: no-repeat, no-repeat, repeat;
 }
 
-#fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot.fi-selected,
-#fernfall-inventory-root.fi-open .fi-hotbar .fi-slot.fi-selected {
-	position: relative;
-	z-index: 1;
-	outline: 2px solid #f1d778 !important;
-	outline-offset: -2px;
-	box-shadow: 0 0 8px #f1d778c9 !important;
-}
-
-#fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot.fi-selected img,
-#fernfall-inventory-root.fi-open .fi-hotbar .fi-slot.fi-selected img {
-	width: 94% !important;
-	height: 94% !important;
-	max-width: none;
-	max-height: none;
-	filter: drop-shadow(0 1px 2px #172318);
-}
-
 #fernfall-inventory-root.fi-open .fi-backpack .fi-slot,
 #fernfall-inventory-root.fi-open .fi-gridbar .fi-slot {
 	border: 2px solid #697168 !important;

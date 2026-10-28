@@ -346,7 +346,7 @@ const FernfallSurvival = (() => {
 
 	function stationReady(recipe, fire) {
 		if (recipe.station === "fire") return true;
-		if (recipe.station === "open_fire_or_pan") return !fire.cookware || fire.cookware === "frying_pan";
+		if (recipe.station === "open_fire_or_pan") return !fire.cookware || fire.cookware === "frying_pan" || fire.cookware === "cooking_pot";
 		if (recipe.station === "pan") return fire.cookware === "frying_pan";
 		if (recipe.station === "pot") return fire.cookware === "cooking_pot";
 		return fire.cookware === "frying_pan" || fire.cookware === "cooking_pot";
@@ -408,7 +408,7 @@ const FernfallSurvival = (() => {
 		if (recipe.waterOptional) requirements.push(`Water ${player.inventory.bucket_water || 0}/1 (optional)`);
 		const unavailable = isCrafting ? !craftingGridMatches(recipe) : missing.length > 0 || !stationOk || Boolean(fire?.cooking);
 		const action = activeMode === "cook" ? "cook" : "craft";
-		return `<article class="recipe-row"><div><strong>${recipe.name}</strong><p>${requirements.join(" · ")}</p><small>${activeMode === "cook" ? `${recipe.seconds}s · ${recipe.station === "either" ? "Pot or pan" : recipe.station === "open_fire_or_pan" ? "Open fire or frying pan" : recipe.station === "fire" ? "Campfire" : recipe.station === "pan" ? "Frying pan" : "Cooking pot"}` : "Craft equipment"}</small>${missing.length ? `<small class="missing-items">Missing: ${missing.join(", ")}</small>` : ""}</div><button type="button" class="recipe-action" data-survival-action="${action}" data-recipe="${recipe.id}" ${unavailable ? "disabled" : ""}>${activeMode === "cook" ? "Start" : "Craft"}</button></article>`;
+		return `<article class="recipe-row"><div><strong>${recipe.name}</strong><p>${requirements.join(" · ")}</p><small>${activeMode === "cook" ? `${recipe.seconds}s · ${recipe.station === "either" ? "Pot or pan" : recipe.station === "open_fire_or_pan" ? "Fire, furnace, pot or pan" : recipe.station === "fire" ? "Campfire or furnace" : recipe.station === "pan" ? "Frying pan" : "Cooking pot"}` : "Craft equipment"}</small>${missing.length ? `<small class="missing-items">Missing: ${missing.join(", ")}</small>` : ""}</div><button type="button" class="recipe-action" data-survival-action="${action}" data-recipe="${recipe.id}" ${unavailable ? "disabled" : ""}>${activeMode === "cook" ? "Start" : "Craft"}</button></article>`;
 	}
 
 	function renderCraftingWorkspace() {
