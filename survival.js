@@ -718,6 +718,22 @@ const FernfallSurvival = (() => {
 			return true;
 		}
 
+		const furnaceIndex = campfires.findIndex((fire) => fire.kind === "furnace" && !fire.cooking && Math.hypot(fire.x - x, fire.y - y) < 36);
+		if (furnaceIndex >= 0) {
+			campfires.splice(furnaceIndex, 1);
+			player.inventory.furnace = (player.inventory.furnace || 0) + 1;
+			show("Picked up furnace.");
+			return true;
+		}
+
+		const coalFire = campfires.find((fire) => fire.kind !== "furnace" && !fire.coalCollected && Math.hypot(fire.x + 32 - x, fire.y + 12 - y) < 14);
+		if (coalFire) {
+			coalFire.coalCollected = true;
+			player.inventory.coal = (player.inventory.coal || 0) + 1;
+			show("Picked up coal from the campfire.");
+			return true;
+		}
+
 		const tableIndex = craftingTables.findIndex((table) => !table.village && Math.hypot(table.x - x, table.y - y) < 36);
 		if (tableIndex >= 0) {
 			craftingTables.splice(tableIndex, 1);
@@ -1092,6 +1108,18 @@ const FernfallSurvival = (() => {
 
 	function drawStations() {
 		for (const fire of campfires) {
+			if (fire.kind !== "furnace" && !fire.coalCollected) {
+				const coalX = fire.x + 32;
+				const coalY = fire.y + 12;
+				ctx.fillStyle = "#342d22";
+				ctx.beginPath();
+				ctx.arc(coalX, coalY, 11, 0, Math.PI * 2);
+				ctx.fill();
+				if (!drawPackItemIcon("coal", coalX, coalY, 18)) {
+					ctx.fillStyle = "#17191a";
+					ctx.fillRect(coalX - 6, coalY - 5, 12, 10);
+				}
+			}
 			if (fire.kind === "furnace") {
 				if (!drawPackStationArt(fire.cooking ? "furnace_lit" : "furnace_unlit", fire.x, fire.y, 58)) {
 					ctx.fillStyle = "#77776f";
