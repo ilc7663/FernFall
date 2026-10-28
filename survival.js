@@ -660,8 +660,12 @@ const FernfallSurvival = (() => {
 			}
 			const heal = item.raw ? 1 : item.heal || (selectedItem === "bucket_water" ? 1 : 2);
 			const hungerGain = selectedItem === "bucket_water" ? 5 : item.raw ? 8 : bucketItem ? 14 : 12 + (item.heal || 1) * 4;
+			const saturationMultiplier = item.raw ? 0.25 : selectedItem === "bucket_water" ? 0 : ["berry", "herb"].includes(selectedItem) ? 0.35 : selectedItem === "mushroom" ? 0.4 : selectedItem === "potato" ? 0.5 : /cooked|stew|pie|soup|meal/.test(selectedItem) ? 0.9 : 0.65;
+			const saturationGain = Math.round(hungerGain * saturationMultiplier);
 			player.health = Math.min(MAX_HEALTH, player.health + heal);
 			player.hunger = Math.min(MAX_HUNGER, player.hunger + hungerGain);
+			player.saturation = Math.min(MAX_SATURATION, (player.saturation || 0) + saturationGain);
+			player.lastFoodEaten = selectedItem;
 			player.inventory[selectedItem] -= 1;
 			if (selectedItem === "bucket_milk" || selectedItem === "bucket_water") player.inventory.bucket_empty = (player.inventory.bucket_empty || 0) + 1;
 			show(item.raw && sickUntil > Date.now() ? "Raw food helped a little, but you feel unwell." : `Ate ${item.name.toLowerCase()}.`);
@@ -1206,13 +1210,25 @@ const FernfallSurvival = (() => {
 				let seed = (Math.imul(cx, 374761393) ^ Math.imul(cy, 668265263)) >>> 0;
 				const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
 				const types = ["stone", "carrot", "potato", "berry", "mushroom", "grain", "herb"];
+				if (random() < 0.5) continue;
 				for (let index = 0; index < 7; index += 1) {
 					const resource = {
 						x: cx * WORLD_CHUNK_SIZE + 32 + random() * (WORLD_CHUNK_SIZE - 64),
 						y: cy * WORLD_CHUNK_SIZE + 32 + random() * (WORLD_CHUNK_SIZE - 64),
 						type: types[Math.floor(random() * types.length)], available: true,
 					};
-					if (!collides(resource.x, resource.y) && Math.hypot(player.x - resource.x, player.y - resource.y) > 85) resources.push(resource);
+					if (!collides(resource.x, resource.y) && Math.hypot(player.x - resource.x, player.y - resource.y) > 85) {
+						if (resource.type === "berry" && random() < 0.55) continue;
+						resources.push(resource);
+						if (resource.type === "berry") {
+							const offsets = [[-22, -12], [24, -8], [-14, 22], [18, 24]];
+							const clusterSize = 2 + Math.floor(random() * 2);
+							for (const [offsetX, offsetY] of offsets.slice(0, clusterSize)) {
+								const berry = { ...resource, x: resource.x + offsetX, y: resource.y + offsetY };
+								if (!collides(berry.x, berry.y) && Math.hypot(player.x - berry.x, player.y - berry.y) > 85) resources.push(berry);
+							}
+						}
+					}
 				}
 				if (random() < 0.22) ponds.push({ x: cx * WORLD_CHUNK_SIZE + 100 + random() * 300, y: cy * WORLD_CHUNK_SIZE + 100 + random() * 300 });
 				generateVillage(random, cx, cy);

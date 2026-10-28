@@ -7,6 +7,8 @@ const keys = new Set();
 const heldDirections = new Set();
 const MAX_HEALTH = 10;
 const MAX_HUNGER = 100;
+const MAX_SATURATION = 100;
+const SATURATION_REGEN_COST = 10;
 const HUNGER_DRAIN_MS = 20000;
 const HUNGER_REGEN_MS = 6000;
 const STARVATION_DAMAGE_MS = 8000;
@@ -33,6 +35,8 @@ const player = {
 	direction: "down",
 	health: saved?.health ?? MAX_HEALTH,
 	hunger: saved?.hunger ?? MAX_HUNGER,
+	saturation: Math.min(MAX_SATURATION, Math.max(0, saved?.saturation ?? 0)),
+	lastFoodEaten: saved?.lastFoodEaten ?? "",
 	coins: saved?.coins ?? 0,
 	xp: saved?.xp ?? 0,
 	level: saved?.level ?? 1,
@@ -205,7 +209,7 @@ function saveGame() {
 	let serializedSave;
 	try {
 		const save = {
-			x: player.x, y: player.y, health: player.health, hunger: player.hunger, coins: player.coins,
+			x: player.x, y: player.y, health: player.health, hunger: player.hunger, saturation: player.saturation, lastFoodEaten: player.lastFoodEaten, coins: player.coins,
 			xp: player.xp, level: player.level, inventory: player.inventory, questClaimed,
 			wolfTamed: animals.find((animal) => animal.type === "wolf")?.tamed ?? false,
 			jimothyMet,
@@ -603,9 +607,10 @@ function update() {
 		lastHungerDrain += drain * HUNGER_DRAIN_MS;
 		updateHud();
 	}
-	if (player.hunger >= MAX_HUNGER && player.health < MAX_HEALTH) {
+	if (player.hunger >= MAX_HUNGER && player.saturation > 0 && player.health < MAX_HEALTH) {
 		if (now - lastHungerRegen >= HUNGER_REGEN_MS) {
 			player.health = Math.min(MAX_HEALTH, player.health + 1);
+			player.saturation = Math.max(0, player.saturation - SATURATION_REGEN_COST);
 			lastHungerRegen = now;
 			updateHud();
 			saveGame();
@@ -915,7 +920,24 @@ function checkQuest() {
 function updateHud() {
 	document.querySelector("#health-fill").style.width = `${player.health / MAX_HEALTH * 100}%`;
 	document.querySelector("#health-value").textContent = `${player.health} / ${MAX_HEALTH}`;
-	window.FernfallInventory?.setVitals({ health: player.health, maxHealth: MAX_HEALTH, hunger: player.hunger, maxHunger: MAX_HUNGER });
+	window.FernfallInventory?.setVitals({ health: player.health, maxHealth: MAX_HEALTH, hunger: player.hunger, maxHunger: MAX_HUNGER, saturation: player.saturation, maxSaturation: MAX_SATURATION });
+	const statusbar = document.querySelector(".statusbar");
+	let saturationMeter = document.querySelector("#saturation-meter");
+	if (!saturationMeter && statusbar) {
+		saturationMeter = document.createElement("div");
+		saturationMeter.id = "saturation-meter";
+		saturationMeter.setAttribute("role", "meter");
+		saturationMeter.setAttribute("aria-label", "Saturation");
+		saturationMeter.innerHTML = '<span class="saturation-label">SAT</span><span class="saturation-track"><span class="saturation-fill"></span></span><span class="saturation-value"></span>';
+		statusbar.append(saturationMeter);
+	}
+	if (saturationMeter) {
+		saturationMeter.setAttribute("aria-valuemin", "0");
+		saturationMeter.setAttribute("aria-valuemax", String(MAX_SATURATION));
+		saturationMeter.setAttribute("aria-valuenow", String(Math.round(player.saturation)));
+		saturationMeter.querySelector(".saturation-fill").style.width = `${player.saturation / MAX_SATURATION * 100}%`;
+		saturationMeter.querySelector(".saturation-value").textContent = `${Math.round(player.saturation)}%`;
+	}
 	document.querySelector("#coin-value").textContent = player.coins;
 	document.querySelector("#level-value").textContent = player.level;
 	const defeated = mobs.filter((mob) => !mob.alive).length;

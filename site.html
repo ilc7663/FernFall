@@ -13,6 +13,127 @@
 	<link rel="stylesheet" href="Video_Game_PNGs/Fernfall_Complete_Inventory_Crafting_Animations_VSCode/crafting.css">
 	<link rel="stylesheet" href="Video_Game_PNGs/Fernfall_Complete_Inventory_Hotbar_Textures_VSCode/fernfall-texture-theme.css">
 	<link rel="stylesheet" href="style.css">
+	<style>
+		#fernfall-inventory-root.fi-open .fi-window {
+			max-height: calc(100dvh - 104px) !important;
+			overflow-y: auto !important;
+		}
+		#fernfall-inventory-root.fi-open .fi-hotbar {
+			position: fixed !important;
+			left: 50% !important;
+			bottom: max(8px, env(safe-area-inset-bottom)) !important;
+			transform: translateX(-50%) !important;
+			z-index: 10001 !important;
+			display: grid !important;
+			grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+			gap: 3px !important;
+			width: min(440px, calc(100vw - 16px)) !important;
+		}
+		#fernfall-inventory-root.fi-open .fi-hotbar .fi-slot {
+			width: 100% !important;
+			min-width: 0 !important;
+			height: auto !important;
+			aspect-ratio: 1;
+		}
+		#fernfall-inventory-root.fi-open .fi-backpack .fi-slot img,
+		#fernfall-inventory-root.fi-open .fi-gridbar .fi-slot img {
+			width: 94% !important;
+			height: 94% !important;
+			max-width: calc(100% - 4px) !important;
+			max-height: calc(100% - 4px) !important;
+			object-fit: contain;
+		}
+		.fernfall-inventory-controls {
+			max-width: 230px;
+			margin: 6px auto 0;
+			color: #f3ead4;
+			font: 10px/1.3 "DM Sans", sans-serif;
+			text-align: center;
+		}
+		#saturation-meter {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+			width: min(120px, 22vw);
+			min-width: 72px;
+			color: var(--muted);
+			font: 700 9px/1 "DM Sans", sans-serif;
+		}
+		#saturation-meter .saturation-track {
+			flex: 1;
+			height: 7px;
+			overflow: hidden;
+			border: 1px solid #6b7157;
+			background: #25342b;
+		}
+		#saturation-meter .saturation-fill {
+			display: block;
+			height: 100%;
+			background: #78b878;
+			transition: width 180ms ease;
+		}
+		#saturation-meter .saturation-value {
+			min-width: 24px;
+			text-align: right;
+		}
+		#survival-dialog.game-box-popup {
+			position: absolute !important;
+			top: 50% !important;
+			left: 50% !important;
+			inset: auto !important;
+			transform: translate(-50%, -50%);
+			margin: 0 !important;
+			width: min(520px, calc(100% - 24px));
+			max-width: calc(100% - 24px);
+			max-height: calc(100% - 24px);
+			overflow: auto;
+			padding: 20px;
+			border: 1px solid #c1a875;
+			border-radius: 10px;
+			background: linear-gradient(145deg, #26392d, #17251e);
+			color: #f3ead4;
+			box-shadow: 0 16px 46px #09120dc9, 0 0 0 100vmax #08110b77;
+			z-index: 20;
+		}
+		#survival-dialog.game-box-popup::backdrop {
+			background: transparent;
+		}
+		#survival-dialog.game-box-popup #survival-title {
+			margin: 0 0 14px;
+			color: #f3dfad;
+			font: 600 20px/1.2 "Unbounded", sans-serif;
+		}
+		#survival-dialog.game-box-popup button {
+			min-height: 38px;
+			border: 1px solid #779276;
+			border-radius: 6px;
+			background: #314b38;
+			color: #f7f0dc;
+			font: 600 13px/1.25 "DM Sans", sans-serif;
+			cursor: pointer;
+		}
+		#survival-dialog.game-box-popup button:hover:not(:disabled) {
+			background: #45634a;
+		}
+		#survival-dialog.game-box-popup button:disabled {
+			cursor: not-allowed;
+			opacity: 0.55;
+		}
+		#survival-dialog.game-box-popup .cooking-progress {
+			padding: 12px;
+			border: 1px solid #758660;
+			border-radius: 7px;
+			background: #17241dd9;
+		}
+		@media (max-width: 560px) {
+			#survival-dialog.game-box-popup {
+				padding: 14px;
+			}
+			#survival-dialog.game-box-popup #survival-title {
+				font-size: 17px;
+			}
+		}
+	</style>
 </head>
 <body>
 	<main class="game-shell">
@@ -196,5 +317,14 @@
 	<script src="Video_Game_PNGs/Fernfall_Complete_Inventory_Crafting_Animations_VSCode/inventory.js"></script>
 	<script src="Video_Game_PNGs/Fernfall_Complete_Inventory_Crafting_Animations_VSCode/crafting.js"></script>
 	<script src="fernfall-game-integration.js"></script>
-</body>
+	<script>
+		(() => {
+			const gameBox = document.querySelector(".scene-wrap");
+			const cookingDialog = document.querySelector("#survival-dialog");
+			if (!gameBox || !cookingDialog) return;
+			gameBox.append(cookingDialog);
+			cookingDialog.classList.add("game-box-popup");
+		})();
+	</script>
+	</body>
 </html>

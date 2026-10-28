@@ -121,9 +121,17 @@
 	window.FernfallInventory.setPortrait((context, width, height) => {
 		const sprite = art.ranger[`${player.direction}_idle`] || art.ranger.down_idle;
 		if (!sprite?.complete || !sprite.naturalWidth) return;
-		const size = Math.min(width - 12, height - 12);
+		const size = Math.min(width, height) * 1.12;
 		context.imageSmoothingEnabled = false;
 		context.drawImage(sprite, Math.round((width - size) / 2), Math.round(height - size - 4), size, size);
+		const canvas = context.canvas;
+		const panel = canvas.parentElement;
+		if (panel && !panel.querySelector(".fernfall-inventory-controls")) {
+			const hint = document.createElement("p");
+			hint.className = "fernfall-inventory-controls";
+			hint.textContent = "Click: pick up / place · Shift+click: move stack · Right-click: split / place one · 1–9: select hotbar · I: inventory";
+			canvas.insertAdjacentElement("afterend", hint);
+		}
 	});
 
 	syncPackFromGame();
