@@ -1203,6 +1203,16 @@ kbd {
 	border-radius: 0 !important;
 }
 
+#fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot img,
+#fernfall-inventory-root.fi-open .fi-hotbar .fi-slot img {
+	width: 115% !important;
+	height: 115% !important;
+	max-width: none !important;
+	max-height: none !important;
+	object-fit: contain !important;
+	image-rendering: pixelated;
+}
+
 #fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot img[src*="slime_gel.png"],
 #fernfall-inventory-root.fi-open .fi-hotbar .fi-slot img[src*="slime_gel.png"] {
 	transform: scaleX(1.4);
@@ -1458,10 +1468,10 @@ kbd {
 
 	#fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot img,
 	#fernfall-inventory-root.fi-open .fi-hotbar .fi-slot img {
-		width: 100% !important;
-		height: 100% !important;
-		max-width: calc(100% - 2px) !important;
-		max-height: calc(100% - 2px) !important;
+		width: 115% !important;
+		height: 115% !important;
+		max-width: none !important;
+		max-height: none !important;
 		object-fit: contain !important;
 		image-rendering: pixelated;
 	}
