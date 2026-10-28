@@ -6,6 +6,8 @@ const SAVE_KEY = "fernfall-save-v1";
 const keys = new Set();
 const heldDirections = new Set();
 const MAX_HEALTH = 10;
+const MAX_HUNGER = 100;
+const HUNGER_DRAIN_MS = 12000;
 const WORLD_CHUNK_SIZE = 512;
 const camera = { x: 0, y: 0 };
 const generatedChunks = new Set(["0,0"]);
@@ -28,6 +30,7 @@ const player = {
 	y: saved?.y ?? 322,
 	direction: "down",
 	health: saved?.health ?? MAX_HEALTH,
+	hunger: saved?.hunger ?? MAX_HUNGER,
 	coins: saved?.coins ?? 0,
 	xp: saved?.xp ?? 0,
 	level: saved?.level ?? 1,
@@ -172,6 +175,7 @@ const pickups = [];
 let lastAttack = 0;
 let lastDamage = 0;
 let lastSave = 0;
+let lastHungerDrain = performance.now();
 const toastQueue = [];
 let toastTimer;
 let questClaimed = saved?.questClaimed ?? false;
@@ -192,7 +196,7 @@ function saveGame() {
 	let serializedSave;
 	try {
 		const save = {
-			x: player.x, y: player.y, health: player.health, coins: player.coins,
+			x: player.x, y: player.y, health: player.health, hunger: player.hunger, coins: player.coins,
 			xp: player.xp, level: player.level, inventory: player.inventory, questClaimed,
 			wolfTamed: animals.find((animal) => animal.type === "wolf")?.tamed ?? false,
 			jimothyMet,
@@ -582,6 +586,12 @@ function update() {
 	}
 
 	const now = performance.now();
+	if (now - lastHungerDrain >= HUNGER_DRAIN_MS) {
+		const drain = Math.floor((now - lastHungerDrain) / HUNGER_DRAIN_MS);
+		player.hunger = Math.max(0, player.hunger - drain);
+		lastHungerDrain += drain * HUNGER_DRAIN_MS;
+		updateHud();
+	}
 	if (player.swing > 0) player.swing = Math.max(0, player.swing - 0.06);
 	if (player.hurt > 0) player.hurt -= 1;
 	for (const animal of animals) {
@@ -780,6 +790,7 @@ function checkQuest() {
 function updateHud() {
 	document.querySelector("#health-fill").style.width = `${player.health / MAX_HEALTH * 100}%`;
 	document.querySelector("#health-value").textContent = `${player.health} / ${MAX_HEALTH}`;
+	window.FernfallInventory?.setVitals({ health: player.health, maxHealth: MAX_HEALTH, hunger: player.hunger, maxHunger: MAX_HUNGER });
 	document.querySelector("#coin-value").textContent = player.coins;
 	document.querySelector("#level-value").textContent = player.level;
 	const defeated = mobs.filter((mob) => !mob.alive).length;

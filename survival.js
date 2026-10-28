@@ -567,13 +567,15 @@ const FernfallSurvival = (() => {
 		if (!item || !(player.inventory[selectedItem] > 0)) return;
 		if (item.category === "food" || selectedItem === "bucket_milk" || selectedItem === "bucket_water") {
 			const bucketItem = selectedItem === "bucket_milk" || selectedItem === "bucket_water";
-			if (player.health >= MAX_HEALTH && !bucketItem) return show("You are already at full health.");
+			if (player.health >= MAX_HEALTH && player.hunger >= MAX_HUNGER && !bucketItem) return show("You are already full.");
 			if (item.raw && Math.random() < 0.25) {
 				sickUntil = Date.now() + 7000;
 				nextSicknessDamage = Date.now() + 2200;
 			}
 			const heal = item.raw ? 1 : item.heal || (selectedItem === "bucket_water" ? 1 : 2);
+			const hungerGain = selectedItem === "bucket_water" ? 5 : item.raw ? 8 : bucketItem ? 14 : 12 + (item.heal || 1) * 4;
 			player.health = Math.min(MAX_HEALTH, player.health + heal);
+			player.hunger = Math.min(MAX_HUNGER, player.hunger + hungerGain);
 			player.inventory[selectedItem] -= 1;
 			if (selectedItem === "bucket_milk" || selectedItem === "bucket_water") player.inventory.bucket_empty = (player.inventory.bucket_empty || 0) + 1;
 			show(item.raw && sickUntil > Date.now() ? "Raw food helped a little, but you feel unwell." : `Ate ${item.name.toLowerCase()}.`);

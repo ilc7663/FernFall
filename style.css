@@ -656,6 +656,14 @@ kbd {
 		aspect-ratio: 8 / 5;
 	}
 
+	#fernfall-inventory-root.fi-game-overlay .fi-vitals {
+		left: calc(50% + 64px);
+		width: min(280px, calc(100% - 140px));
+		grid-template-columns: minmax(0, 1fr);
+		gap: 3px;
+		padding: 4px 6px;
+	}
+
 	.scene-topline {
 		top: 7px;
 		left: 7px;
@@ -962,6 +970,74 @@ kbd {
 	width: 100%;
 	height: 100%;
 	pointer-events: none;
+}
+
+#fernfall-inventory-root.fi-game-overlay .fi-vitals {
+	position: absolute;
+	left: 50%;
+	bottom: calc(10px + clamp(40px, 10vw, 60px) + 8px);
+	width: min(280px, calc(100% - 24px));
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 7px;
+	padding: 5px 7px;
+	transform: translateX(-50%);
+	border: 1px solid #ffffff68;
+	border-radius: 5px;
+	background: #203b31e8;
+	box-shadow: 0 2px 6px #10201966;
+	color: #fff;
+	font-size: 9px;
+	pointer-events: none;
+}
+
+#fernfall-inventory-root.fi-open .fi-vitals {
+	bottom: calc(2% + clamp(40px, 10vw, 56px) + 8px);
+}
+
+#fernfall-inventory-root .fi-vital-row {
+	min-width: 0;
+	display: grid;
+	grid-template-columns: 28px minmax(0, 1fr) 29px;
+	align-items: center;
+	gap: 4px;
+}
+
+#fernfall-inventory-root .fi-vital-label {
+	color: #eef1e8;
+	font-size: 8px;
+	font-weight: 800;
+}
+
+#fernfall-inventory-root .fi-vital-value {
+	color: #f3f4ed;
+	font-size: 8px;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+#fernfall-inventory-root .fi-vital-track {
+	height: 6px;
+	min-width: 0;
+	overflow: hidden;
+	border-radius: 4px;
+	background: #101a17;
+}
+
+#fernfall-inventory-root .fi-vital-fill {
+	width: 100%;
+	height: 100%;
+	display: block;
+	border-radius: inherit;
+	transition: width 180ms ease-out;
+}
+
+#fernfall-inventory-root .fi-health-fill {
+	background: var(--coral);
+}
+
+#fernfall-inventory-root .fi-hunger-fill {
+	background: var(--gold);
 }
 
 #fernfall-inventory-root.fi-game-overlay .fi-hotbar {
