@@ -36,10 +36,10 @@ function drawHostileSprite(mob, x, y) {
 
 const originalGather = gather;
 gather = function () {
-	if (survivalModule?.interact()) return;
+	if (survivalModule?.interact()) return true;
 	const untamedWolves = animals.filter((animal) => animal.type === "wolf" && !animal.tamed);
 	const inventoryBefore = { ...player.inventory };
-	originalGather();
+	const gathered = originalGather();
 	for (const [type, amount] of Object.entries(player.inventory)) {
 		const gained = amount - (inventoryBefore[type] || 0);
 		if (gained <= 0) continue;
@@ -47,6 +47,10 @@ gather = function () {
 		survivalModule?.recordVillagerQuestProgress(type, gained);
 	}
 	if (survivalModule && untamedWolves.some((animal) => animal.tamed)) survivalModule.recordQuest("wolf");
+	if (gathered) return true;
+	if (window.FernfallGameInventory?.eatSelectedFood()) return true;
+	showToast("Nothing to gather nearby. Look for a sparkle!");
+	return false;
 };
 
 const originalAttack = attack;

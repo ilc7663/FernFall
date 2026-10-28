@@ -167,7 +167,7 @@
 		const treeBefore = obstacles.map((tree) => ({ tree, hits: tree.woodHits || 0 }));
 		const pickupBefore = pickups.map((pickup) => ({ x: pickup.x, y: pickup.y }));
 		const pickupCount = pickups.length;
-		baseGather();
+		const handled = baseGather();
 		for (const entry of resourceBefore) {
 			const { resource } = entry;
 			if (!entry.available || resource.available) continue;
@@ -185,6 +185,7 @@
 			const gone = pickupBefore.find((spot) => !pickups.some((pickup) => pickup.x === spot.x && pickup.y === spot.y));
 			if (gone) spawn("ui_effects", "pickup", 3, gone.x, gone.y, 44, 420);
 		}
+		return handled;
 	};
 
 	window.addEventListener("fernfall:item-crafted", () => spawn("ui_effects", "craft_success", 3, player.x, player.y - 36, 52, 600));

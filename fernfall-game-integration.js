@@ -92,6 +92,14 @@
 
 	window.FernfallGameInventory = {
 		syncFromGame: () => syncPackFromGame(),
+		eatSelectedFood() {
+			if (window.FernfallInventory.hasCursor()) return false;
+			const selected = window.FernfallInventory.getSelected();
+			if (!selected) return false;
+			const gameId = gameIdFor(selected.id);
+			if (itemInfo[gameId]?.category !== "food" || !(player.inventory[gameId] > 0)) return false;
+			return Boolean(survivalModule?.useItem(gameId));
+		},
 		animate(fallback) {
 			const id = window.FernfallInventory.getSelected()?.id || "";
 			if (!/_(pickaxe|axe|shovel|hoe|sword|bow|fishing_rod|shears)$/.test(id)) return false;

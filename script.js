@@ -686,7 +686,7 @@ function gather() {
 		animals.splice(animals.indexOf(nearbyJimothy), 1);
 		showToast("Jimothy waves goodbye and slips into the woods. That was your one meeting!");
 		saveGame();
-		return;
+		return true;
 	}
 	const nearbyWolf = animals.find((animal) => animal.type === "wolf" && Math.hypot(player.x - animal.x, player.y - animal.y) < 58);
 	if (nearbyWolf) {
@@ -703,7 +703,7 @@ function gather() {
 			updateHud();
 			saveGame();
 		}
-		return;
+		return true;
 	}
 	const nearbyPickup = pickups.find((pickup) => Math.hypot(player.x - pickup.x, player.y - pickup.y) < 55);
 	if (nearbyPickup) {
@@ -713,19 +713,17 @@ function gather() {
 		addItem(nearbyPickup.type, amount);
 		const itemName = itemInfo[nearbyPickup.type]?.name || nearbyPickup.type.replaceAll("_", " ");
 		showToast(`Picked up ${itemName.toLowerCase()}${amount > 1 ? ` ×${amount}` : ""}.`);
-		return;
+		return true;
 	}
 	const resource = resources.find((item) => item.available && Math.hypot(player.x - item.x, player.y - item.y) < 48);
-	if (!resource) {
-		showToast("Nothing to gather nearby. Look for a sparkle!");
-		return;
-	}
+	if (!resource) return false;
 	window.FernfallGameInventory?.animate(resource.type === "wood" ? "chop" : "dig");
 	resource.available = false;
 	addItem(resource.type, 1);
 	playTone(620);
 	showToast(`Gathered ${itemInfo[resource.type].name.toLowerCase()}!`);
 	setTimeout(() => { resource.available = true; }, 12000);
+	return true;
 }
 
 function attack() {
