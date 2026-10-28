@@ -559,6 +559,7 @@ kbd {
 	}
 
 	.panel-heading,
+	.pack-shortcuts,
 	.inventory-grid,
 	.pack-note {
 		grid-column: 1;
@@ -657,11 +658,11 @@ kbd {
 	}
 
 	#fernfall-inventory-root.fi-game-overlay .fi-vitals {
-		left: calc(50% + 64px);
-		width: min(280px, calc(100% - 140px));
-		grid-template-columns: minmax(0, 1fr);
-		gap: 3px;
-		padding: 4px 6px;
+		left: 50%;
+		width: calc(100% - 16px);
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: 10px;
+	padding: 0 3%;
 	}
 
 	.scene-topline {
@@ -674,7 +675,7 @@ kbd {
 
 	.mobile-pad {
 		position: absolute;
-		bottom: 10px;
+		bottom: 74px;
 		left: 10px;
 		width: 102px;
 		height: 102px;
@@ -976,16 +977,17 @@ kbd {
 	position: absolute;
 	left: 50%;
 	bottom: calc(10px + clamp(40px, 10vw, 60px) + 8px);
-	width: min(280px, calc(100% - 24px));
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 7px;
-	padding: 5px 7px;
+	width: min(600px, calc(100% - 12px));
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 0 4.1%;
 	transform: translateX(-50%);
-	border: 1px solid #ffffff68;
-	border-radius: 5px;
-	background: #203b31e8;
-	box-shadow: 0 2px 6px #10201966;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
 	color: #fff;
 	font-size: 9px;
 	pointer-events: none;
@@ -993,9 +995,12 @@ kbd {
 
 #fernfall-inventory-root.fi-open .fi-vitals {
 	bottom: calc(2% + clamp(40px, 10vw, 56px) + 8px);
+	width: min(560px, calc(100% - 24px));
+	padding: 0 4.7%;
 }
 
 #fernfall-inventory-root .fi-vital-row {
+	width: 46%;
 	min-width: 0;
 	display: grid;
 	grid-template-columns: 28px minmax(0, 1fr) 29px;
@@ -1007,6 +1012,7 @@ kbd {
 	color: #eef1e8;
 	font-size: 8px;
 	font-weight: 800;
+	text-shadow: 0 1px 3px #102019;
 }
 
 #fernfall-inventory-root .fi-vital-value {
@@ -1014,6 +1020,7 @@ kbd {
 	font-size: 8px;
 	font-variant-numeric: tabular-nums;
 	text-align: right;
+	text-shadow: 0 1px 3px #102019;
 }
 
 #fernfall-inventory-root .fi-vital-track {

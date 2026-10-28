@@ -777,6 +777,36 @@ function useTonic() {
 	}
 }
 
+function resetCharacter() {
+	const resetPoints = [
+		{ x: 160, y: 192 }, { x: 224, y: 192 }, { x: 96, y: 192 },
+		{ x: 160, y: 256 }, { x: 160, y: 128 }, { x: 288, y: 192 },
+		{ x: 224, y: 256 }, { x: 96, y: 256 },
+	];
+	const position = resetPoints.find(({ x, y }) =>
+		!collides(x, y) && !window.fernfallPathOverlaps?.(x, y, 48, 48),
+	);
+	if (!position) return showToast("No clear reset point is available right now.");
+	keys.clear();
+	heldDirections.clear();
+	player.x = position.x;
+	player.y = position.y;
+	player.direction = "down";
+	player.swing = 0;
+	player.hurt = 0;
+	player.toolAction = null;
+	player.toolActionUntil = 0;
+	camera.x = player.x - WIDTH / 2;
+	camera.y = player.y - HEIGHT / 2;
+	window.FernfallInventory?.close();
+	window.FernfallCrafting?.close();
+	const cookingDialog = document.querySelector("#survival-dialog");
+	if (cookingDialog?.open) cookingDialog.close();
+	showToast("Character reset to a safe clearing. Inventory and progress kept.");
+	updateHud();
+	saveGame();
+}
+
 function checkQuest() {
 	const defeated = mobs.filter((mob) => !mob.alive).length;
 	if (defeated >= 3 && !questClaimed) {
@@ -828,6 +858,7 @@ canvas.addEventListener("pointerdown", setDirectionFromPointer);
 document.querySelector("#gather-button").addEventListener("click", gather);
 document.querySelector("#attack-button").addEventListener("click", attack);
 document.querySelector("#potion-button").addEventListener("click", useTonic);
+document.querySelector("#reset-character-button").addEventListener("click", resetCharacter);
 document.querySelector("#mobile-attack").addEventListener("pointerdown", (event) => { event.preventDefault(); attack(); });
 document.querySelectorAll("[data-move]").forEach((button) => {
 	const direction = button.dataset.move;
