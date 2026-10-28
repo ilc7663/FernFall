@@ -10,6 +10,7 @@
 	const ROCK_CROP = { sy: 0, sh: 0.85 };
 	const CROP_CROP = { sy: 0.42, sh: 0.58 };
 	const effects = [];
+	const cleanedPickupSprites = new WeakMap();
 	let fx = null;
 
 	loadFernfallEffects(PACK_ROOT).then((art) => { fx = art; }).catch(() => {});
@@ -18,16 +19,39 @@
 		return fx?.[group]?.[`${prefix}_${String(index).padStart(2, "0")}`];
 	}
 
+	function pickupSpriteWithoutWhite(img) {
+		if (!img?.complete || !img.naturalWidth) return null;
+		if (cleanedPickupSprites.has(img)) return cleanedPickupSprites.get(img);
+		const canvas = document.createElement("canvas");
+		canvas.width = img.naturalWidth;
+		canvas.height = img.naturalHeight;
+		const context = canvas.getContext("2d", { willReadFrequently: true });
+		context.drawImage(img, 0, 0);
+		const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+		const pixels = imageData.data;
+		for (let offset = 0; offset < pixels.length; offset += 4) {
+			if (!pixels[offset + 3]) continue;
+			const min = Math.min(pixels[offset], pixels[offset + 1], pixels[offset + 2]);
+			const max = Math.max(pixels[offset], pixels[offset + 1], pixels[offset + 2]);
+			if (min >= 210 && max - min <= 55) pixels[offset + 3] = 0;
+		}
+		context.putImageData(imageData, 0, 0);
+		cleanedPickupSprites.set(img, canvas);
+		return canvas;
+	}
+
 	function drawSprite(img, x, y, size, { crop, bottom = false } = {}) {
-		if (!img?.complete || !img.naturalWidth) return false;
-		const sy = (crop?.sy ?? 0) * img.naturalHeight;
-		const sh = (crop?.sh ?? 1) * img.naturalHeight;
-		const scale = size / Math.max(img.naturalWidth, sh);
-		const w = img.naturalWidth * scale;
+		const imageWidth = img?.naturalWidth || img?.width;
+		const imageHeight = img?.naturalHeight || img?.height;
+		if (!imageWidth || !imageHeight) return false;
+		const sy = (crop?.sy ?? 0) * imageHeight;
+		const sh = (crop?.sh ?? 1) * imageHeight;
+		const scale = size / Math.max(imageWidth, sh);
+		const w = imageWidth * scale;
 		const h = sh * scale;
 		ctx.save();
 		ctx.imageSmoothingEnabled = false;
-		ctx.drawImage(img, 0, sy, img.naturalWidth, sh, Math.round(x - w / 2), Math.round(bottom ? y - h : y - h / 2), Math.round(w), Math.round(h));
+		ctx.drawImage(img, 0, sy, imageWidth, sh, Math.round(x - w / 2), Math.round(bottom ? y - h : y - h / 2), Math.round(w), Math.round(h));
 		ctx.restore();
 		return true;
 	}
@@ -45,7 +69,11 @@
 				effects.splice(index, 1);
 				continue;
 			}
-			drawSprite(frame(effect.group, effect.prefix, Math.floor(progress * effect.count) + 1), effect.x, effect.y, effect.size);
+			const image = frame(effect.group, effect.prefix, Math.floor(progress * effect.count) + 1);
+			const sprite = effect.group === "ui_effects" && effect.prefix === "pickup"
+				? pickupSpriteWithoutWhite(image)
+				: image;
+			drawSprite(sprite, effect.x, effect.y, effect.size);
 		}
 	}
 

@@ -817,37 +817,68 @@ const FernfallSurvival = (() => {
 		context.drawImage(image, 0, 0);
 		const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
 		const pixels = imageData.data;
-		const visited = new Uint8Array(canvas.width * canvas.height);
+		const pixelCount = canvas.width * canvas.height;
+		const visited = new Uint8Array(pixelCount);
+		const removed = new Uint8Array(pixelCount);
 		const background = [pixels[0], pixels[1], pixels[2]];
-		const pending = [];
-		const matchesBackground = (offset) =>
-			Math.abs(pixels[offset] - background[0]) <= 18 &&
-			Math.abs(pixels[offset + 1] - background[1]) <= 18 &&
-			Math.abs(pixels[offset + 2] - background[2]) <= 18;
-		const addBackgroundPixel = (index) => {
-			if (visited[index]) return;
-			visited[index] = 1;
+		const matchesBackground = (index) => {
 			const offset = index * 4;
-			if (matchesBackground(offset)) pending.push(index);
+			return Math.abs(pixels[offset] - background[0]) <= 18 &&
+				Math.abs(pixels[offset + 1] - background[1]) <= 18 &&
+				Math.abs(pixels[offset + 2] - background[2]) <= 18;
 		};
+		for (let start = 0; start < pixelCount; start += 1) {
+			if (visited[start]) continue;
+			visited[start] = 1;
+			if (!matchesBackground(start)) continue;
+			const component = [start];
+			for (let cursor = 0; cursor < component.length; cursor += 1) {
+				const index = component[cursor];
+				const x = index % canvas.width;
+				const y = Math.floor(index / canvas.width);
+				const neighbors = [
+					x > 0 ? index - 1 : -1,
+					x < canvas.width - 1 ? index + 1 : -1,
+					y > 0 ? index - canvas.width : -1,
+					y < canvas.height - 1 ? index + canvas.width : -1,
+				];
+				for (const neighbor of neighbors) {
+					if (neighbor < 0 || visited[neighbor]) continue;
+					visited[neighbor] = 1;
+					if (matchesBackground(neighbor)) component.push(neighbor);
+				}
+			}
+			if (component.length < 16) continue;
+			for (const index of component) {
+				removed[index] = 1;
+				pixels[index * 4 + 3] = 0;
+			}
+		}
 
-		for (let x = 0; x < canvas.width; x += 1) {
-			addBackgroundPixel(x);
-			addBackgroundPixel((canvas.height - 1) * canvas.width + x);
-		}
-		for (let y = 0; y < canvas.height; y += 1) {
-			addBackgroundPixel(y * canvas.width);
-			addBackgroundPixel(y * canvas.width + canvas.width - 1);
-		}
-		while (pending.length) {
-			const index = pending.pop();
-			pixels[index * 4 + 3] = 0;
+		for (let index = 0; index < pixelCount; index += 1) {
+			if (removed[index] || !pixels[index * 4 + 3]) continue;
 			const x = index % canvas.width;
 			const y = Math.floor(index / canvas.width);
-			if (x > 0) addBackgroundPixel(index - 1);
-			if (x < canvas.width - 1) addBackgroundPixel(index + 1);
-			if (y > 0) addBackgroundPixel(index - canvas.width);
-			if (y < canvas.height - 1) addBackgroundPixel(index + canvas.width);
+			let touchesBackground = false;
+			for (let offsetY = -1; offsetY <= 1 && !touchesBackground; offsetY += 1) {
+				for (let offsetX = -1; offsetX <= 1; offsetX += 1) {
+					const nextX = x + offsetX;
+					const nextY = y + offsetY;
+					if (nextX >= 0 && nextX < canvas.width && nextY >= 0 && nextY < canvas.height && removed[nextY * canvas.width + nextX]) {
+						touchesBackground = true;
+						break;
+					}
+				}
+			}
+			if (!touchesBackground) continue;
+			const offset = index * 4;
+			const distance = Math.max(
+				Math.abs(pixels[offset] - background[0]),
+				Math.abs(pixels[offset + 1] - background[1]),
+				Math.abs(pixels[offset + 2] - background[2]),
+			);
+			if (distance <= 35) pixels[offset + 3] = 0;
+			else if (distance <= 60) pixels[offset + 3] = Math.round(pixels[offset + 3] * (distance - 35) / 25);
 		}
 
 		context.putImageData(imageData, 0, 0);
