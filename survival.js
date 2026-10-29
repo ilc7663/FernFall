@@ -126,7 +126,7 @@ const FernfallSurvival = (() => {
 	let lastRefresh = 0;
 	let sickUntil = 0;
 	let nextSicknessDamage = 0;
-	let worldEpoch = 0;
+	let worldEpoch = 0; 	let spawnTableTaken = false;
 	let currentNightIndex = -1;
 	let bed = null;
 	let bedSpawned = false;
@@ -928,8 +928,9 @@ const FernfallSurvival = (() => {
 			return true;
 		}
 
-		const tableIndex = craftingTables.findIndex((table) => !table.village && Math.hypot(table.x - x, table.y - y) < 36);
+		const tableIndex = craftingTables.findIndex((table) => Math.hypot(table.x - x, table.y - y) < 36);
 		if (tableIndex >= 0) {
+			if (craftingTables[tableIndex].id === "village-table-spawn") spawnTableTaken = true;
 			craftingTables.splice(tableIndex, 1);
 			player.inventory.crafting_table = (player.inventory.crafting_table || 0) + 1;
 			show("Picked up crafting table.");
@@ -1613,7 +1614,7 @@ const FernfallSurvival = (() => {
 		if (oldTableIndex >= 0) craftingTables.splice(oldTableIndex, 1);
 		const spawnVillage = villages.find((village) => village.id === villageId);
 		const tablePosition = findVillageTablePosition(center, spawnVillage?.houses || []);
-		if (tablePosition) craftingTables.push({ id: tableId, ...tablePosition, village: true });
+		if (tablePosition && !spawnTableTaken) craftingTables.push({ id: tableId, ...tablePosition, village: true });
 		villageChunks.add("0,0");
 	}
 
@@ -1986,6 +1987,7 @@ const FernfallSurvival = (() => {
 		(state.villageChunks || []).forEach((key) => villageChunks.add(key));
 		(state.discoveredRecipes || []).forEach((key) => discoveredRecipes.add(key));
 		jimothyMet = state.jimothyMet ?? jimothyMet;
+		spawnTableTaken = Boolean(state.spawnTableTaken);
 		worldEpoch = state.worldEpoch || 0;
 		(state.hostileChunks || []).forEach((key) => hostileChunks.add(key));
 		Object.assign(questProgress, state.questProgress || {});
@@ -2008,7 +2010,7 @@ const FernfallSurvival = (() => {
 			inventory: player.inventory, resources, animals, mobs, pickups, obstacles,
 			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], pondChunks: [...pondChunks], pondSpawnVersion: POND_SPAWN_VERSION, villageChunks: [...villageChunks],
 			villages, villagers, craftingTables, ponds, campfires, hostileProjectiles, craftingSlots,
-			discoveredRecipes: [...discoveredRecipes], jimothyMet, selectedItem, questProgress, villagerQuestStates,
+			discoveredRecipes: [...discoveredRecipes], jimothyMet, spawnTableTaken, selectedItem, questProgress, villagerQuestStates,
 			completedSurvivalQuests: [...completedSurvivalQuests], worldEpoch,
 			hostileChunks: [...hostileChunks],
 			bed, bedSpawned, spawnPoint,
