@@ -3,7 +3,7 @@ const FernfallSurvival = (() => {
 		berry: { name: "Wild berry", category: "food", icon: "●", heal: 1 },
 		wood: { name: "Softwood", category: "materials", icon: "▰" },
 		gel: { name: "Slime gel", category: "other", icon: "●" },
-		tonic: { name: "Berry tonic", category: "food", icon: "♧", heal: 2 },
+		tonic: { name: "Health potion", category: "food", icon: "♧", heal: 3 },
 		seed: { name: "Acorn", category: "materials", icon: "✿" },
 		coal: { name: "Coal", category: "materials", icon: "●" },
 		coal: { name: "Coal", category: "materials", icon: "C" },
@@ -38,6 +38,7 @@ const FernfallSurvival = (() => {
 		cooking_pot: { name: "Cooking pot", category: "equipment", icon: "O", art: "cooking_pot_empty" },
 		frying_pan: { name: "Frying pan", category: "equipment", icon: "A", art: "frying_pan_empty" },
 		bowl: { name: "Wooden bowl", category: "equipment", icon: "D", art: "bowl_empty" },
+		bed: { name: "Bed", category: "equipment", icon: "B" },
 	};
 	const craftingRecipes = [
 		{ id: "crafting_table", name: "Crafting table", ingredients: { wood: 4 }, pattern: ["wood", "wood", "", "wood", "wood", "", "", "", ""] },
@@ -117,6 +118,11 @@ const FernfallSurvival = (() => {
 	let nextSicknessDamage = 0;
 	let worldEpoch = 0;
 	let currentNightIndex = -1;
+	let bed = null;
+	let bedSpawned = false;
+	let spawnPoint = null;
+	const HOUSE_WIDTH = 216;
+	const HOUSE_HEIGHT = 186;
 
 	function label(id) {
 		return itemInfo[id]?.name || id.replaceAll("_", " ");
@@ -630,6 +636,54 @@ const FernfallSurvival = (() => {
 		saveGame();
 	}
 
+	function placeBed() {
+		if (bed) return show("Your bed is already placed. Click it to pick it up first.");
+		const offset = { up: [0, -60], down: [0, 60], left: [-60, 0], right: [60, 0] }[player.direction];
+		const candidate = { x: player.x + offset[0], y: player.y + offset[1] };
+		if (collides(candidate.x, candidate.y) || spawnBlocked(candidate.x, candidate.y, 20)) return show("There is no clear space for a bed.");
+		bed = candidate;
+		player.inventory.bed -= 1;
+		show("Bed placed. Press E beside it to sleep and set your spawn.");
+		updateHud();
+		saveGame();
+	}
+
+	function ensureStartBed() {
+		if (bed || bedSpawned) return;
+		for (const [x, y] of [[478, 232], [478, 200], [478, 262], [400, 232], [560, 232]]) {
+			if (collides(x, y) || spawnBlocked(x, y, 20)) continue;
+			bed = { x, y };
+			bedSpawned = true;
+			return;
+		}
+	}
+
+	function sleepInBed() {
+		const front = { x: bed.x, y: bed.y + 46 };
+		spawnPoint = collides(front.x, front.y) ? { x: bed.x, y: bed.y } : front;
+		player.health = MAX_HEALTH;
+		show("You rested. This bed is now your spawn point.");
+		updateHud();
+		saveGame();
+	}
+
+	function respawnPoint() {
+		return spawnPoint ? { ...spawnPoint } : null;
+	}
+
+	function drawBed() {
+		if (!bed) return;
+		ctx.fillStyle = "#30483b44";
+		ctx.beginPath();
+		ctx.ellipse(bed.x, bed.y + 24, 25, 7, 0, 0, Math.PI * 2);
+		ctx.fill();
+		if (window.fernfallDrawNatureSprite?.("beds", "bed_down", bed.x, bed.y, 46, 53)) return;
+		ctx.fillStyle = "#8a5a35";
+		ctx.fillRect(bed.x - 20, bed.y - 24, 40, 48);
+		ctx.fillStyle = "#d9d2c0";
+		ctx.fillRect(bed.x - 17, bed.y - 20, 34, 24);
+	}
+
 	function blocks(x, y, animalType = "") {
 		if (animalType !== "rabbit" && campfires.some((fire) => Math.hypot(x - fire.x, y - fire.y) < (fire.kind === "furnace" ? 34 : 27))) return true;
 		if (ponds.some((pond) => {
@@ -659,6 +713,7 @@ const FernfallSurvival = (() => {
 		})) return true;
 		if (campfires.some((fire) => Math.hypot(x - fire.x, y - fire.y) < radius + (fire.kind === "furnace" ? 34 : 27))) return true;
 		if (craftingTables.some((table) => Math.abs(x - table.x) < radius + 26 && Math.abs(y - table.y) < radius + 24)) return true;
+		if (bed && Math.abs(x - bed.x) < radius + 26 && Math.abs(y - bed.y) < radius + 30) return true;
 		return villages.some((village) => village.houses.some((house) => Math.abs(x - house.x) < radius + house.width / 2 && Math.abs(y - house.y) < radius + house.height / 2));
 	}
 
@@ -712,6 +767,9 @@ const FernfallSurvival = (() => {
 		} else if (selectedItem === "crafting_table") {
 			placeCraftingTable();
 			return;
+		} else if (selectedItem === "bed") {
+			placeBed();
+			return;
 		} else if (selectedItem === "cooking_pot" || selectedItem === "frying_pan") {
 			const fire = campfires.find((entry) => near(entry, player, 74));
 			if (!fire) return show("Stand beside a campfire to place cookware.");
@@ -746,6 +804,12 @@ const FernfallSurvival = (() => {
 	}
 
 	function pickupAt(x, y) {
+		if (bed && Math.hypot(bed.x - x, bed.y - y) < 38) {
+			bed = null;
+			player.inventory.bed = (player.inventory.bed || 0) + 1;
+			show("Picked up bed. Your spawn point stays where you last slept.");
+			return true;
+		}
 		const resource = resources.find((entry) => entry.available && Math.hypot(entry.x - x, entry.y - y) < 30);
 		if (resource) {
 			resource.available = false;
@@ -784,6 +848,10 @@ const FernfallSurvival = (() => {
 	}
 
 	function interact() {
+		if (bed && near(bed, player, 66) && !campfires.some((entry) => near(entry, player, 68))) {
+			sleepInBed();
+			return true;
+		}
 		const fire = campfires.find((entry) => near(entry, player, 68));
 		if (fire) {
 			if (collectFire(fire)) return true;
@@ -1124,6 +1192,23 @@ const FernfallSurvival = (() => {
 				ctx.arc(villager.x - camera.x, y - 14, 7, 0, Math.PI * 2);
 				ctx.fill();
 			}
+			const quest = villagerQuestDefinitions[villager.role];
+			const state = villagerQuestStates[villager.role];
+			if (!quest || state?.claimed) continue;
+			const ready = Boolean(state?.accepted && state.progress >= quest.goal);
+			if (state?.accepted && !ready) continue;
+			const markX = villager.x - camera.x;
+			const markY = y - 38 + Math.sin(performance.now() / 240 + villager.phase) * 2;
+			ctx.save();
+			ctx.font = "bold 24px sans-serif";
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			ctx.lineWidth = 4;
+			ctx.strokeStyle = "#2d2a1f";
+			ctx.strokeText("!", markX, markY);
+			ctx.fillStyle = ready ? "#59c466" : "#f4cf3d";
+			ctx.fillText("!", markX, markY);
+			ctx.restore();
 		}
 	}
 
@@ -1173,6 +1258,7 @@ const FernfallSurvival = (() => {
 	}
 
 	function drawStations() {
+		drawBed();
 		for (const fire of campfires) {
 			if (fire.kind !== "furnace" && !fire.coalCollected) {
 				const coalX = fire.x + 32;
@@ -1325,7 +1411,7 @@ const FernfallSurvival = (() => {
 		villageChunks.add(key);
 		if (random() > 0.08) return;
 		const center = { x: chunkX * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE / 2, y: chunkY * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE / 2 };
-		const layouts = [[-96, -72], [96, -72], [-96, 72], [96, 72], [0, -150]];
+		const layouts = [[-150, -110], [150, -110], [-150, 130], [150, 130], [0, -330]];
 		const houseCount = 3 + Math.floor(random() * 3);
 		const houses = [];
 		const roles = [{ role: "mayor", asset: "town_hall" }, { role: "shopkeeper", asset: "general_store" }, { role: "blacksmith", asset: "blacksmith_building" }, { role: "farmer", asset: "farmer_cottage" }, { role: "innkeeper", asset: "inn" }, { role: "healer", asset: "healer_house" }];
@@ -1334,7 +1420,7 @@ const FernfallSurvival = (() => {
 			const role = roles[houses.length];
 			const position = findVillageHousePosition(center.x + offsetX, center.y + offsetY, houses);
 			if (!position) continue;
-			const house = { ...position, width: 144, height: 124, doorSide: "center", role: role.role, asset: role.asset };
+			const house = { ...position, width: HOUSE_WIDTH, height: HOUSE_HEIGHT, doorSide: "center", role: role.role, asset: role.asset };
 			houses.push(house);
 			villagers.push({ id: `${key}-${role.role}`, role: role.role, x: house.x, y: house.y + house.height / 2 + 20, direction: "down", phase: random() * 6, villageId: key });
 		}
@@ -1344,16 +1430,16 @@ const FernfallSurvival = (() => {
 		if (tablePosition) craftingTables.push({ id: `village-table-${key}`, ...tablePosition, village: true });
 	}
 
-	function findVillageHousePosition(x, y, houses) {
-		const houseWidth = 144;
-		const houseHeight = 124;
-		const offsets = [[0, 0], [0, -190], [0, 190], [-190, 0], [190, 0], [0, -290], [0, 290], [-290, 0], [290, 0], [0, -390], [0, 390]];
+	function findVillageHousePosition(x, y, houses, relaxed = false) {
+		const houseWidth = HOUSE_WIDTH;
+		const houseHeight = HOUSE_HEIGHT;
+		const offsets = relaxed ? [[0, 0]] : [[0, 0], [0, -260], [0, 260], [-260, 0], [260, 0], [0, -400], [0, 400], [-400, 0], [400, 0], [0, -520], [0, 520]];
 		for (const [offsetX, offsetY] of offsets) {
 			const candidate = { x: x + offsetX, y: y + offsetY };
-			if (window.fernfallPathOverlaps?.(candidate.x, candidate.y, houseWidth + 36, houseHeight + 36)) continue;
-			if (window.fernfallSpawnAreaIsClear && !window.fernfallSpawnAreaIsClear(candidate.x, candidate.y, 86)) continue;
+			if (!relaxed && window.fernfallPathOverlaps?.(candidate.x, candidate.y, houseWidth + 36, houseHeight + 36)) continue;
+			if (!relaxed && window.fernfallSpawnAreaIsClear && !window.fernfallSpawnAreaIsClear(candidate.x, candidate.y, 86)) continue;
 			if (!window.fernfallSpawnAreaIsClear && collides(candidate.x, candidate.y)) continue;
-			if (obstacles.some((tree) => Math.abs(tree.x - candidate.x) < houseWidth / 2 + tree.r * 0.66 && Math.abs(tree.y - candidate.y) < houseHeight / 2 + tree.r * 0.66)) continue;
+			if (!relaxed && obstacles.some((tree) => Math.abs(tree.x - candidate.x) < houseWidth / 2 + tree.r * 0.66 && Math.abs(tree.y - candidate.y) < houseHeight / 2 + tree.r * 0.66)) continue;
 			if (craftingTables.some((table) => Math.abs(table.x - candidate.x) < houseWidth / 2 + 32 && Math.abs(table.y - candidate.y) < houseHeight / 2 + 28)) continue;
 			if (houses.some((house) => Math.abs(house.x - candidate.x) < (house.width + houseWidth) / 2 + 20 && Math.abs(house.y - candidate.y) < (house.height + houseHeight) / 2 + 20)) continue;
 			return candidate;
@@ -1362,7 +1448,7 @@ const FernfallSurvival = (() => {
 	}
 
 	function findVillageTablePosition(center, houses) {
-		const offsets = [[0, -130], [0, -180], [0, 130], [150, -120], [-150, -120], [170, 0], [-170, 0], [0, 220]];
+		const offsets = [[0, 100], [0, -130], [0, -180], [0, 130], [150, -120], [-150, -120], [170, 0], [-170, 0], [0, 220]];
 		for (const [offsetX, offsetY] of offsets) {
 			const candidate = { x: center.x + offsetX, y: center.y + offsetY };
 			if (collides(candidate.x, candidate.y)) continue;
@@ -1386,15 +1472,24 @@ const FernfallSurvival = (() => {
 			villagers.splice(0, villagers.length, ...villagers.filter((villager) => villager.villageId !== "0,0"));
 			craftingTables.splice(0, craftingTables.length, ...craftingTables.filter((table) => table.id !== "village-table-0,0"));
 			const houseSpecs = [
-				{ x: 338, y: 322, width: 144, height: 124, doorSide: "center", role: "mayor", asset: "town_hall" },
-				{ x: 618, y: 322, width: 144, height: 124, doorSide: "center", role: "shopkeeper", asset: "general_store" },
-				{ x: 478, y: 462, width: 144, height: 124, doorSide: "center", role: "blacksmith", asset: "blacksmith_building" },
+				{ x: 318, y: 300, width: HOUSE_WIDTH, height: HOUSE_HEIGHT, doorSide: "center", role: "mayor", asset: "town_hall" },
+				{ x: 638, y: 300, width: HOUSE_WIDTH, height: HOUSE_HEIGHT, doorSide: "center", role: "shopkeeper", asset: "general_store" },
+				{ x: 478, y: 560, width: HOUSE_WIDTH, height: HOUSE_HEIGHT, doorSide: "center", role: "blacksmith", asset: "blacksmith_building" },
 			];
 			const houses = [];
+			const savedBed = bed;
+			bed = null;
+			craftingTables.splice(0, craftingTables.length, ...craftingTables.filter((table) => table.id !== tableId));
 			for (const house of houseSpecs) {
-				const position = findVillageHousePosition(house.x, house.y, houses);
+				const position = findVillageHousePosition(house.x, house.y, houses, true);
 				if (position) houses.push({ ...house, ...position });
 			}
+			bed = savedBed;
+			const insideHouse = (entry, margin) => houses.some((house) => Math.abs(entry.x - house.x) < house.width / 2 + margin && Math.abs(entry.y - house.y) < house.height / 2 + margin);
+			for (let index = obstacles.length - 1; index >= 0; index -= 1) if (insideHouse(obstacles[index], obstacles[index].r * 0.5)) obstacles.splice(index, 1);
+			obstacleChunks.clear();
+			obstacles.forEach(indexObstacle);
+			resources.splice(0, resources.length, ...resources.filter((resource) => !insideHouse(resource, 24)));
 			villages.push({ id: villageId, ...center, houses });
 			villagers.push(...houses.map((house) => ({
 				id: `${villageId}-${house.role}`,
@@ -1560,8 +1655,9 @@ const FernfallSurvival = (() => {
 				show("A witch's spell struck you!");
 				if (player.health === 0) {
 					player.health = MAX_HEALTH;
-					player.x = 478;
-					player.y = 322;
+					const home = respawnPoint() || { x: 478, y: 322 };
+					player.x = home.x;
+					player.y = home.y;
 					show("A friendly nap. Back to the trail!");
 				}
 				updateHud();
@@ -1600,6 +1696,7 @@ const FernfallSurvival = (() => {
 		for (const id of Object.keys(itemDefinitions)) player.inventory[id] ??= 0;
 		restore(state);
 		ensureSpawnVillage();
+		ensureStartBed();
 		if (!worldEpoch) {
 			worldEpoch = Date.now() - NIGHT_CYCLE_MS * 0.24;
 			mobs.splice(0, mobs.length, ...mobs.filter((mob) => !hostileTypes.includes(mob.type)));
@@ -1696,12 +1793,12 @@ const FernfallSurvival = (() => {
 		}
 		campfires.splice(0, campfires.length, ...(state.campfires || []));
 		const houseMoves = new Map();
-		const restoredVillages = (state.villages || []).map((village) => {
+		const restoredVillages = (state.villages || []).filter((village) => village.id !== "village-spawn" || (village.houses || []).length >= 3 && village.houses.every((house) => house.width === HOUSE_WIDTH && Math.hypot(house.x - 478, house.y - 322) < 500)).map((village) => {
 			const houses = [];
 			for (const house of village.houses || []) {
 				const position = findVillageHousePosition(house.x, house.y, houses);
 				if (!position) continue;
-				const restoredHouse = { ...house, ...position, width: 144, height: 124 };
+				const restoredHouse = { ...house, ...position, width: HOUSE_WIDTH, height: HOUSE_HEIGHT };
 				houses.push(restoredHouse);
 				const move = { x: position.x - house.x, y: position.y - house.y };
 				houseMoves.set(`${village.id}:${house.role}`, move);
@@ -1735,6 +1832,9 @@ const FernfallSurvival = (() => {
 		Object.assign(villagerQuestStates, state.villagerQuestStates || {});
 		(state.completedSurvivalQuests || []).forEach((id) => completedSurvivalQuests.add(id));
 		selectedItem = state.selectedItem || "";
+		bed = state.bed || null;
+		bedSpawned = Boolean(state.bedSpawned || state.bed);
+		spawnPoint = state.spawnPoint || null;
 		if (Array.isArray(state.craftingSlots)) {
 			const savedGrid = state.craftingSlots.length === 16
 				? [0, 1, 2, 4, 5, 6, 8, 9, 10].map((index) => state.craftingSlots[index])
@@ -1751,12 +1851,13 @@ const FernfallSurvival = (() => {
 			discoveredRecipes: [...discoveredRecipes], jimothyMet, selectedItem, questProgress, villagerQuestStates,
 			completedSurvivalQuests: [...completedSurvivalQuests], worldEpoch,
 			hostileChunks: [...hostileChunks],
+			bed, bedSpawned, spawnPoint,
 		};
 	}
 
 	return {
 		setup, update, interact, pickupAt, attackAnimal, blocks, spawnBlocked, drawResource, drawPonds, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
-		refreshInventory, openCrafting: () => openPanel("craft"), useItem, recordQuest, recordVillagerQuestProgress, save,
+		refreshInventory, openCrafting: () => openPanel("craft"), useItem, recordQuest, recordVillagerQuestProgress, save, respawnPoint,
 		campfires, hostileProjectiles,
 	};
 })();

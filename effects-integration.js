@@ -149,15 +149,8 @@
 			if (!entry.alive) continue;
 			if (!mob.alive) {
 				const set = mob.type === "witch" ? "witch" : mob.type === "slime" || !mob.type ? "slime" : "skeleton";
-				spawn("combat", "critical_hit", 4, mob.x, mob.y - 8, 52, 360);
 				spawn("defeat", set, 6, mob.x, mob.y, 60, 700);
-			} else if (mob.hp < entry.hp || (mob.hit || 0) > entry.hit) {
-				spawn("combat", "sword_hit", 4, mob.x, mob.y - 8, 48, 320);
 			}
-		}
-		for (const entry of animalBefore) {
-			const { animal } = entry;
-			if ((animal.hit || 0) > entry.hit || animal.hp < entry.hp) spawn("combat", "sword_hit", 4, animal.x, animal.y - 8, 44, 320);
 		}
 	};
 

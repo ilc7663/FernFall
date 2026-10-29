@@ -24,7 +24,7 @@ const itemInfo = {
 	berry: { name: "Wild berry", icon: "●" },
 	wood: { name: "Softwood", icon: "▰" },
 	gel: { name: "Slime gel", icon: "●" },
-	tonic: { name: "Berry tonic", icon: "♧" },
+	tonic: { name: "Health potion", icon: "♧" },
 	seed: { name: "Acorn", icon: "✿" },
 };
 
@@ -699,8 +699,9 @@ function update() {
 			if (player.health === 0) {
 				player.health = MAX_HEALTH;
 				player.hunger = Math.ceil(MAX_HUNGER / 4);
-				player.x = 160;
-				player.y = 192;
+				const home = FernfallSurvival.respawnPoint?.() || { x: 160, y: 192 };
+				player.x = home.x;
+				player.y = home.y;
 				camera.x = player.x - WIDTH / 2;
 				camera.y = player.y - HEIGHT / 2;
 				keys.clear();
@@ -750,8 +751,9 @@ function update() {
 			showToast(hitMessages[mob.type] || "An enemy struck you!");
 			if (player.health === 0) {
 				player.health = MAX_HEALTH;
-				player.x = 478;
-				player.y = 322;
+				const home = FernfallSurvival.respawnPoint?.() || { x: 478, y: 322 };
+				player.x = home.x;
+				player.y = home.y;
 				showToast("A friendly nap. Back to the trail!");
 			}
 			updateHud();
@@ -898,11 +900,11 @@ function useTonic() {
 	if (player.health >= MAX_HEALTH) {
 		showToast("You're already feeling great!");
 	} else if (!player.inventory.tonic) {
-		showToast("No berry tonic in your pack.");
+		showToast("No health potion in your pack.");
 	} else {
 		player.inventory.tonic -= 1;
-		player.health = Math.min(MAX_HEALTH, player.health + 2);
-		showToast("Berry tonic! Two hearts restored.");
+		player.health = Math.min(MAX_HEALTH, player.health + 3);
+		showToast("Health potion! 3 health restored.");
 		updateHud();
 		saveGame();
 	}
