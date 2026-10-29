@@ -707,6 +707,7 @@ const FernfallSurvival = (() => {
 
 	function blocks(x, y, animalType = "") {
 		if (animalType !== "rabbit" && campfires.some((fire) => Math.hypot(x - fire.x, y - fire.y) < (fire.kind === "furnace" ? 34 : 27))) return true;
+		if (bed && Math.abs(x - bed.x) < 28 && Math.abs(y - bed.y) < 31) return true;
 		if (ponds.some((pond) => {
 			const radiusX = (pond.width || 120) * 0.39;
 			const radiusY = (pond.height || 84) * 0.39;
@@ -824,12 +825,19 @@ const FernfallSurvival = (() => {
 		return true;
 	}
 
+	function pickupBed() {
+		if (!bed) return false;
+		bed = null;
+		player.inventory.bed = (player.inventory.bed || 0) + 1;
+		show("Picked up bed. Your spawn point stays where you last slept.");
+		updateHud();
+		saveGame();
+		return true;
+	}
+
 	function pickupAt(x, y) {
-		if (bed && Math.hypot(bed.x - x, bed.y - y) < 38) {
-			bed = null;
-			player.inventory.bed = (player.inventory.bed || 0) + 1;
-			show("Picked up bed. Your spawn point stays where you last slept.");
-			return true;
+		if (bed && Math.abs(bed.x - x) <= 28 && Math.abs(bed.y - y) <= 32) {
+			return pickupBed();
 		}
 		const resource = resources.find((entry) => entry.available && Math.hypot(entry.x - x, entry.y - y) < 30);
 		if (resource) {
@@ -870,7 +878,8 @@ const FernfallSurvival = (() => {
 
 	function interact() {
 		if (bed && near(bed, player, 66) && !campfires.some((entry) => near(entry, player, 68))) {
-			sleepInBed();
+			if (updateWorldClock(Date.now()).isNight) sleepInBed();
+			else pickupBed();
 			return true;
 		}
 		const fire = campfires.find((entry) => near(entry, player, 68));
