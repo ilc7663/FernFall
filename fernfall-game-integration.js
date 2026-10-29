@@ -176,7 +176,7 @@
 	document.body.append(animationScript);
 
 	const natureSurvival = typeof FernfallSurvival === "undefined" ? null : FernfallSurvival;
-	const natureRoot = new URL("Video_Game_PNGs/Fernfall_Beds_Berries_Mushrooms_Logs_Ponds_Game_Ready/", document.baseURI);
+	const natureRoot = new URL("Video_Game_PNGs/Fernfall_Beds_Berries_Mushrooms_Logs_Ponds_Game_Ready/", window.location.href);
 	const natureSpriteCache = new WeakMap();
 	let natureArt = null;
 	if (natureSurvival && window.loadFernfallNatureAssets) {
