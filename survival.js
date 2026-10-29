@@ -1387,12 +1387,12 @@ const FernfallSurvival = (() => {
 				}
 				if (random() < 0.12) {
 					for (let attempt = 0; attempt < 14; attempt += 1) {
-						const width = 84 + random() * 124;
+						const width = random() < 0.38 ? 112 + random() * 92 : 220 + random() * 150;
 						const height = width * (0.54 + random() * 0.2);
 						const pond = {
 							x: cx * WORLD_CHUNK_SIZE + 110 + random() * 292,
 							y: cy * WORLD_CHUNK_SIZE + 110 + random() * 292,
-							width, height, depth: random(),
+							width, height, depth: random(), sizeVersion: 1,
 						};
 						const clear = window.fernfallSpawnAreaIsClear?.(pond.x, pond.y, Math.max(width, height) / 2 + 20) ?? !collides(pond.x, pond.y);
 						if (!clear) continue;
@@ -1820,7 +1820,13 @@ const FernfallSurvival = (() => {
 		});
 		villagers.splice(0, villagers.length, ...restoredVillagers);
 		craftingTables.splice(0, craftingTables.length, ...(state.craftingTables || []));
-		ponds.splice(0, ponds.length, ...(state.ponds || []));
+		const restoredPonds = (state.ponds || []).map((pond) => {
+			if (pond.sizeVersion === 1) return pond;
+			const width = pond.width || 120;
+			const scale = Math.max(1.5, 200 / width);
+			return { ...pond, width: width * scale, height: (pond.height || 84) * scale, sizeVersion: 1 };
+		});
+		ponds.splice(0, ponds.length, ...restoredPonds);
 		hostileProjectiles.splice(0, hostileProjectiles.length, ...(state.hostileProjectiles || []));
 		(state.resourceChunks || []).forEach((key) => resourceChunks.add(key));
 		(state.villageChunks || []).forEach((key) => villageChunks.add(key));

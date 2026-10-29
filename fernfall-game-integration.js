@@ -311,7 +311,7 @@
 		const originalNaturePonds = natureSurvival.drawPonds;
 		let pondSnapshot = [];
 		let pondSnapshotAt = 0;
-		function pondTileFor(occupied, row, col, depth) {
+		function pondTileFor(occupied, row, col, depth, seed) {
 			const hasCell = (cellRow, cellCol) => occupied.has(`${cellRow},${cellCol}`);
 			const north = hasCell(row - 1, col);
 			const south = hasCell(row + 1, col);
@@ -325,6 +325,9 @@
 			if (!south) return "pond_edge_s";
 			if (!west) return "pond_edge_w";
 			if (!east) return "pond_edge_e";
+			const detail = (seed + row * 37 + col * 61) % 29;
+			if (detail === 0) return "pond_water_flower";
+			if (detail < 3) return "pond_water_lily";
 			return depth > 0.68 ? "pond_water_deep" : "pond_center";
 		}
 		natureSurvival.drawPonds = function (...args) {
@@ -339,8 +342,8 @@
 				const width = pond.width || 120;
 				const height = pond.height || 84;
 				if (pond.x < camera.x - width || pond.x > camera.x + WIDTH + width || pond.y < camera.y - height || pond.y > camera.y + HEIGHT + height) continue;
-				const columns = Math.max(5, Math.round(width / 24));
-				const rows = Math.max(4, Math.round(height / 24));
+				const columns = Math.max(4, Math.round(width / 32));
+				const rows = Math.max(3, Math.round(height / 32));
 				const cellWidth = width / columns;
 				const cellHeight = height / rows;
 				const seed = Math.abs(Math.floor(pond.x * 17 + pond.y * 31));
@@ -387,16 +390,27 @@
 				}
 				for (const { row, col } of cells) {
 					const cell = cellRect(col, row);
-					const tile = pondTileFor(occupied, row, col, pond.depth);
+					const tile = pondTileFor(occupied, row, col, pond.depth, seed);
 					drawNatureSprite("pond_tiles", tile, cell.x, cell.y, cell.width, cell.height, false);
 				}
 				const decor = window.fernfallNatureArt?.pond_decor;
-				for (const [image, x, y, spriteWidth, spriteHeight] of [
-					[decor?.reeds, pond.x - camera.x - width * 0.36, pond.y - camera.y - height * 0.35, 24, 34],
-					[pond.depth < 0.8 ? decor?.lilypad : null, pond.x - camera.x + width * 0.17, pond.y - camera.y + height * 0.12, 24, 17],
-					[decor?.ripples, pond.x - camera.x - width * 0.04, pond.y - camera.y + height * 0.28, 28, 17],
-					[decor?.pond_rock, pond.x - camera.x + width * 0.42, pond.y - camera.y + height * 0.4, 18, 19],
-				]) {
+				const decorLayout = [
+					{ name: "reeds", x: -0.36, y: -0.3, width: 30, height: 42 },
+					{ name: "reeds", x: 0.34, y: 0.28, width: 30, height: 42 },
+					{ name: "lilypad", x: 0.18, y: 0.1, width: 38, height: 26 },
+					{ name: "ripples", x: -0.08, y: -0.24, width: 44, height: 28 },
+					{ name: "ripples", x: 0.2, y: 0.32, width: 44, height: 28 },
+					{ name: "pond_rock", x: 0.41, y: 0.34, width: 28, height: 30 },
+					{ name: "pond_rock", x: -0.4, y: 0.08, width: 28, height: 30 },
+				];
+				for (const [index, item] of decorLayout.entries()) {
+					if (item.name === "lilypad" && pond.depth >= 0.8) continue;
+					const image = decor?.[item.name];
+					const variation = (((seed + index * 43) % 9) - 4) * 0.022;
+					const x = pond.x - camera.x + (item.x + variation) * width;
+					const y = pond.y - camera.y + (item.y - variation) * height;
+					const spriteWidth = item.width;
+					const spriteHeight = item.height;
 					if (!image?.complete || !image.naturalWidth) continue;
 					ctx.save();
 					ctx.imageSmoothingEnabled = false;
