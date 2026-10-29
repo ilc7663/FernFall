@@ -1008,7 +1008,30 @@ function checkQuest() {
 	}
 }
 
+let lastHudHealth = player.health;
+
+function isMenuOpen() {
+	const inventory = document.querySelector("#fernfall-inventory-root")?.classList.contains("fi-open");
+	const crafting = document.querySelector("#fernfall-crafting");
+	return Boolean(inventory || (crafting && !crafting.hidden) || [...document.querySelectorAll("dialog")].some((dialog) => dialog.open));
+}
+
+function flashDamageScreen() {
+	let overlay = document.querySelector("#damage-flash");
+	if (!overlay) {
+		overlay = document.createElement("div");
+		overlay.id = "damage-flash";
+		overlay.setAttribute("aria-hidden", "true");
+		overlay.style.cssText = "position:fixed;inset:0;z-index:2147483000;pointer-events:none;background:#d62828;opacity:0";
+		document.body.append(overlay);
+	}
+	overlay.getAnimations().forEach((animation) => animation.cancel());
+	overlay.animate([{ opacity: 0 }, { opacity: 0.45, offset: 0.35 }, { opacity: 0 }], { duration: 700, easing: "ease-in-out" });
+}
+
 function updateHud() {
+	if (player.health < lastHudHealth && isMenuOpen()) flashDamageScreen();
+	lastHudHealth = player.health;
 	document.querySelector("#health-fill").style.width = `${player.health / MAX_HEALTH * 100}%`;
 	document.querySelector("#health-value").textContent = `${player.health} / ${MAX_HEALTH}`;
 	window.FernfallInventory?.setVitals({ health: player.health, maxHealth: MAX_HEALTH, hunger: player.hunger, maxHunger: MAX_HUNGER, saturation: player.saturation, maxSaturation: MAX_SATURATION });
