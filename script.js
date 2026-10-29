@@ -1212,14 +1212,15 @@ const gameTips = [
 	"Moving cancels a job in progress, so stand still while the bar fills.",
 	"Berry bushes need no tool. Pick them by hand for a few berries at a time.",
 ];
-const tipList = document.querySelector("#tip-list");
-if (tipList) {
-	for (const tip of gameTips) {
-		const item = document.createElement("li");
-		item.textContent = tip;
-		tipList.append(item);
-	}
+let gameTipIndex = Math.floor(Math.random() * gameTips.length);
+function showNextTip() {
+	const tip = document.querySelector("#tip-text");
+	if (!tip) return;
+	tip.textContent = gameTips[gameTipIndex];
+	gameTipIndex = (gameTipIndex + 1) % gameTips.length;
 }
+showNextTip();
+setInterval(showNextTip, 15000);
 document.querySelector("#gather-button").addEventListener("click", gather);
 document.querySelector("#attack-button").addEventListener("click", attack);
 document.querySelector("#potion-button").addEventListener("click", useTonic);
