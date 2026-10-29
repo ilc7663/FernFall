@@ -673,7 +673,15 @@ function update() {
 			lastDamage = now;
 			player.health = Math.max(0, player.health - 1);
 			player.hurt = 14;
-			showToast(mob.type === "skeleton" ? "A skeleton struck you!" : "Oof! A slime bonked you.");
+			const hitMessages = {
+				slime: "Oof! A slime bonked you.",
+				skeleton: "A skeleton struck you!",
+				spider: "A spider bit you!",
+				witch: "A witch's spell struck you!",
+				bat: "A bat swooped into you!",
+				zombie: "A zombie struck you!",
+			};
+			showToast(hitMessages[mob.type] || "An enemy struck you!");
 			if (player.health === 0) {
 				player.health = MAX_HEALTH;
 				player.x = 478;
