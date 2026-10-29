@@ -1020,7 +1020,7 @@ function updateHud() {
 		dayTracker.className = "day-tracker";
 		dayTracker.setAttribute("role", "meter");
 		dayTracker.setAttribute("aria-label", "Day progress");
-		dayTracker.innerHTML = '<span class="day-label">DAY 1</span><span class="day-track"><span class="day-fill"></span></span><span class="day-value">0%</span>';
+		dayTracker.innerHTML = '<span class="day-label">DAY 1</span><span class="day-track"><span class="day-fill"></span></span><span class="day-value" title="Percent of the current day that has passed.">0%</span>';
 		statusbar.append(dayTracker);
 	}
 	if (dayTracker) {
@@ -1031,7 +1031,10 @@ function updateHud() {
 		dayTracker.setAttribute("aria-valuenow", String(Math.round(percentage)));
 		dayTracker.querySelector(".day-label").textContent = `DAY ${dayStatus.day}`;
 		dayTracker.querySelector(".day-fill").style.width = `${percentage}%`;
-		dayTracker.querySelector(".day-value").textContent = `${Math.round(percentage)}%`;
+		const dayValue = dayTracker.querySelector(".day-value");
+		dayValue.textContent = `${Math.round(percentage)}%`;
+		dayValue.title = "Percent of the current day that has passed.";
+		dayValue.setAttribute("aria-label", `${Math.round(percentage)} percent of the current day has passed`);
 	}
 	document.querySelector("#coin-value").textContent = player.coins;
 	document.querySelector("#level-value").textContent = player.level;

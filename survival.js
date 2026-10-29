@@ -92,6 +92,7 @@ const FernfallSurvival = (() => {
 	const ponds = [];
 	const hostileProjectiles = [];
 	const resourceChunks = new Set();
+	const pondChunks = new Set();
 	const villageChunks = new Set();
 	const discoveredRecipes = new Set();
 	const questProgress = { gathered: 0, campfire: 0, meal: 0, milk: 0, wolf: 0, jimothy: 0 };
@@ -770,6 +771,35 @@ const FernfallSurvival = (() => {
 		return villages.some((village) => village.houses.some((house) => Math.abs(x - house.x) < radius + house.width / 2 && Math.abs(y - house.y) < radius + house.height / 2));
 	}
 
+	function pondSpawnIsClear(pond, nearbyPonds = ponds, nearbyVillages = villages) {
+		const halfWidth = pond.width / 2;
+		const halfHeight = pond.height / 2;
+		const overlaps = (entry, padX = 18, padY = padX) =>
+			Math.abs(pond.x - entry.x) < halfWidth + padX && Math.abs(pond.y - entry.y) < halfHeight + padY;
+		if (window.fernfallPathOverlaps?.(pond.x, pond.y, pond.width + 40, pond.height + 40)) return false;
+		const clearRadius = Math.min(halfWidth, halfHeight) + 20;
+		const spawnAreaIsClear = window.fernfallSpawnAreaIsClear
+			? window.fernfallSpawnAreaIsClear(pond.x, pond.y, clearRadius)
+			: !collides(pond.x, pond.y);
+		if (!spawnAreaIsClear || overlaps(player, 48, 48)) return false;
+		if (obstacles.some((tree) => overlaps(tree, tree.r * 0.66))) return false;
+		if (resources.some((resource) => overlaps(resource, 22))) return false;
+		if (animals.some((animal) => overlaps(animal, 32))) return false;
+		if (mobs.some((mob) => mob.alive && overlaps(mob, 24))) return false;
+		if (pickups.some((pickup) => overlaps(pickup, 14))) return false;
+		if (campfires.some((fire) => overlaps(fire, 34))) return false;
+		if (craftingTables.some((table) => overlaps(table, 32, 28))) return false;
+		if (bed && overlaps(bed, 30, 36)) return false;
+		if (nearbyVillages.some((village) => village.houses.some((house) =>
+			Math.abs(pond.x - house.x) < halfWidth + house.width / 2 + 24 &&
+			Math.abs(pond.y - house.y) < halfHeight + house.height / 2 + 24,
+		))) return false;
+		return !nearbyPonds.some((other) =>
+			Math.abs(pond.x - other.x) < halfWidth + (other.width || 120) / 2 + 24 &&
+			Math.abs(pond.y - other.y) < halfHeight + (other.height || 84) / 2 + 24,
+		);
+	}
+
 	function keepAnimalsOffRoofs() {
 		for (const animal of animals) {
 			if (animal.type === "rabbit") continue;
@@ -1442,26 +1472,37 @@ const FernfallSurvival = (() => {
 						}
 					}
 				}
-				if (random() < 0.12) {
-					for (let attempt = 0; attempt < 14; attempt += 1) {
-						const small = random() < 0.38;
-						const columns = small ? 4 + Math.floor(random() * 2) : 6 + Math.floor(random() * 2);
-						const rows = small ? 3 + Math.floor(random() * 2) : 4 + Math.floor(random() * 2);
-						const width = columns * 64;
-						const height = rows * 64;
-						const pond = {
-							x: cx * WORLD_CHUNK_SIZE + 110 + random() * 292,
-							y: cy * WORLD_CHUNK_SIZE + 110 + random() * 292,
-							width, height, depth: random(), sizeVersion: 1,
-						};
-						if (window.fernfallPathOverlaps?.(pond.x, pond.y, width + 40, height + 40)) continue;
-						const clear = window.fernfallSpawnAreaIsClear?.(pond.x, pond.y, Math.max(width, height) / 2 + 20) ?? !collides(pond.x, pond.y);
-						if (!clear) continue;
-						ponds.push(pond);
-						break;
-					}
-				}
 				generateVillage(random, cx, cy);
+			}
+		}
+	}
+
+	function generatePondChunks() {
+		const centerX = Math.floor(player.x / WORLD_CHUNK_SIZE);
+		const centerY = Math.floor(player.y / WORLD_CHUNK_SIZE);
+		for (let cy = centerY - 1; cy <= centerY + 1; cy += 1) {
+			for (let cx = centerX - 1; cx <= centerX + 1; cx += 1) {
+				const key = `${cx},${cy}`;
+				if (pondChunks.has(key)) continue;
+				pondChunks.add(key);
+				let seed = (Math.imul(cx, 374761393) ^ Math.imul(cy, 668265263) ^ 0x9e3779b9) >>> 0;
+				const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+				if (random() > 0.22) continue;
+				for (let attempt = 0; attempt < 28; attempt += 1) {
+					const small = random() < 0.42;
+					const columns = small ? 4 + Math.floor(random() * 2) : 6 + Math.floor(random() * 2);
+					const rows = small ? 3 + Math.floor(random() * 2) : 4 + Math.floor(random() * 2);
+					const width = columns * 64;
+					const height = rows * 64;
+					const pond = {
+						x: cx * WORLD_CHUNK_SIZE + width / 2 + random() * (WORLD_CHUNK_SIZE - width),
+						y: cy * WORLD_CHUNK_SIZE + height / 2 + random() * (WORLD_CHUNK_SIZE - height),
+						width, height, depth: random(), sizeVersion: 1,
+					};
+					if (!pondSpawnIsClear(pond)) continue;
+					ponds.push(pond);
+					break;
+				}
 			}
 		}
 	}
@@ -1501,7 +1542,7 @@ const FernfallSurvival = (() => {
 			if (ponds.some((pond) => {
 				const radiusX = (pond.width || 120) / 2 + houseWidth / 2 + 24;
 				const radiusY = (pond.height || 84) / 2 + houseHeight / 2 + 24;
-				return ((candidate.x - pond.x) / radiusX) ** 2 + ((candidate.y - pond.y) / radiusY) ** 2 < 1;
+				return Math.abs(candidate.x - pond.x) < radiusX && Math.abs(candidate.y - pond.y) < radiusY;
 			})) continue;
 			if (!relaxed && window.fernfallSpawnAreaIsClear && !window.fernfallSpawnAreaIsClear(candidate.x, candidate.y, Math.max(houseWidth, houseHeight) / 2 + 32)) continue;
 			if (!window.fernfallSpawnAreaIsClear && collides(candidate.x, candidate.y)) continue;
@@ -1666,6 +1707,7 @@ const FernfallSurvival = (() => {
 	function update() {
 		generateVillageChunks();
 		generateResourceChunks();
+		generatePondChunks();
 		keepAnimalsOffRoofs();
 		const now = Date.now();
 		updateVillagers(now);
@@ -1937,6 +1979,7 @@ const FernfallSurvival = (() => {
 		villagers.splice(0, villagers.length, ...restoredVillagers);
 		hostileProjectiles.splice(0, hostileProjectiles.length, ...(state.hostileProjectiles || []));
 		(state.resourceChunks || []).forEach((key) => resourceChunks.add(key));
+		(state.pondChunks || []).forEach((key) => pondChunks.add(key));
 		(state.villageChunks || []).forEach((key) => villageChunks.add(key));
 		(state.discoveredRecipes || []).forEach((key) => discoveredRecipes.add(key));
 		jimothyMet = state.jimothyMet ?? jimothyMet;
@@ -1960,7 +2003,7 @@ const FernfallSurvival = (() => {
 	function save() {
 		return {
 			inventory: player.inventory, resources, animals, mobs, pickups, obstacles,
-			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], villageChunks: [...villageChunks],
+			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], pondChunks: [...pondChunks], villageChunks: [...villageChunks],
 			villages, villagers, craftingTables, ponds, campfires, hostileProjectiles, craftingSlots,
 			discoveredRecipes: [...discoveredRecipes], jimothyMet, selectedItem, questProgress, villagerQuestStates,
 			completedSurvivalQuests: [...completedSurvivalQuests], worldEpoch,
