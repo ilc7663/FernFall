@@ -8,9 +8,55 @@ const survivalAssetsReady = loadFernfallSurvivalAssets(survivalAssetRoot).catch(
 const hostileMotion = new WeakMap();
 const hostileTypes = ["skeleton", "witch", "spider", "bat", "zombie"];
 
+function zombieFrame(direction, frame) {
+	const image = window.FernfallSprites?.get("zombie", null, direction, frame);
+	return image?.complete && image.naturalWidth ? image : null;
+}
+
+function directionToward(from, to) {
+	const dx = to.x - from.x;
+	const dy = to.y - from.y;
+	return Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : dy < 0 ? "up" : "down";
+}
+
+// Frames are 352px with feet at ~92% of the height, so the feet land near the shadow.
+function drawZombieFrame(sprite, x, y, alpha = 1) {
+	ctx.fillStyle = "#30483b55";
+	ctx.beginPath();
+	ctx.ellipse(x, y + 13, 17, 6, 0, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.save();
+	ctx.globalAlpha = alpha;
+	ctx.imageSmoothingEnabled = true;
+	ctx.imageSmoothingQuality = "high";
+	ctx.drawImage(sprite, Math.round(x - 32), Math.round(y - 46), 64, 64);
+	ctx.restore();
+}
+
+const zombiesSeenAlive = new WeakSet();
+const ZOMBIE_DEATH_MS = 900;
+
+function drawZombieDeaths() {
+	const now = performance.now();
+	for (const mob of mobs) {
+		if (mob.type !== "zombie") continue;
+		if (mob.alive) {
+			zombiesSeenAlive.add(mob);
+			mob.lastFacing = directionToward(mob, player);
+			continue;
+		}
+		if (!zombiesSeenAlive.has(mob)) continue;
+		mob.diedAt ??= now;
+		const age = now - mob.diedAt;
+		if (age > ZOMBIE_DEATH_MS || !visible(mob)) continue;
+		const sprite = zombieFrame(mob.lastFacing || "down", "death");
+		if (sprite) drawZombieFrame(sprite, mob.x, mob.y, Math.min(1, (ZOMBIE_DEATH_MS - age) / 300));
+	}
+}
+
 function drawHostileSprite(mob, x, y) {
 	const frames = fernfallHostileArt[mob.type];
-	if (!frames) return false;
+	if (!frames && mob.type !== "zombie") return false;
 	const previous = hostileMotion.get(mob);
 	const moving = previous && Math.hypot(mob.x - previous.x, mob.y - previous.y) > 0.25;
 	hostileMotion.set(mob, { x: mob.x, y: mob.y });
@@ -18,6 +64,20 @@ function drawHostileSprite(mob, x, y) {
 	const dy = player.y - mob.y;
 	const direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : dy < 0 ? "up" : "down";
 	const walkFrame = Math.floor(performance.now() / 170 + mob.phase) % 2 + 1;
+	if (mob.type === "zombie") {
+		const striking = mob.hit > 0 || Math.hypot(dx, dy) < 40;
+		const frame = striking ? `attack_${Math.floor(performance.now() / 200 + mob.phase) % 2 + 1}` : moving ? `walk_${walkFrame}` : "idle";
+		const zombieSprite = zombieFrame(direction, frame) || zombieFrame(direction, "idle");
+		if (zombieSprite) {
+			ctx.save();
+			if (mob.hit > 0) ctx.filter = "brightness(1.7)";
+			drawZombieFrame(zombieSprite, x, y);
+			ctx.restore();
+			if (mob.hp < mob.maxHp) drawMobHealth(mob, x, y);
+			return true;
+		}
+	}
+	if (!frames) return false;
 	const action = mob.type === "witch" && performance.now() - (mob.lastSpell || 0) < 650
 		? "cast"
 		: mob.hit > 0 ? "attack"
@@ -136,6 +196,7 @@ render = function () {
 	ctx.translate(-camera.x, -camera.y);
 	survivalModule?.drawStations();
 	survivalModule?.drawProjectiles();
+	drawZombieDeaths();
 	ctx.restore();
 	survivalModule?.drawNightOverlay();
 };

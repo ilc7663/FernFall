@@ -461,7 +461,7 @@ function drawPlayer() {
 	ctx.ellipse(player.x, player.y + 11, 14, 7, 0, 0, Math.PI * 2);
 	ctx.fill();
 	const now = performance.now();
-	if (drawToolAction(now, bob)) return;
+	if (drawRangerSprite(now, bob)) return;
 	const action = player.swing > 0
 		? `attack${Math.floor(now / 100) % 2 + 1}`
 		: moving() ? `walk${Math.floor(now / 180) % 2 + 1}` : "idle";
@@ -502,15 +502,45 @@ function drawPlayer() {
 	}
 }
 
-function drawToolAction(now, bob) {
-	const animations = window.FernfallToolAnimations;
-	if (!player.toolAction || now >= player.toolActionUntil || !animations?.draw) return false;
-	const frames = animations.images?.[`${player.toolAction}_${player.direction}`] || animations.images?.[`${player.toolAction}_down`];
-	const frame = frames?.[Math.floor(now / 90) % frames.length];
-	if (!frame?.complete || !frame.naturalWidth) return false;
+// Absolute URL so the temporary <base> used by other loaders cannot redirect the sprite paths.
+const characterSpriteBase = new URL("Video_Game_PNGs/Fernfall_Characters_Complete_Rebuild", window.location.href).href;
+window.FernfallSprites?.init(characterSpriteBase).then((sprites) => {
+	const { ranger, zombie } = sprites.manifest;
+	for (const tool of Object.keys(ranger)) {
+		for (const direction of Object.keys(ranger[tool])) {
+			for (const frame of Object.keys(ranger[tool][direction])) sprites.get("ranger", tool, direction, frame);
+		}
+	}
+	for (const direction of Object.keys(zombie)) {
+		for (const frame of Object.keys(zombie[direction])) sprites.get("zombie", null, direction, frame);
+	}
+}).catch((error) => console.warn("Character sprites could not be loaded.", error));
+
+function characterFrame(kind, tool, direction, frame) {
+	const image = window.FernfallSprites?.get(kind, tool, direction, frame);
+	return image?.complete && image.naturalWidth ? image : null;
+}
+
+function startUseAnimation(ms = 380) {
+	const now = performance.now();
+	player.useStartedAt = now;
+	player.useUntil = now + ms;
+}
+window.fernfallStartUseAnimation = startUseAnimation;
+
+function drawRangerSprite(now, bob) {
+	const tool = window.FernfallGameInventory?.heldTool?.().tool || "empty";
+	const animating = now < (player.useUntil || 0);
+	const swingPose = player.swing > 0 || (animating && Math.floor((now - player.useStartedAt) / 130) % 2 === 0);
+	const frame = swingPose ? "use" : animating ? "idle" : moving() ? `walk_${Math.floor(now / 180) % 2 + 1}` : "idle";
+	const sprite = characterFrame("ranger", tool, player.direction, frame) || characterFrame("ranger", "empty", player.direction, frame);
+	if (!sprite) return false;
 	ctx.save();
-	ctx.imageSmoothingEnabled = false;
-	animations.draw(ctx, player.toolAction, player.direction, player.x - 32, player.y + bob - 32, 64, now - player.toolActionStarted);
+	if (player.hurt > 0 && Math.floor(now / 90) % 2 === 0) ctx.filter = "brightness(1.8)";
+	ctx.imageSmoothingEnabled = true;
+	ctx.imageSmoothingQuality = "high";
+	// Frames are 352px with feet at ~92% of the height; anchor the feet near the shadow.
+	ctx.drawImage(sprite, Math.round(player.x - 32), Math.round(player.y + bob - 45), 64, 64);
 	ctx.restore();
 	return true;
 }

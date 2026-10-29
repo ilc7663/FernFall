@@ -179,6 +179,74 @@ const FernfallSurvival = (() => {
 	let activeMode = "craft";
 	let activeVillagerRole = "";
 	let activeVillageKey = "spawn";
+	let gatherTask = null;
+	const gatherSpecs = {
+		stone: { tool: "pickaxe", baseMs: 1600 },
+		wood: { tool: "axe", baseMs: 1200 },
+		carrot: { tool: "hoe", baseMs: 800 },
+		potato: { tool: "hoe", baseMs: 800 },
+		grain: { tool: "hoe", baseMs: 800 },
+		mushroom: { tool: "shovel", baseMs: 600 },
+		herb: { tool: "shovel", baseMs: 600 },
+		shear: { tool: "shears", baseMs: 1200 },
+	};
+
+	function gatherDuration(kind) {
+		const spec = gatherSpecs[kind];
+		const held = window.FernfallGameInventory?.heldTool?.() || { tool: "empty", speed: 1 };
+		return Math.round(spec.baseMs / (held.tool === spec.tool ? held.speed : 1));
+	}
+
+	function startGather(kind, target, finish, remote = false) {
+		if (gatherTask?.target === target) return;
+		const duration = gatherDuration(kind);
+		gatherTask = { target, finish, remote, startedAt: performance.now(), until: performance.now() + duration };
+		window.fernfallStartUseAnimation?.(duration);
+	}
+
+	function updateGather() {
+		if (!gatherTask) return;
+		const { target, finish, until, remote } = gatherTask;
+		if ((typeof moving === "function" && moving()) || (!remote && !near(target, player, 80))) {
+			gatherTask = null;
+			player.useUntil = 0;
+			return;
+		}
+		if (performance.now() < until) return;
+		gatherTask = null;
+		finish();
+	}
+
+	function collectResource(resource) {
+		if (!resource.available) return;
+		resource.available = false;
+		resource.respawnAt = Date.now() + 30000;
+		player.inventory[resource.type] = (player.inventory[resource.type] || 0) + 1;
+		recordQuest("gathered");
+		recordVillagerQuestProgress(resource.type);
+		show(`Gathered ${label(resource.type)}.`);
+		updateHud();
+		saveGame();
+	}
+
+	function chopTree(tree) {
+		if (tree.chopped) return;
+		tree.woodHits = (tree.woodHits || 0) + 1;
+		player.inventory.wood = (player.inventory.wood || 0) + 1;
+		recordQuest("gathered");
+		recordVillagerQuestProgress("wood");
+		if (tree.woodHits >= 3) tree.chopped = true;
+		show(tree.chopped ? "Gathered wood. The tree is now a stump." : "Gathered wood from the tree.");
+		updateHud();
+		saveGame();
+	}
+
+	function shearSheep(sheep) {
+		sheep.shornUntil = Date.now() + 60000;
+		addDrop(sheep.x, sheep.y, "wool", 2);
+		show("You sheared the sheep.");
+		saveGame();
+	}
 	let activeFireId = null;
 	let lastRefresh = 0;
 	let sickUntil = 0;
@@ -960,12 +1028,11 @@ const FernfallSurvival = (() => {
 		}
 		const resource = resources.find((entry) => entry.available && Math.hypot(entry.x - x, entry.y - y) < 30);
 		if (resource) {
-			resource.available = false;
-			resource.respawnAt = Date.now() + 30000;
-			player.inventory[resource.type] = (player.inventory[resource.type] || 0) + 1;
-			recordQuest("gathered");
-			recordVillagerQuestProgress(resource.type);
-			show(`Gathered ${label(resource.type)}.`);
+			if (gatherSpecs[resource.type]) startGather(resource.type, resource, () => collectResource(resource), true);
+			else {
+				window.fernfallStartUseAnimation?.();
+				collectResource(resource);
+			}
 			return true;
 		}
 
@@ -1030,7 +1097,7 @@ const FernfallSurvival = (() => {
 			saveGame();
 			return true;
 		}
-		if (selectedItem === "bucket_empty" && player.inventory.bucket_empty > 0) {
+		if ((selectedItem === "bucket_empty" || window.FernfallGameInventory?.heldTool?.().id === "bucket_empty") && player.inventory.bucket_empty > 0) {
 			const cow = animals.find((animal) => animal.type === "cow" && near(animal, player, 58));
 			if (cow) {
 				if (cow.milkedUntil > Date.now()) show("This cow needs time before it can be milked again.");
@@ -1039,6 +1106,7 @@ const FernfallSurvival = (() => {
 					player.inventory.bucket_empty -= 1;
 					player.inventory.bucket_milk = (player.inventory.bucket_milk || 0) + 1;
 					recordQuest("milk");
+					window.fernfallStartUseAnimation?.(500);
 					show("You filled the bucket with fresh milk.");
 					updateHud();
 					saveGame();
@@ -1049,9 +1117,18 @@ const FernfallSurvival = (() => {
 			if (pond) {
 				player.inventory.bucket_empty -= 1;
 				player.inventory.bucket_water = (player.inventory.bucket_water || 0) + 1;
+				window.fernfallStartUseAnimation?.(500);
 				show("You filled the bucket with water.");
 				updateHud();
 				saveGame();
+				return true;
+			}
+		}
+		if (window.FernfallGameInventory?.heldTool?.().tool === "shears") {
+			const sheep = animals.find((animal) => animal.type === "sheep" && near(animal, player, 58));
+			if (sheep) {
+				if ((sheep.shornUntil || 0) > Date.now()) show("This sheep needs time to regrow its wool.");
+				else startGather("shear", sheep, () => shearSheep(sheep));
 				return true;
 			}
 		}
@@ -1069,28 +1146,12 @@ const FernfallSurvival = (() => {
 		}
 		const resource = resources.find((entry) => entry.available && ["stone", "carrot", "potato", "mushroom", "grain", "herb"].includes(entry.type) && near(entry, player, 50));
 		if (resource) {
-			window.FernfallGameInventory?.animate(resource.type === "stone" ? "mine" : ["carrot", "potato", "grain"].includes(resource.type) ? "till" : "dig");
-			resource.available = false;
-			resource.respawnAt = Date.now() + 30000;
-			player.inventory[resource.type] = (player.inventory[resource.type] || 0) + 1;
-			recordQuest("gathered");
-			recordVillagerQuestProgress(resource.type);
-			show(`Gathered ${label(resource.type)}.`);
-			updateHud();
-			saveGame();
+			startGather(resource.type, resource, () => collectResource(resource));
 			return true;
 		}
 		const tree = obstacles.find((entry) => !entry.chopped && near(entry, player, 56));
 		if (tree) {
-			window.FernfallGameInventory?.animate("chop");
-			tree.woodHits = (tree.woodHits || 0) + 1;
-			player.inventory.wood = (player.inventory.wood || 0) + 1;
-			recordQuest("gathered");
-			recordVillagerQuestProgress("wood");
-			if (tree.woodHits >= 3) tree.chopped = true;
-			show(tree.chopped ? "Gathered wood. The tree is now a stump." : "Gathered wood from the tree.");
-			updateHud();
-			saveGame();
+			startGather("wood", tree, () => chopTree(tree));
 			return true;
 		}
 		return false;
@@ -1406,6 +1467,13 @@ const FernfallSurvival = (() => {
 
 	function drawStations() {
 		drawBed();
+		if (gatherTask) {
+			const progress = Math.min(1, (performance.now() - gatherTask.startedAt) / (gatherTask.until - gatherTask.startedAt));
+			ctx.fillStyle = "#1b2a21cc";
+			ctx.fillRect(player.x - 18, player.y - 52, 36, 6);
+			ctx.fillStyle = "#e7c56e";
+			ctx.fillRect(player.x - 17, player.y - 51, 34 * progress, 4);
+		}
 		for (const fire of campfires) {
 			if (fire.kind !== "furnace" && !fire.coalCollected) {
 				const coalX = fire.x + 32;
@@ -1768,6 +1836,7 @@ const FernfallSurvival = (() => {
 		generateVillageChunks();
 		generateResourceChunks();
 		generatePondChunks();
+		updateGather();
 		keepAnimalsOffRoofs();
 		const now = Date.now();
 		updateVillagers(now);

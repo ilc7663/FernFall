@@ -77,20 +77,18 @@
 		saveGame();
 	}
 
-	function toolActionForSelected(fallback) {
-		const id = window.FernfallInventory.getSelected()?.id || "";
-		if (id.includes("pickaxe")) return "mine";
-		if (id.includes("axe")) return "chop";
-		if (id.includes("shovel")) return "dig";
-		if (id.includes("hoe")) return "till";
-		if (id.includes("sword")) return "attack";
-		if (id.includes("bow")) return "shoot";
-		if (id.includes("fishing_rod")) return "fish";
-		if (id.includes("shears")) return "shear";
-		return fallback;
+	const toolTierSpeed = { wood: 1.6, stone: 2.2, iron: 3, gold: 3.4, diamond: 4.2 };
+
+	function heldTool() {
+		const id = window.FernfallInventory?.getSelected?.()?.id || "";
+		const match = id.match(/^(?:([a-z]+)_)?(pickaxe|axe|shovel|hoe|shears)$/);
+		if (match) return { id, tool: match[2], speed: toolTierSpeed[match[1]] || 2 };
+		if (id.startsWith("bucket")) return { id, tool: "bucket", speed: 1 };
+		return { id, tool: "empty", speed: 1 };
 	}
 
 	window.FernfallGameInventory = {
+		heldTool,
 		syncFromGame: () => syncPackFromGame(),
 		placeSelectedItem() {
 			if (window.FernfallInventory.hasCursor()) return false;
@@ -109,19 +107,15 @@
 			if (itemInfo[gameId]?.category !== "food" || !(player.inventory[gameId] > 0)) return false;
 			return Boolean(survivalModule?.useItem(gameId));
 		},
-		animate(fallback) {
-			const id = window.FernfallInventory.getSelected()?.id || "";
-			if (!/_(pickaxe|axe|shovel|hoe|sword|bow|fishing_rod|shears)$/.test(id)) return false;
-			player.toolAction = fallback && fallback !== "attack" ? fallback : toolActionForSelected(fallback);
-			player.toolActionStarted = performance.now();
-			player.toolActionUntil = player.toolActionStarted + 540;
+		animate() {
+			window.fernfallStartUseAnimation?.();
 			return true;
 		},
 	};
 	window.FernfallInventory.setPortrait((context, width, height) => {
-		const sprite = art.ranger[`${player.direction}_idle`] || art.ranger.down_idle;
+		const sprite = characterFrame("ranger", heldTool().tool, "down", "idle") || art.ranger[`${player.direction}_idle`] || art.ranger.down_idle;
 		if (!sprite?.complete || !sprite.naturalWidth) return;
-		const size = Math.min(width, height) * 1.12;
+		const size = Math.min(width, height) * 1.2;
 		context.imageSmoothingEnabled = false;
 		context.drawImage(sprite, Math.round((width - size) / 2), Math.round(height - size - 4), size, size);
 		const canvas = context.canvas;

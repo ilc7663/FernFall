@@ -1,0 +1,230 @@
+{
+  "version": "2.0",
+  "ranger": {
+    "empty": {
+      "down": {
+        "idle": "assets/ranger/empty/down/idle.png",
+        "walk_1": "assets/ranger/empty/down/walk_1.png",
+        "walk_2": "assets/ranger/empty/down/walk_2.png",
+        "use": "assets/ranger/empty/down/use.png"
+      },
+      "up": {
+        "idle": "assets/ranger/empty/up/idle.png",
+        "walk_1": "assets/ranger/empty/up/walk_1.png",
+        "walk_2": "assets/ranger/empty/up/walk_2.png",
+        "use": "assets/ranger/empty/up/use.png"
+      },
+      "left": {
+        "idle": "assets/ranger/empty/left/idle.png",
+        "walk_1": "assets/ranger/empty/left/walk_1.png",
+        "walk_2": "assets/ranger/empty/left/walk_2.png",
+        "use": "assets/ranger/empty/left/use.png"
+      },
+      "right": {
+        "idle": "assets/ranger/empty/right/idle.png",
+        "walk_1": "assets/ranger/empty/right/walk_1.png",
+        "walk_2": "assets/ranger/empty/right/walk_2.png",
+        "use": "assets/ranger/empty/right/use.png"
+      }
+    },
+    "pickaxe": {
+      "down": {
+        "idle": "assets/ranger/pickaxe/down/idle.png",
+        "walk_1": "assets/ranger/pickaxe/down/walk_1.png",
+        "walk_2": "assets/ranger/pickaxe/down/walk_2.png",
+        "use": "assets/ranger/pickaxe/down/use.png"
+      },
+      "up": {
+        "idle": "assets/ranger/pickaxe/up/idle.png",
+        "walk_1": "assets/ranger/pickaxe/up/walk_1.png",
+        "walk_2": "assets/ranger/pickaxe/up/walk_2.png",
+        "use": "assets/ranger/pickaxe/up/use.png"
+      },
+      "left": {
+        "idle": "assets/ranger/pickaxe/left/idle.png",
+        "walk_1": "assets/ranger/pickaxe/left/walk_1.png",
+        "walk_2": "assets/ranger/pickaxe/left/walk_2.png",
+        "use": "assets/ranger/pickaxe/left/use.png"
+      },
+      "right": {
+        "idle": "assets/ranger/pickaxe/right/idle.png",
+        "walk_1": "assets/ranger/pickaxe/right/walk_1.png",
+        "walk_2": "assets/ranger/pickaxe/right/walk_2.png",
+        "use": "assets/ranger/pickaxe/right/use.png"
+      }
+    },
+    "axe": {
+      "down": {
+        "idle": "assets/ranger/axe/down/idle.png",
+        "walk_1": "assets/ranger/axe/down/walk_1.png",
+        "walk_2": "assets/ranger/axe/down/walk_2.png",
+        "use": "assets/ranger/axe/down/use.png"
+      },
+      "up": {
+        "idle": "assets/ranger/axe/up/idle.png",
+        "walk_1": "assets/ranger/axe/up/walk_1.png",
+        "walk_2": "assets/ranger/axe/up/walk_2.png",
+        "use": "assets/ranger/axe/up/use.png"
+      },
+      "left": {
+        "idle": "assets/ranger/axe/left/idle.png",
+        "walk_1": "assets/ranger/axe/left/walk_1.png",
+        "walk_2": "assets/ranger/axe/left/walk_2.png",
+        "use": "assets/ranger/axe/left/use.png"
+      },
+      "right": {
+        "idle": "assets/ranger/axe/right/idle.png",
+        "walk_1": "assets/ranger/axe/right/walk_1.png",
+        "walk_2": "assets/ranger/axe/right/walk_2.png",
+        "use": "assets/ranger/axe/right/use.png"
+      }
+    },
+    "shovel": {
+      "down": {
+        "idle": "assets/ranger/shovel/down/idle.png",
+        "walk_1": "assets/ranger/shovel/down/walk_1.png",
+        "walk_2": "assets/ranger/shovel/down/walk_2.png",
+        "use": "assets/ranger/shovel/down/use.png"
+      },
+      "up": {
+        "idle": "assets/ranger/shovel/up/idle.png",
+        "walk_1": "assets/ranger/shovel/up/walk_1.png",
+        "walk_2": "assets/ranger/shovel/up/walk_2.png",
+        "use": "assets/ranger/shovel/up/use.png"
+      },
+      "left": {
+        "idle": "assets/ranger/shovel/left/idle.png",
+        "walk_1": "assets/ranger/shovel/left/walk_1.png",
+        "walk_2": "assets/ranger/shovel/left/walk_2.png",
+        "use": "assets/ranger/shovel/left/use.png"
+      },
+      "right": {
+        "idle": "assets/ranger/shovel/right/idle.png",
+        "walk_1": "assets/ranger/shovel/right/walk_1.png",
+        "walk_2": "assets/ranger/shovel/right/walk_2.png",
+        "use": "assets/ranger/shovel/right/use.png"
+      }
+    },
+    "hoe": {
+      "down": {
+        "idle": "assets/ranger/hoe/down/idle.png",
+        "walk_1": "assets/ranger/hoe/down/walk_1.png",
+        "walk_2": "assets/ranger/hoe/down/walk_2.png",
+        "use": "assets/ranger/hoe/down/use.png"
+      },
+      "up": {
+        "idle": "assets/ranger/hoe/up/idle.png",
+        "walk_1": "assets/ranger/hoe/up/walk_1.png",
+        "walk_2": "assets/ranger/hoe/up/walk_2.png",
+        "use": "assets/ranger/hoe/up/use.png"
+      },
+      "left": {
+        "idle": "assets/ranger/hoe/left/idle.png",
+        "walk_1": "assets/ranger/hoe/left/walk_1.png",
+        "walk_2": "assets/ranger/hoe/left/walk_2.png",
+        "use": "assets/ranger/hoe/left/use.png"
+      },
+      "right": {
+        "idle": "assets/ranger/hoe/right/idle.png",
+        "walk_1": "assets/ranger/hoe/right/walk_1.png",
+        "walk_2": "assets/ranger/hoe/right/walk_2.png",
+        "use": "assets/ranger/hoe/right/use.png"
+      }
+    },
+    "shears": {
+      "down": {
+        "idle": "assets/ranger/shears/down/idle.png",
+        "walk_1": "assets/ranger/shears/down/walk_1.png",
+        "walk_2": "assets/ranger/shears/down/walk_2.png",
+        "use": "assets/ranger/shears/down/use.png"
+      },
+      "up": {
+        "idle": "assets/ranger/shears/up/idle.png",
+        "walk_1": "assets/ranger/shears/up/walk_1.png",
+        "walk_2": "assets/ranger/shears/up/walk_2.png",
+        "use": "assets/ranger/shears/up/use.png"
+      },
+      "left": {
+        "idle": "assets/ranger/shears/left/idle.png",
+        "walk_1": "assets/ranger/shears/left/walk_1.png",
+        "walk_2": "assets/ranger/shears/left/walk_2.png",
+        "use": "assets/ranger/shears/left/use.png"
+      },
+      "right": {
+        "idle": "assets/ranger/shears/right/idle.png",
+        "walk_1": "assets/ranger/shears/right/walk_1.png",
+        "walk_2": "assets/ranger/shears/right/walk_2.png",
+        "use": "assets/ranger/shears/right/use.png"
+      }
+    },
+    "bucket": {
+      "down": {
+        "idle": "assets/ranger/bucket/down/idle.png",
+        "walk_1": "assets/ranger/bucket/down/walk_1.png",
+        "walk_2": "assets/ranger/bucket/down/walk_2.png",
+        "use": "assets/ranger/bucket/down/use.png"
+      },
+      "up": {
+        "idle": "assets/ranger/bucket/up/idle.png",
+        "walk_1": "assets/ranger/bucket/up/walk_1.png",
+        "walk_2": "assets/ranger/bucket/up/walk_2.png",
+        "use": "assets/ranger/bucket/up/use.png"
+      },
+      "left": {
+        "idle": "assets/ranger/bucket/left/idle.png",
+        "walk_1": "assets/ranger/bucket/left/walk_1.png",
+        "walk_2": "assets/ranger/bucket/left/walk_2.png",
+        "use": "assets/ranger/bucket/left/use.png"
+      },
+      "right": {
+        "idle": "assets/ranger/bucket/right/idle.png",
+        "walk_1": "assets/ranger/bucket/right/walk_1.png",
+        "walk_2": "assets/ranger/bucket/right/walk_2.png",
+        "use": "assets/ranger/bucket/right/use.png"
+      }
+    }
+  },
+  "zombie": {
+    "down": {
+      "idle": "assets/zombie/down/idle.png",
+      "walk_1": "assets/zombie/down/walk_1.png",
+      "walk_2": "assets/zombie/down/walk_2.png",
+      "attack_1": "assets/zombie/down/attack_1.png",
+      "attack_2": "assets/zombie/down/attack_2.png",
+      "death": "assets/zombie/down/death.png"
+    },
+    "up": {
+      "idle": "assets/zombie/up/idle.png",
+      "walk_1": "assets/zombie/up/walk_1.png",
+      "walk_2": "assets/zombie/up/walk_2.png",
+      "attack_1": "assets/zombie/up/attack_1.png",
+      "attack_2": "assets/zombie/up/attack_2.png",
+      "death": "assets/zombie/up/death.png"
+    },
+    "left": {
+      "idle": "assets/zombie/left/idle.png",
+      "walk_1": "assets/zombie/left/walk_1.png",
+      "walk_2": "assets/zombie/left/walk_2.png",
+      "attack_1": "assets/zombie/left/attack_1.png",
+      "attack_2": "assets/zombie/left/attack_2.png",
+      "death": "assets/zombie/left/death.png"
+    },
+    "right": {
+      "idle": "assets/zombie/right/idle.png",
+      "walk_1": "assets/zombie/right/walk_1.png",
+      "walk_2": "assets/zombie/right/walk_2.png",
+      "attack_1": "assets/zombie/right/attack_1.png",
+      "attack_2": "assets/zombie/right/attack_2.png",
+      "death": "assets/zombie/right/death.png"
+    }
+  },
+  "canvas": {
+    "width": 352,
+    "height": 352,
+    "anchor": "feet"
+  },
+  "notes": {
+    "right": "mirrored left artwork",
+    "zombie": "some alternate attack and death poses reused where source art was absent"
+  }
+}
