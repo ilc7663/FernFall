@@ -251,8 +251,51 @@ let starvationWarningShown = false;
 let starvationWarned = false;
 const toastQueue = [];
 let toastTimer;
-let questClaimed = saved?.questClaimed ?? false;
+const gatherTasks = {
+	berry: { noun: "wild berries", titles: ["Berry picking", "Sweet tooth", "Pantry run"] },
+	wood: { noun: "softwood", titles: ["Timber run", "Firewood duty", "Lumber call"] },
+	stone: { noun: "stones", titles: ["Rock collector", "Quarry day", "Pebble hunt"] },
+	carrot: { noun: "carrots", titles: ["Carrot patch", "Root harvest"] },
+	potato: { noun: "potatoes", titles: ["Spud hunting", "Potato dig"] },
+	mushroom: { noun: "forest mushrooms", titles: ["Mushroom foray", "Fungus forager"] },
+	grain: { noun: "grain", titles: ["Grain gathering", "Harvest hands"] },
+	herb: { noun: "forest herbs", titles: ["Herbalist's errand", "Herb round"] },
+};
+const slimeTaskTitles = ["Brave the woods", "Slime patrol", "Bubble trouble"];
+let dailyTask = saved?.dailyTask ?? rollDailyTask();
+let taskLastInventory = { ...player.inventory };
+let taskLastDefeated = 0;
 let jimothyMet = saved?.jimothyMet ?? false;
+
+function pickRandom(list) {
+	return list[Math.floor(Math.random() * list.length)];
+}
+
+function rollDailyTask(previousKey) {
+	const keys = ["slime", ...Object.keys(gatherTasks)].filter((key) => key !== previousKey);
+	const key = pickRandom(keys);
+	if (key === "slime") {
+		const goal = 2 + Math.floor(Math.random() * 4);
+		return { key, title: pickRandom(slimeTaskTitles), copy: `Defeat ${goal} little slimes. They look grumpy, but they're mostly bubbles.`, goal, progress: 0, reward: goal };
+	}
+	const goal = 3 + Math.floor(Math.random() * 6);
+	const info = gatherTasks[key];
+	return { key, title: pickRandom(info.titles), copy: `Gather ${goal} ${info.noun} out in the forest.`, goal, progress: 0, reward: 1 + Math.ceil(goal / 2) };
+}
+
+function trackDailyTask() {
+	const defeated = mobs.filter((mob) => !mob.alive).length;
+	if (dailyTask.key === "slime") dailyTask.progress += Math.max(0, defeated - taskLastDefeated);
+	else dailyTask.progress += Math.max(0, (player.inventory[dailyTask.key] || 0) - (taskLastInventory[dailyTask.key] || 0));
+	taskLastDefeated = defeated;
+	taskLastInventory = { ...player.inventory };
+	if (dailyTask.progress < dailyTask.goal) return;
+	player.coins += dailyTask.reward;
+	showToast(`Task complete: ${dailyTask.title}! +${dailyTask.reward} coins.`);
+	dailyTask = rollDailyTask(dailyTask.key);
+	showToast(`New task: ${dailyTask.title}.`);
+	saveGame();
+}
 
 function meleeTargetRadius(target) {
 	const radii = {
@@ -292,7 +335,7 @@ function saveGame() {
 	try {
 		const save = {
 			x: player.x, y: player.y, health: player.health, hunger: player.hunger, saturation: player.saturation, lastFoodEaten: player.lastFoodEaten, coins: player.coins,
-			xp: player.xp, level: player.level, inventory: player.inventory, questClaimed,
+			xp: player.xp, level: player.level, inventory: player.inventory, dailyTask,
 			wolfTamed: animals.find((animal) => animal.type === "wolf")?.tamed ?? false,
 			jimothyMet,
 			...FernfallSurvival.save(),
@@ -999,13 +1042,7 @@ function resetCharacter() {
 }
 
 function checkQuest() {
-	const defeated = mobs.filter((mob) => !mob.alive).length;
-	if (defeated >= 3 && !questClaimed) {
-		questClaimed = true;
-		player.coins += 3;
-		showToast("Quest complete! +3 bonus coins.");
-		saveGame();
-	}
+	trackDailyTask();
 }
 
 let lastHudHealth = player.health;
@@ -1061,9 +1098,12 @@ function updateHud() {
 	}
 	document.querySelector("#coin-value").textContent = player.coins;
 	document.querySelector("#level-value").textContent = player.level;
-	const defeated = mobs.filter((mob) => !mob.alive).length;
-	document.querySelector("#quest-progress").textContent = questClaimed ? "Done!" : `${defeated} / 3`;
-	document.querySelector("#quest-fill").style.width = `${questClaimed ? 100 : defeated / 3 * 100}%`;
+	trackDailyTask();
+	document.querySelector("#quest-title").textContent = dailyTask.title;
+	document.querySelector("#quest-copy").textContent = dailyTask.copy;
+	document.querySelector("#quest-reward").textContent = `+ ${dailyTask.reward} coins`;
+	document.querySelector("#quest-progress").textContent = `${dailyTask.progress} / ${dailyTask.goal}`;
+	document.querySelector("#quest-fill").style.width = `${dailyTask.progress / dailyTask.goal * 100}%`;
 	document.querySelector("#inventory-grid").innerHTML = Object.entries(itemInfo).map(([type, item]) => {
 		const count = player.inventory[type] || 0;
 		return `<div class="item-slot${count ? " filled" : ""}" title="${item.name}: ${count}" aria-label="${item.name}: ${count}"><span class="item-icon">${item.icon}</span>${count ? `<span class="item-count">${count}</span>` : ""}</div>`;

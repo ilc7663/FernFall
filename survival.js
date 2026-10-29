@@ -115,7 +115,7 @@ const FernfallSurvival = (() => {
 	};
 	const villagerQuestStates = {};
 	const craftingSlots = Array(9).fill("");
-	const NIGHT_CYCLE_MS = 240000;
+	const NIGHT_CYCLE_MS = 600000;
 	const POND_SPAWN_VERSION = 2;
 	const hostileChunks = new Set();
 	let selectedCategory = "food";
