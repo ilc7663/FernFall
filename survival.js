@@ -683,7 +683,7 @@ const FernfallSurvival = (() => {
 		document.querySelector("#furnace-fuel-status").textContent = fuelSeconds ? `${label(fire.furnaceFuelType || "coal")} · ${fuelSeconds}s fuel remaining` : "Add coal, wood, or sticks for fuel.";
 		const progress = cooking ? Math.min(100, (Date.now() - cooking.startedAt) / cooking.duration * 100) : 0;
 		document.querySelector("#furnace-progress-fill").style.width = `${progress}%`;
-		document.querySelector("#furnace-status").textContent = cooking ? cooking.ready ? `${label(cooking.recipeId)} is ready.` : `Smelting ${label(cooking.inputId)}…` : "Choose raw meat or ore to smelt.";
+		document.querySelector("#furnace-status").textContent = cooking ? cooking.ready ? `${label(cooking.recipeId)} is ready.` : `Smelting ${label(cooking.inputId)}…` : (fire?.furnaceFuelMs ? "Choose raw meat or ore to smelt." : "Add coal, wood or sticks as fuel first, then choose something to smelt.");
 		const collect = document.querySelector("#furnace-collect");
 		collect.hidden = !cooking?.ready;
 		collect.disabled = !cooking?.ready;
@@ -2016,6 +2016,20 @@ const FernfallSurvival = (() => {
 			if (recipe) addCraftedItem(recipe);
 		});
 		document.querySelector("#use-selected-button").addEventListener("click", useSelected);
+		document.querySelector("#furnace-fuel-slot").addEventListener("click", () => {
+			const fuelId = Object.keys(furnaceFuelMs).find((id) => player.inventory[id] > 0);
+			if (fuelId) addFurnaceFuel(currentFire(), fuelId);
+			else show("You have no fuel. Coal, wood or sticks will work.");
+		});
+		document.querySelector("#furnace-input-slot").addEventListener("click", () => {
+			const fire = currentFire();
+			const recipe = furnaceRecipes().find((entry) => (player.inventory[Object.keys(entry.ingredients)[0]] || 0) >= 1 && (fire?.furnaceFuelMs || 0) >= entry.seconds * 1000);
+			if (recipe) startFurnaceCook(recipe.id, fire);
+			else show("Add fuel and something to smelt first.");
+		});
+		document.querySelector("#furnace-output-slot").addEventListener("click", () => {
+			if (collectFire(currentFire())) refreshPanel();
+		});
 		document.querySelector("#craft-menu-button").addEventListener("click", () => openPanel("craft"));
 		document.querySelector("#survival-close").addEventListener("click", () => document.querySelector("#survival-dialog").close());
 		document.querySelector("#villager-quest-action").addEventListener("click", handleVillagerQuestAction);

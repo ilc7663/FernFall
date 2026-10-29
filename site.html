@@ -54,6 +54,51 @@
 			width: 58% !important;
 			height: 58% !important;
 		}
+		#survival-dialog.game-box-popup .furnace-recipe,
+		#survival-dialog.game-box-popup .furnace-fuel {
+			min-height: 40px;
+			padding: 4px 8px;
+			font-size: 12px;
+		}
+		#furnace-input-slot,
+		#furnace-fuel-slot,
+		#furnace-output-slot {
+			cursor: pointer;
+		}
+		#survival-dialog.game-box-popup .survival-dialog-header {
+			padding: 8px 16px !important;
+		}
+		#survival-dialog.game-box-popup #survival-title {
+			font-size: 18px !important;
+			margin: 0 !important;
+		}
+		#survival-dialog.game-box-popup .furnace-recipe-list {
+			grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+		}
+		#survival-dialog.game-box-popup .furnace-fuel-list {
+			grid-template-columns: 1fr !important;
+		}
+		#survival-dialog.game-box-popup .furnace-input-panel {
+			display: flex !important;
+			flex-direction: column !important;
+		}
+		#survival-dialog.game-box-popup .furnace-input-panel > h3:nth-of-type(1),
+		#furnace-recipe-list {
+			order: 3;
+		}
+		#survival-dialog.game-box-popup .furnace-input-panel > h3:nth-of-type(2),
+		#furnace-fuel-status,
+		#furnace-fuel-list {
+			order: 1;
+		}
+		#survival-dialog.game-box-popup .furnace-machine-panel {
+			justify-content: flex-start !important;
+		}
+		#survival-dialog.game-box-popup .furnace-progress {
+			height: 14px !important;
+			min-height: 0 !important;
+			flex: none !important;
+		}
 		#saturation-meter {
 			display: flex;
 			align-items: center;
@@ -82,13 +127,13 @@
 		}
 		#survival-dialog.game-box-popup {
 			position: absolute !important;
-			top: 50% !important;
+			top: calc(50% - 40px) !important;
 			left: 50% !important;
 			transform: translate(-50%, -50%);
 			margin: 0 !important;
-			width: min(520px, calc(100% - 24px));
+			width: min(760px, calc(100% - 24px));
 			max-width: calc(100% - 24px);
-			max-height: calc(100% - 24px);
+			max-height: calc(100% - 104px);
 			height: fit-content;
 			box-sizing: border-box;
 			overflow-x: hidden;

@@ -145,6 +145,14 @@
 	});
 	document.querySelector("#inventory-open-button")?.addEventListener("click", () => window.FernfallInventory.open());
 
+	document.addEventListener("wheel", (event) => {
+		if (!event.target.closest?.(".scene-wrap") || event.target.closest("#fernfall-inventory-root .fi-window, dialog, #fernfall-crafting")) return;
+		if (document.querySelector("#fernfall-inventory-root")?.classList.contains("fi-open") || !event.deltaY) return;
+		const current = Number(document.querySelector("#fernfall-inventory-root .fi-hotbar .fi-selected")?.dataset.index) || 0;
+		event.preventDefault();
+		window.FernfallInventory.select(current + (event.deltaY > 0 ? 1 : -1));
+	}, { passive: false });
+
 	const originalUpdateHud = updateHud;
 	updateHud = function (...args) {
 		const result = originalUpdateHud(...args);
