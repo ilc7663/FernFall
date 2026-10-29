@@ -316,10 +316,11 @@
 			const south = hasCell(row + 1, col);
 			const west = hasCell(row, col - 1);
 			const east = hasCell(row, col + 1);
-			if (!north && !west && !hasCell(row - 1, col - 1)) return "pond_corner_nw";
-			if (!north && !east && !hasCell(row - 1, col + 1)) return "pond_corner_ne";
-			if (!south && !east && !hasCell(row + 1, col + 1)) return "pond_corner_se";
-			if (!south && !west && !hasCell(row + 1, col - 1)) return "pond_corner_sw";
+			const missingSides = Number(!north) + Number(!east) + Number(!south) + Number(!west);
+			if (missingSides === 2 && !north && !west && !hasCell(row - 1, col - 1)) return "pond_corner_nw";
+			if (missingSides === 2 && !north && !east && !hasCell(row - 1, col + 1)) return "pond_corner_ne";
+			if (missingSides === 2 && !south && !east && !hasCell(row + 1, col + 1)) return "pond_corner_se";
+			if (missingSides === 2 && !south && !west && !hasCell(row + 1, col - 1)) return "pond_corner_sw";
 			if (!north) return "pond_edge_n";
 			if (!south) return "pond_edge_s";
 			if (!west) return "pond_edge_w";
@@ -337,12 +338,11 @@
 				const width = pond.width || 120;
 				const height = pond.height || 84;
 				if (pond.x < camera.x - width || pond.x > camera.x + WIDTH + width || pond.y < camera.y - height || pond.y > camera.y + HEIGHT + height) continue;
-				const columns = Math.max(3, Math.round(width / 64));
-				const rows = Math.max(2, Math.round(height / 64));
+				const columns = Math.max(4, Math.round(width / 48));
+				const rows = Math.max(3, Math.round(height / 48));
 				const cellWidth = width / columns;
 				const cellHeight = height / rows;
 				const seed = Math.abs(Math.floor(pond.x * 17 + pond.y * 31));
-				const shape = seed % 4;
 				const phase = (seed % 997) / 997 * Math.PI * 2;
 				const cells = [];
 				const occupied = new Set();
@@ -352,15 +352,27 @@
 						const ny = ((row + 0.5) / rows) * 2 - 1;
 						const angle = Math.atan2(ny, nx);
 						const radial = Math.hypot(nx, ny);
-						const lobes = Math.sin(angle * 3 + phase) * 0.11
-							+ Math.cos(angle * 5 - phase * 0.7) * 0.07
-							+ Math.sin(angle * 7 + phase * 1.3) * 0.035;
-						const kidney = shape === 1 ? Math.cos(angle + phase) * 0.075 : 0;
-						const angular = shape === 2 ? Math.cos(angle * 4 + phase) * 0.04 : 0;
-						const jitter = (((seed + col * 19 + row * 31) % 7) - 3) * 0.035;
-						if (radial > 0.84 + lobes + kidney + angular + jitter) continue;
+						const lobes = Math.sin(angle * 3 + phase) * 0.045
+							+ Math.cos(angle * 2 - phase * 0.7) * 0.025
+							+ Math.sin(angle + phase * 1.3) * 0.02;
+						const jitter = (((seed + col * 19 + row * 31) % 5) - 2) * 0.008;
+						if (radial > 0.91 + lobes + jitter) continue;
 						occupied.add(`${row},${col}`);
-						cells.push({ row, col });
+					}
+				}
+				for (let row = 1; row < rows - 1; row += 1) {
+					for (let col = 1; col < columns - 1; col += 1) {
+						if (occupied.has(`${row},${col}`)) continue;
+						const neighbors = [
+							occupied.has(`${row - 1},${col}`), occupied.has(`${row + 1},${col}`),
+							occupied.has(`${row},${col - 1}`), occupied.has(`${row},${col + 1}`),
+						];
+						if (neighbors.filter(Boolean).length >= 3) occupied.add(`${row},${col}`);
+					}
+				}
+				for (let row = 0; row < rows; row += 1) {
+					for (let col = 0; col < columns; col += 1) {
+						if (occupied.has(`${row},${col}`)) cells.push({ row, col });
 					}
 				}
 				const left = pond.x - camera.x - width / 2;
