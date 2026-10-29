@@ -311,19 +311,20 @@
 		const originalNaturePonds = natureSurvival.drawPonds;
 		let pondSnapshot = [];
 		let pondSnapshotAt = 0;
-		function pondTileFor(nx, ny, depth) {
-			const top = ny < -0.62;
-			const bottom = ny > 0.62;
-			const left = nx < -0.62;
-			const right = nx > 0.62;
-			if (top && left) return "pond_corner_nw";
-			if (top && right) return "pond_corner_ne";
-			if (bottom && right) return "pond_corner_se";
-			if (bottom && left) return "pond_corner_sw";
-			if (top) return "pond_edge_n";
-			if (bottom) return "pond_edge_s";
-			if (left) return "pond_edge_w";
-			if (right) return "pond_edge_e";
+		function pondTileFor(occupied, row, col, depth) {
+			const hasCell = (cellRow, cellCol) => occupied.has(`${cellRow},${cellCol}`);
+			const north = hasCell(row - 1, col);
+			const south = hasCell(row + 1, col);
+			const west = hasCell(row, col - 1);
+			const east = hasCell(row, col + 1);
+			if (!north && !west && !hasCell(row - 1, col - 1)) return "pond_corner_nw";
+			if (!north && !east && !hasCell(row - 1, col + 1)) return "pond_corner_ne";
+			if (!south && !east && !hasCell(row + 1, col + 1)) return "pond_corner_se";
+			if (!south && !west && !hasCell(row + 1, col - 1)) return "pond_corner_sw";
+			if (!north) return "pond_edge_n";
+			if (!south) return "pond_edge_s";
+			if (!west) return "pond_edge_w";
+			if (!east) return "pond_edge_e";
 			return depth > 0.68 ? "pond_water_deep" : "pond_center";
 		}
 		natureSurvival.drawPonds = function (...args) {
@@ -338,34 +339,56 @@
 				const width = pond.width || 120;
 				const height = pond.height || 84;
 				if (pond.x < camera.x - width || pond.x > camera.x + WIDTH + width || pond.y < camera.y - height || pond.y > camera.y + HEIGHT + height) continue;
-				const columns = Math.max(3, Math.round(width / 64));
-				const rows = Math.max(2, Math.round(height / 64));
+				const columns = Math.max(5, Math.round(width / 24));
+				const rows = Math.max(4, Math.round(height / 24));
 				const cellWidth = width / columns;
 				const cellHeight = height / rows;
 				const seed = Math.abs(Math.floor(pond.x * 17 + pond.y * 31));
-				const shape = seed % 3;
+				const shape = seed % 4;
+				const phase = (seed % 997) / 997 * Math.PI * 2;
 				const cells = [];
+				const occupied = new Set();
 				for (let row = 0; row < rows; row += 1) {
 					for (let col = 0; col < columns; col += 1) {
 						const nx = ((col + 0.5) / columns) * 2 - 1;
 						const ny = ((row + 0.5) / rows) * 2 - 1;
-						const jitter = (((seed + col * 19 + row * 31) % 7) - 3) * 0.045;
-						const round = nx * nx + ny * ny <= 1 + jitter;
-						const kidney = ((nx + 0.2) ** 2 + ny * ny * 1.1 <= 1.15 + jitter || (nx - 0.42) ** 2 * 1.4 + ny * ny * 1.2 <= 0.62 + jitter) && !(nx > 0.08 && nx < 0.43 && ny > -0.08 && ny < 0.5);
-						const angular = Math.abs(nx) ** 1.35 + Math.abs(ny) ** 1.35 + 0.12 * nx * ny <= 1.18 + jitter;
-						if (!(shape === 0 ? round : shape === 1 ? kidney : angular)) continue;
-						cells.push({ row, col, tile: pondTileFor(nx, ny, pond.depth) });
+						const angle = Math.atan2(ny, nx);
+						const radial = Math.hypot(nx, ny);
+						const lobes = Math.sin(angle * 3 + phase) * 0.11
+							+ Math.cos(angle * 5 - phase * 0.7) * 0.07
+							+ Math.sin(angle * 7 + phase * 1.3) * 0.035;
+						const kidney = shape === 1 ? Math.cos(angle + phase) * 0.075 : 0;
+						const angular = shape === 2 ? Math.cos(angle * 4 + phase) * 0.04 : 0;
+						const jitter = (((seed + col * 19 + row * 31) % 7) - 3) * 0.035;
+						if (radial > 0.84 + lobes + kidney + angular + jitter) continue;
+						occupied.add(`${row},${col}`);
+						cells.push({ row, col });
 					}
 				}
-				const cellX = (col) => pond.x - camera.x - width / 2 + col * cellWidth + cellWidth / 2;
-				const cellY = (row) => pond.y - camera.y - height / 2 + row * cellHeight + cellHeight / 2;
+				const left = pond.x - camera.x - width / 2;
+				const top = pond.y - camera.y - height / 2;
+				const cellRect = (col, row) => {
+					const cellLeft = Math.round(left + col * cellWidth);
+					const cellRight = Math.round(left + (col + 1) * cellWidth);
+					const cellTop = Math.round(top + row * cellHeight);
+					const cellBottom = Math.round(top + (row + 1) * cellHeight);
+					return {
+						x: (cellLeft + cellRight) / 2,
+						y: (cellTop + cellBottom) / 2,
+						width: cellRight - cellLeft,
+						height: cellBottom - cellTop,
+					};
+				};
 				for (let row = 0; row < rows; row += 1) {
 					for (let col = 0; col < columns; col += 1) {
-						drawNatureSprite("pond_tiles", "grass", cellX(col), cellY(row), cellWidth, cellHeight, false);
+						const cell = cellRect(col, row);
+						drawNatureSprite("pond_tiles", "grass", cell.x, cell.y, cell.width, cell.height, false);
 					}
 				}
-				for (const { row, col, tile } of cells) {
-					drawNatureSprite("pond_tiles", tile, cellX(col), cellY(row), cellWidth, cellHeight, false);
+				for (const { row, col } of cells) {
+					const cell = cellRect(col, row);
+					const tile = pondTileFor(occupied, row, col, pond.depth);
+					drawNatureSprite("pond_tiles", tile, cell.x, cell.y, cell.width, cell.height, false);
 				}
 				const decor = window.fernfallNatureArt?.pond_decor;
 				for (const [image, x, y, spriteWidth, spriteHeight] of [
