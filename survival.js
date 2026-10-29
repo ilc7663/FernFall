@@ -180,10 +180,27 @@ const FernfallSurvival = (() => {
 	let activeVillagerRole = "";
 	let activeVillageKey = "spawn";
 	let gatherTask = null;
+	const oreKinds = ["iron", "coal", "gold", "crystal", "rock"];
+	const oreSpecs = {
+		rock: { drop: "stone", ms: 1600 },
+		coal: { drop: "coal", ms: 2200 },
+		iron: { drop: "iron", ms: 2800 },
+		gold: { drop: "gold", ms: 3400 },
+		crystal: { drop: "crystal", ms: 4000 },
+	};
+	const oreItemDefinitions = {
+		iron: { name: "Iron", category: "materials", icon: "I" },
+		gold: { name: "Gold", category: "materials", icon: "G" },
+		crystal: { name: "Crystal", category: "materials", icon: "C" },
+	};
+
+	function oreKindOf(resource) {
+		return oreKinds[Math.abs(Math.floor(resource.x * 7 + resource.y * 13)) % oreKinds.length];
+	}
 	const gatherSpecs = {
 		stone: { tool: "pickaxe", baseMs: 1600 },
 		berry: { tool: "none", baseMs: 700 },
-		wood: { tool: "axe", baseMs: 1200 },
+		wood: { tool: "axe", baseMs: 1800 },
 		carrot: { tool: "hoe", baseMs: 800 },
 		potato: { tool: "hoe", baseMs: 800 },
 		grain: { tool: "hoe", baseMs: 800 },
@@ -192,10 +209,11 @@ const FernfallSurvival = (() => {
 		shear: { tool: "shears", baseMs: 1200 },
 	};
 
-	function gatherDuration(kind) {
+	function gatherDuration(kind, target) {
 		const spec = gatherSpecs[kind];
+		const baseMs = kind === "stone" ? oreSpecs[oreKindOf(target)].ms : spec.baseMs;
 		const held = window.FernfallGameInventory?.heldTool?.() || { tool: "empty", speed: 1 };
-		return Math.round(spec.baseMs / (held.tool === spec.tool ? held.speed : 1));
+		return Math.round(baseMs / (held.tool === spec.tool ? held.speed : 1));
 	}
 
 	function startGather(kind, target, finish, remote = false) {
@@ -203,21 +221,29 @@ const FernfallSurvival = (() => {
 		const dx = target.x - player.x;
 		const dy = target.y - player.y;
 		player.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : dy < 0 ? "up" : "down";
-		const duration = gatherDuration(kind);
-		gatherTask = { target, finish, remote, startedAt: performance.now(), until: performance.now() + duration };
+		const duration = gatherDuration(kind, target);
+		gatherTask = { kind, target, finish, remote, startedAt: performance.now(), until: performance.now() + duration };
 		window.fernfallStartUseAnimation?.(duration);
 	}
 
 	function updateGather() {
 		if (!gatherTask) return;
-		const { target, finish, until, remote } = gatherTask;
+		const { kind, target, finish, until, remote } = gatherTask;
 		if ((typeof moving === "function" && moving()) || (!remote && !near(target, player, 80))) {
 			gatherTask = null;
 			player.useUntil = 0;
 			return;
 		}
-		if (performance.now() < until) return;
+		const now = performance.now();
+		if (now < until) {
+			if (now - (gatherTask.fxAt || 0) >= 450) {
+				gatherTask.fxAt = now;
+				window.fernfallGatherFx?.(kind, target, false);
+			}
+			return;
+		}
 		gatherTask = null;
+		window.fernfallGatherFx?.(kind, target, true);
 		finish();
 	}
 
@@ -226,10 +252,11 @@ const FernfallSurvival = (() => {
 		const amount = resource.type === "berry" ? 2 + Math.floor(Math.random() * 2) : 1;
 		resource.available = false;
 		resource.respawnAt = Date.now() + 30000;
-		player.inventory[resource.type] = (player.inventory[resource.type] || 0) + amount;
+		const drop = resource.type === "stone" ? oreSpecs[oreKindOf(resource)].drop : resource.type;
+		player.inventory[drop] = (player.inventory[drop] || 0) + amount;
 		recordQuest("gathered", amount);
 		recordVillagerQuestProgress(resource.type, amount);
-		show(amount > 1 ? `Picked ${amount} ${label(resource.type).toLowerCase()}s from the bush.` : `Gathered ${label(resource.type)}.`);
+		show(resource.type === "stone" && drop !== "stone" ? `Mined ${label(drop).toLowerCase()}.` : amount > 1 ? `Picked ${amount} ${label(resource.type).toLowerCase()}s from the bush.` : `Gathered ${label(drop)}.`);
 		updateHud();
 		saveGame();
 	}
@@ -1934,8 +1961,8 @@ const FernfallSurvival = (() => {
 	}
 
 	function setup(state) {
-		Object.assign(itemInfo, itemDefinitions);
-		for (const id of Object.keys(itemDefinitions)) player.inventory[id] ??= 0;
+		Object.assign(itemInfo, itemDefinitions, oreItemDefinitions);
+		for (const id of [...Object.keys(itemDefinitions), ...Object.keys(oreItemDefinitions)]) player.inventory[id] ??= 0;
 		restore(state);
 		ensureSpawnVillage();
 		ensureStartBed();
@@ -2150,7 +2177,7 @@ const FernfallSurvival = (() => {
 	}
 
 	return {
-		setup, update, interact, pickupAt, attackAnimal, blocks, spawnBlocked, drawResource, drawPonds, drawVillages, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
+		setup, update, interact, pickupAt, oreKindOf, attackAnimal, blocks, spawnBlocked, drawResource, drawPonds, drawVillages, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
 		refreshInventory, openCrafting: () => openPanel("craft"), useItem, recordQuest, recordVillagerQuestProgress, dayProgress, save, respawnPoint,
 		campfires, hostileProjectiles,
 	};

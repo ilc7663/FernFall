@@ -78,8 +78,21 @@
 	}
 
 	function oreKind(resource) {
-		return oreKinds[Math.abs(Math.floor(resource.x * 7 + resource.y * 13)) % oreKinds.length];
+		return survival?.oreKindOf?.(resource) ?? oreKinds[Math.abs(Math.floor(resource.x * 7 + resource.y * 13)) % oreKinds.length];
 	}
+
+	window.fernfallGatherFx = (kind, target, done) => {
+		if (!fx) return;
+		if (kind === "stone") {
+			spawn("mining", "rock_dust", 6, target.x, target.y, 52, 560);
+			if (!done) spawn("mining", "ore_chips", 6, target.x, target.y - 6, 52, 560);
+		} else if (kind === "wood") {
+			spawn("chopping", "wood_chips", 5, target.x, target.y - 10, 56, 520);
+			if (done) spawn("chopping", "leaf_particles", 5, target.x, target.y - 40, 64, 620);
+		} else if (done) {
+			spawn("ui_effects", "pickup", 3, target.x, target.y - 10, 44, 420);
+		}
+	};
 
 	function resourceSprite(resource) {
 		if (!fx) return null;

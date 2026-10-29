@@ -77,7 +77,7 @@
 		saveGame();
 	}
 
-	const toolTierSpeed = { wood: 1.6, stone: 2.2, iron: 3, gold: 3.4, diamond: 4.2 };
+	const toolTierSpeed = { wood: 1.6, stone: 2.2, iron: 3, gold: 3.4, crystal: 4.2, diamond: 4.2 };
 
 	function heldTool() {
 		const id = window.FernfallInventory?.getSelected?.()?.id || "";
