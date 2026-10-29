@@ -116,6 +116,7 @@ const FernfallSurvival = (() => {
 	const villagerQuestStates = {};
 	const craftingSlots = Array(9).fill("");
 	const NIGHT_CYCLE_MS = 240000;
+	const POND_SPAWN_VERSION = 2;
 	const hostileChunks = new Set();
 	let selectedCategory = "food";
 	let selectedItem = "";
@@ -1487,7 +1488,7 @@ const FernfallSurvival = (() => {
 				pondChunks.add(key);
 				let seed = (Math.imul(cx, 374761393) ^ Math.imul(cy, 668265263) ^ 0x9e3779b9) >>> 0;
 				const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-				if (random() > 0.22) continue;
+				if (random() > 0.4) continue;
 				for (let attempt = 0; attempt < 28; attempt += 1) {
 					const small = random() < 0.42;
 					const columns = small ? 4 + Math.floor(random() * 2) : 6 + Math.floor(random() * 2);
@@ -1979,7 +1980,9 @@ const FernfallSurvival = (() => {
 		villagers.splice(0, villagers.length, ...restoredVillagers);
 		hostileProjectiles.splice(0, hostileProjectiles.length, ...(state.hostileProjectiles || []));
 		(state.resourceChunks || []).forEach((key) => resourceChunks.add(key));
-		(state.pondChunks || []).forEach((key) => pondChunks.add(key));
+		if (state.pondSpawnVersion === POND_SPAWN_VERSION) {
+			(state.pondChunks || []).forEach((key) => pondChunks.add(key));
+		}
 		(state.villageChunks || []).forEach((key) => villageChunks.add(key));
 		(state.discoveredRecipes || []).forEach((key) => discoveredRecipes.add(key));
 		jimothyMet = state.jimothyMet ?? jimothyMet;
@@ -2003,7 +2006,7 @@ const FernfallSurvival = (() => {
 	function save() {
 		return {
 			inventory: player.inventory, resources, animals, mobs, pickups, obstacles,
-			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], pondChunks: [...pondChunks], villageChunks: [...villageChunks],
+			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], pondChunks: [...pondChunks], pondSpawnVersion: POND_SPAWN_VERSION, villageChunks: [...villageChunks],
 			villages, villagers, craftingTables, ponds, campfires, hostileProjectiles, craftingSlots,
 			discoveredRecipes: [...discoveredRecipes], jimothyMet, selectedItem, questProgress, villagerQuestStates,
 			completedSurvivalQuests: [...completedSurvivalQuests], worldEpoch,
