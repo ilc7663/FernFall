@@ -182,6 +182,7 @@ const FernfallSurvival = (() => {
 	let gatherTask = null;
 	const gatherSpecs = {
 		stone: { tool: "pickaxe", baseMs: 1600 },
+		berry: { tool: "none", baseMs: 700 },
 		wood: { tool: "axe", baseMs: 1200 },
 		carrot: { tool: "hoe", baseMs: 800 },
 		potato: { tool: "hoe", baseMs: 800 },
@@ -199,6 +200,9 @@ const FernfallSurvival = (() => {
 
 	function startGather(kind, target, finish, remote = false) {
 		if (gatherTask?.target === target) return;
+		const dx = target.x - player.x;
+		const dy = target.y - player.y;
+		player.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : dy < 0 ? "up" : "down";
 		const duration = gatherDuration(kind);
 		gatherTask = { target, finish, remote, startedAt: performance.now(), until: performance.now() + duration };
 		window.fernfallStartUseAnimation?.(duration);
@@ -219,12 +223,13 @@ const FernfallSurvival = (() => {
 
 	function collectResource(resource) {
 		if (!resource.available) return;
+		const amount = resource.type === "berry" ? 2 + Math.floor(Math.random() * 2) : 1;
 		resource.available = false;
 		resource.respawnAt = Date.now() + 30000;
-		player.inventory[resource.type] = (player.inventory[resource.type] || 0) + 1;
-		recordQuest("gathered");
-		recordVillagerQuestProgress(resource.type);
-		show(`Gathered ${label(resource.type)}.`);
+		player.inventory[resource.type] = (player.inventory[resource.type] || 0) + amount;
+		recordQuest("gathered", amount);
+		recordVillagerQuestProgress(resource.type, amount);
+		show(amount > 1 ? `Picked ${amount} ${label(resource.type).toLowerCase()}s from the bush.` : `Gathered ${label(resource.type)}.`);
 		updateHud();
 		saveGame();
 	}
@@ -833,7 +838,7 @@ const FernfallSurvival = (() => {
 			overlay.setAttribute("role", "status");
 			overlay.setAttribute("aria-live", "assertive");
 			overlay.textContent = "Sleeping through the night";
-			document.body.append(overlay);
+			(document.querySelector(".scene-wrap") || document.body).append(overlay);
 		}
 		window.clearTimeout(sleepOverlayTimer);
 		overlay.classList.add("is-visible");
@@ -1144,7 +1149,7 @@ const FernfallSurvival = (() => {
 			saveGame();
 			return true;
 		}
-		const resource = resources.find((entry) => entry.available && ["stone", "carrot", "potato", "mushroom", "grain", "herb"].includes(entry.type) && near(entry, player, 50));
+		const resource = resources.find((entry) => entry.available && ["stone", "berry", "carrot", "potato", "mushroom", "grain", "herb"].includes(entry.type) && near(entry, player, 50));
 		if (resource) {
 			startGather(resource.type, resource, () => collectResource(resource));
 			return true;
