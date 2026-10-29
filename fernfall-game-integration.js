@@ -323,7 +323,7 @@
 
 		const originalNatureGround = drawGround;
 		const props = [
-			{ group: "beds", name: "bed_down", x: 520, y: 260, width: 70, height: 80 },
+			{ group: "beds", name: "bed_down", x: 520, y: 242, width: 58, height: 66 },
 			{ group: "mushrooms", name: "mushroom_brown_small", x: 82, y: 275, width: 24, height: 28 },
 			{ group: "mushrooms", name: "mushroom_orange_small", x: 100, y: 285, width: 22, height: 25 },
 			{ group: "mushrooms", name: "mushroom_purple_small", x: 888, y: 322, width: 26, height: 28 },

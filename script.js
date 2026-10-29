@@ -113,6 +113,83 @@ function randomChunkPosition(random, chunkX, chunkY) {
 	};
 }
 
+function spawnAreaIsClear(x, y, radius = 24) {
+	if (collides(x, y) || window.fernfallPathOverlaps?.(x, y, radius * 2, radius * 2)) return false;
+	if (obstacles.some((tree) => Math.hypot(x - tree.x, y - tree.y) < radius + tree.r * 0.66)) return false;
+	if (resources.some((resource) => Math.hypot(x - resource.x, y - resource.y) < radius + 24)) return false;
+	if (animals.some((animal) => Math.hypot(x - animal.x, y - animal.y) < radius + 28)) return false;
+	if (mobs.some((mob) => mob.alive && Math.hypot(x - mob.x, y - mob.y) < radius + 28)) return false;
+	if (pickups.some((pickup) => Math.hypot(x - pickup.x, y - pickup.y) < radius + 18)) return false;
+	if (Math.hypot(x - player.x, y - player.y) < radius + 48) return false;
+	if (window.FernfallSurvival?.blocks?.(x, y)) return false;
+	return true;
+}
+
+window.fernfallSpawnAreaIsClear = spawnAreaIsClear;
+
+function randomClearChunkPosition(random, chunkX, chunkY, radius, attempts = 16) {
+	for (let attempt = 0; attempt < attempts; attempt += 1) {
+		const position = randomClearChunkPosition(random, chunkX, chunkY, 44);
+		if (spawnAreaIsClear(position.x, position.y, radius)) return position;
+	}
+	return null;
+}
+
+function spawnAreaIsClear(x, y, radius = 24, spawnGroup = null) {
+	if (collides(x, y) || window.fernfallPathOverlaps?.(x, y, radius * 2, radius * 2)) return false;
+	if (obstacles.some((tree) => Math.hypot(x - tree.x, y - tree.y) < radius + tree.r * 0.66)) return false;
+	if (resources.some((resource) => Math.hypot(x - resource.x, y - resource.y) < radius + 22)) return false;
+	if (animals.some((animal) => {
+		const sameGroup = spawnGroup && animal.spawnGroup === spawnGroup;
+		return Math.hypot(x - animal.x, y - animal.y) < radius + (sameGroup ? 20 : 32);
+	})) return false;
+	if (mobs.some((mob) => mob.alive && Math.hypot(x - mob.x, y - mob.y) < radius + 24)) return false;
+	if (pickups.some((pickup) => Math.hypot(x - pickup.x, y - pickup.y) < radius + 14)) return false;
+	if (typeof FernfallSurvival !== "undefined" && FernfallSurvival.spawnBlocked?.(x, y, radius)) return false;
+	return true;
+}
+
+window.fernfallSpawnAreaIsClear = spawnAreaIsClear;
+
+function randomClearChunkPosition(random, chunkX, chunkY, radius, attempts = 16) {
+	for (let attempt = 0; attempt < attempts; attempt += 1) {
+		const position = randomChunkPosition(random, chunkX, chunkY);
+		if (spawnAreaIsClear(position.x, position.y, radius)) return position;
+	}
+	return null;
+}
+
+function spawnPassiveGroup(random, chunkX, chunkY) {
+	if (random() >= 0.28) return;
+	const roll = random();
+	const herd = roll < 0.34
+		? { type: "sheep", min: 3, max: 5 }
+		: roll < 0.54
+			? { type: "rabbit", min: 2, max: 4 }
+			: roll < 0.74
+				? { type: "cow", min: 2, max: 3 }
+				: roll < 0.92
+					? { type: "pig", min: 2, max: 3 }
+					: { type: "wolf", min: 2, max: 3 };
+	const herdId = `${chunkX},${chunkY}:${herd.type}`;
+	const anchor = randomClearChunkPosition(random, chunkX, chunkY, 20, 32);
+	if (!anchor || Math.hypot(player.x - anchor.x, player.y - anchor.y) < 110) return;
+	const count = herd.min + Math.floor(random() * (herd.max - herd.min + 1));
+	for (let index = 0; index < count; index += 1) {
+		let position = index === 0 ? anchor : null;
+		for (let attempt = 0; !position && attempt < 18; attempt += 1) {
+			const angle = random() * Math.PI * 2;
+			const distance = 42 + random() * 40;
+			const candidate = { x: anchor.x + Math.cos(angle) * distance, y: anchor.y + Math.sin(angle) * distance };
+			if (candidate.x < chunkX * WORLD_CHUNK_SIZE + 32 || candidate.x > (chunkX + 1) * WORLD_CHUNK_SIZE - 32) continue;
+			if (candidate.y < chunkY * WORLD_CHUNK_SIZE + 32 || candidate.y > (chunkY + 1) * WORLD_CHUNK_SIZE - 32) continue;
+			if (spawnAreaIsClear(candidate.x, candidate.y, 16, herdId)) position = candidate;
+		}
+		if (!position || Math.hypot(player.x - position.x, player.y - position.y) < 70) continue;
+		animals.push({ ...position, type: herd.type, spawnGroup: herdId, phase: random() * 6, roamAngle: random() * Math.PI * 2, turnTimer: 0, direction: "down", moving: false, tamed: false });
+	}
+}
+
 function generateWorldChunk(chunkX, chunkY) {
 	const key = `${chunkX},${chunkY}`;
 	if (generatedChunks.has(key) || loadingChunks.has(key) || Date.now() < (chunkRetryAfter.get(key) ?? 0)) return;
@@ -129,9 +206,13 @@ function generateWorldChunk(chunkX, chunkY) {
 			if (!response.ok) throw new Error("Chunk request failed");
 			return response.json();
 		}).then((chunk) => {
-			chunk.obstacles.forEach(addObstacle);
-			resources.push(...chunk.resources);
-			animals.push(...chunk.animals);
+					for (const obstacle of chunk.obstacles) {
+						if (spawnAreaIsClear(obstacle.x, obstacle.y, 44)) addObstacle(obstacle);
+					}
+					for (const resource of chunk.resources) {
+						if (spawnAreaIsClear(resource.x, resource.y, 22)) resources.push(resource);
+					}
+					spawnPassiveGroup(chunkRandom(chunkX, chunkY), chunkX, chunkY);
 			generatedChunks.add(key);
 			chunkRetryAfter.delete(key);
 		}).catch(() => {
@@ -143,28 +224,18 @@ function generateWorldChunk(chunkX, chunkY) {
 	generatedChunks.add(key);
 	const random = chunkRandom(chunkX, chunkY);
 	for (let index = 0; index < 5; index += 1) {
-		const position = randomChunkPosition(random, chunkX, chunkY);
-		const onPath = window.fernfallPathOverlaps?.(position.x, position.y + 5, 84, 84);
-		if (!collides(position.x, position.y) && !onPath && Math.hypot(player.x - position.x, player.y - position.y) > 90) {
+			const position = randomClearChunkPosition(random, chunkX, chunkY, 44);
+			if (position && Math.hypot(player.x - position.x, player.y - position.y) > 90) {
 			addObstacle({ ...position, r: 30 + random() * 12 });
 		}
 	}
 	for (let index = 0; index < 3; index += 1) {
-		resources.push({ ...randomChunkPosition(random, chunkX, chunkY), type: ["berry", "wood", "seed"][Math.floor(random() * 3)], available: true });
+			const position = randomClearChunkPosition(random, chunkX, chunkY, 22);
+			if (position && Math.hypot(player.x - position.x, player.y - position.y) > 70) {
+				resources.push({ ...position, type: ["berry", "wood", "seed"][Math.floor(random() * 3)], available: true });
+			}
 	}
-	const animalTypes = ["sheep", "cow", "pig", "rabbit", "wolf"];
-	for (let index = 0; index < 2; index += 1) {
-		animals.push({
-			...randomChunkPosition(random, chunkX, chunkY),
-			type: animalTypes[Math.floor(random() * animalTypes.length)],
-			phase: random() * 6,
-			roamAngle: random() * Math.PI * 2,
-			turnTimer: 0,
-			direction: "down",
-			moving: false,
-			tamed: false,
-		});
-	}
+		spawnPassiveGroup(random, chunkX, chunkY);
 }
 
 function ensureWorldChunks() {
@@ -224,7 +295,9 @@ function saveGame() {
 		localStorage.setItem(SAVE_KEY, serializedSave);
 	} catch {
 		if (!window.FERNFALL_SERVER_MODE) {
-			showToast("Progress could not be saved in this browser.");
+			for (const obstacle of chunk.obstacles) {
+				if (spawnAreaIsClear(obstacle.x, obstacle.y, 44)) addObstacle(obstacle);
+			}
 			return;
 		}
 	}
@@ -665,10 +738,11 @@ function update() {
 			const speedToPlayer = .65;
 			const mx = (player.x - mob.x) / distance * speedToPlayer;
 			const my = (player.y - mob.y) / distance * speedToPlayer;
-			if (!mobs.some((other) => other !== mob && other.alive && Math.hypot(mob.x + mx - other.x, mob.y + my - other.y) < 28)) {
-				mob.x += mx;
-				mob.y += my;
-			}
+				if (!collides(mob.x + mx, mob.y, "mob") && !collides(mob.x, mob.y + my, "mob") &&
+					!mobs.some((other) => other !== mob && other.alive && Math.hypot(mob.x + mx - other.x, mob.y + my - other.y) < 28)) {
+					mob.x += mx;
+					mob.y += my;
+				}
 		} else if (distance <= 29 && now - lastDamage > 950) {
 			lastDamage = now;
 			player.health = Math.max(0, player.health - 1);

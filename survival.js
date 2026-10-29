@@ -1279,12 +1279,30 @@ const FernfallSurvival = (() => {
 	}
 
 	function findVillageHousePosition(x, y, houses) {
-		const offsets = [[0, 0], [0, -160], [0, 160], [0, -224], [0, 224], [-160, 0], [160, 0], [0, -320], [0, 320]];
+		const houseWidth = 144;
+		const houseHeight = 124;
+		const offsets = [[0, 0], [0, -190], [0, 190], [-190, 0], [190, 0], [0, -290], [0, 290], [-290, 0], [290, 0], [0, -390], [0, 390]];
 		for (const [offsetX, offsetY] of offsets) {
 			const candidate = { x: x + offsetX, y: y + offsetY };
-			if (window.fernfallPathOverlaps?.(candidate.x, candidate.y, 132, 112)) continue;
-			if (collides(candidate.x, candidate.y)) continue;
-			if (houses.some((house) => Math.abs(house.x - candidate.x) < 132 && Math.abs(house.y - candidate.y) < 112)) continue;
+			if (window.fernfallPathOverlaps?.(candidate.x, candidate.y, houseWidth + 36, houseHeight + 36)) continue;
+			if (window.fernfallSpawnAreaIsClear && !window.fernfallSpawnAreaIsClear(candidate.x, candidate.y, 86)) continue;
+			if (!window.fernfallSpawnAreaIsClear && collides(candidate.x, candidate.y)) continue;
+			if (obstacles.some((tree) => Math.abs(tree.x - candidate.x) < houseWidth / 2 + tree.r * 0.66 && Math.abs(tree.y - candidate.y) < houseHeight / 2 + tree.r * 0.66)) continue;
+			if (craftingTables.some((table) => Math.abs(table.x - candidate.x) < houseWidth / 2 + 32 && Math.abs(table.y - candidate.y) < houseHeight / 2 + 28)) continue;
+			if (houses.some((house) => Math.abs(house.x - candidate.x) < (house.width + houseWidth) / 2 + 20 && Math.abs(house.y - candidate.y) < (house.height + houseHeight) / 2 + 20)) continue;
+			return candidate;
+		}
+		return null;
+	}
+
+	function findVillageTablePosition(center, houses) {
+		const offsets = [[0, 220], [0, -220], [220, 0], [-220, 0], [0, 300], [0, -300]];
+		for (const [offsetX, offsetY] of offsets) {
+			const candidate = { x: center.x + offsetX, y: center.y + offsetY };
+			if (window.fernfallSpawnAreaIsClear && !window.fernfallSpawnAreaIsClear(candidate.x, candidate.y, 36)) continue;
+			if (!window.fernfallSpawnAreaIsClear && collides(candidate.x, candidate.y)) continue;
+			if (houses.some((house) => Math.abs(house.x - candidate.x) < house.width / 2 + 34 && Math.abs(house.y - candidate.y) < house.height / 2 + 30)) continue;
+			if (craftingTables.some((table) => Math.hypot(table.x - candidate.x, table.y - candidate.y) < 64)) continue;
 			return candidate;
 		}
 		return null;
@@ -1300,9 +1318,9 @@ const FernfallSurvival = (() => {
 			villagers.splice(0, villagers.length, ...villagers.filter((villager) => villager.villageId !== "0,0"));
 			craftingTables.splice(0, craftingTables.length, ...craftingTables.filter((table) => table.id !== "village-table-0,0"));
 			const houseSpecs = [
-				{ x: 338, y: 322, width: 88, height: 76, doorSide: "center", role: "mayor", asset: "town_hall" },
-				{ x: 618, y: 322, width: 88, height: 76, doorSide: "center", role: "shopkeeper", asset: "general_store" },
-				{ x: 478, y: 462, width: 88, height: 76, doorSide: "center", role: "blacksmith", asset: "blacksmith_building" },
+				{ x: 338, y: 322, width: 144, height: 124, doorSide: "center", role: "mayor", asset: "town_hall" },
+				{ x: 618, y: 322, width: 144, height: 124, doorSide: "center", role: "shopkeeper", asset: "general_store" },
+				{ x: 478, y: 462, width: 144, height: 124, doorSide: "center", role: "blacksmith", asset: "blacksmith_building" },
 			];
 			const houses = [];
 			for (const house of houseSpecs) {
