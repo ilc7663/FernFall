@@ -253,6 +253,25 @@ const toastQueue = [];
 let toastTimer;
 let questClaimed = saved?.questClaimed ?? false;
 let jimothyMet = saved?.jimothyMet ?? false;
+
+function meleeTargetRadius(target) {
+	const radii = {
+		bat: 17, spider: 20, skeleton: 22, witch: 22, zombie: 21, slime: 20,
+		cow: 23, rabbit: 15, jimothy: 20, wolf: 19, sheep: 19, pig: 19,
+	};
+	return radii[target.type] || 18;
+}
+
+function meleeHitboxContains(target, reach = 44) {
+	const dx = target.x - player.x;
+	const dy = target.y - player.y;
+	const forward = player.direction === "up" ? -dy : player.direction === "down" ? dy : player.direction === "left" ? -dx : dx;
+	const lateral = player.direction === "up" || player.direction === "down" ? dx : dy;
+	const radius = meleeTargetRadius(target);
+	return forward + radius >= 2 && forward - radius <= reach && Math.abs(lateral) <= 16 + radius;
+}
+
+window.fernfallMeleeHitboxContains = meleeHitboxContains;
 let soundEnabled = false;
 let audioContext;
 let gamePaused = true;
@@ -866,11 +885,7 @@ function attack() {
 	let hit = false;
 	for (const mob of mobs) {
 		if (!mob.alive) continue;
-		const dx = mob.x - player.x;
-		const dy = mob.y - player.y;
-		const distance = Math.hypot(dx, dy);
-		const facingDot = player.direction === "up" ? -dy : player.direction === "down" ? dy : player.direction === "left" ? -dx : dx;
-		if (distance < 62 && facingDot > 2) {
+		if (meleeHitboxContains(mob)) {
 			mob.hp -= 1;
 			mob.hit = 9;
 			hit = true;

@@ -121,6 +121,7 @@ const FernfallSurvival = (() => {
 	let bed = null;
 	let bedSpawned = false;
 	let spawnPoint = null;
+	let sleepOverlayTimer = 0;
 	const HOUSE_WIDTH = 216;
 	const HOUSE_HEIGHT = 186;
 
@@ -659,6 +660,26 @@ const FernfallSurvival = (() => {
 	}
 
 	function sleepInBed() {
+		const now = Date.now();
+		const elapsed = Math.max(0, now - worldEpoch);
+		const dayIndex = Math.floor(elapsed / NIGHT_CYCLE_MS);
+		worldEpoch = now - (dayIndex * NIGHT_CYCLE_MS + NIGHT_CYCLE_MS * 0.16);
+		currentNightIndex = dayIndex;
+		hostileProjectiles.length = 0;
+		updateWorldClock(now);
+		let overlay = document.querySelector("#sleep-overlay");
+		if (!overlay) {
+			overlay = document.createElement("div");
+			overlay.id = "sleep-overlay";
+			overlay.className = "sleep-overlay";
+			overlay.setAttribute("role", "status");
+			overlay.setAttribute("aria-live", "assertive");
+			overlay.textContent = "Sleeping through the night";
+			document.body.append(overlay);
+		}
+		window.clearTimeout(sleepOverlayTimer);
+		overlay.classList.add("is-visible");
+		sleepOverlayTimer = window.setTimeout(() => overlay.classList.remove("is-visible"), 2200);
 		const front = { x: bed.x, y: bed.y + 46 };
 		spawnPoint = collides(front.x, front.y) ? { x: bed.x, y: bed.y } : front;
 		player.health = MAX_HEALTH;
@@ -947,11 +968,7 @@ const FernfallSurvival = (() => {
 	}
 
 	function attackAnimal() {
-		const animal = animals.find((entry) => entry.hp > 0 && !(entry.type === "wolf" && entry.tamed) && near(entry, player, 62) && (() => {
-			const dx = entry.x - player.x;
-			const dy = entry.y - player.y;
-			return (player.direction === "up" ? -dy : player.direction === "down" ? dy : player.direction === "left" ? -dx : dx) > 2;
-		})());
+		const animal = animals.find((entry) => entry.hp > 0 && !(entry.type === "wolf" && entry.tamed) && (window.fernfallMeleeHitboxContains?.(entry) ?? near(entry, player, 62)));
 		if (!animal) return false;
 		if (animal.type === "jimothy") {
 			animal.happyUntil = performance.now() + 1800;
