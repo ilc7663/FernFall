@@ -114,6 +114,62 @@ const FernfallSurvival = (() => {
 		healer: { id: "find_jimothy", unlockDay: 3, title: "Check on Jimothy", description: "Find Jimothy and let the healer know he is well.", greeting: "Jimothy has been out exploring. Could you find him and make sure he is safe?", event: "jimothy", goal: 1, reward: 6 },
 	};
 	const villagerQuestStates = {};
+	const villagerQuestVariants = {
+		mayor: [villagerQuestDefinitions.mayor,
+			{ title: "Mend the village paths", description: "Gather five stones to repair the village paths.", greeting: "The cobbles are worn thin. Could you gather five stones for repairs?", event: "stone", goal: 5, reward: 4 },
+			{ title: "Host a village feast", description: "Cook one meal for the village feast.", greeting: "We want to hold a feast. Could you cook a meal for the table?", event: "meal", goal: 1, reward: 4 }],
+		shopkeeper: [villagerQuestDefinitions.shopkeeper,
+			{ title: "Stock the herb shelf", description: "Gather four forest herbs for the shop.", greeting: "Customers keep asking for herbs. Could you bring me four?", event: "herb", goal: 4, reward: 3 },
+			{ title: "Mushroom market day", description: "Gather four forest mushrooms for the market stall.", greeting: "Market day is coming and my mushroom crates are empty. Could you gather four?", event: "mushroom", goal: 4, reward: 4 }],
+		blacksmith: [villagerQuestDefinitions.blacksmith,
+			{ title: "Stone for the forge", description: "Gather six stones for the forge walls.", greeting: "The forge walls are cracking. Six good stones should do it.", event: "stone", goal: 6, reward: 5 },
+			{ title: "Winter lumber", description: "Gather five pieces of softwood for the lumber rack.", greeting: "Winter is coming and my lumber rack is bare. Can you bring five pieces of softwood?", event: "wood", goal: 5, reward: 4 }],
+		farmer: [villagerQuestDefinitions.farmer,
+			{ title: "Fresh milk run", description: "Milk a cow and bring the milk home.", greeting: "My cows are fussy for me today. Could you milk one for the farm?", event: "milk", goal: 1, reward: 4 },
+			{ title: "Fill the root cellar", description: "Gather six crops for the root cellar.", greeting: "The root cellar is nearly empty. Six crops would see us through.", event: "crop", goal: 6, reward: 5 }],
+		innkeeper: [villagerQuestDefinitions.innkeeper,
+			{ title: "Berry pie filling", description: "Gather five wild berries for the inn's pies.", greeting: "I'm baking pies tonight and I'm short on berries. Could you gather five?", event: "berry", goal: 5, reward: 4 },
+			{ title: "Mushroom stew supplies", description: "Gather three forest mushrooms for the stew pot.", greeting: "A mushroom stew would be perfect on a cold night. Could you gather three?", event: "mushroom", goal: 3, reward: 3 }],
+		healer: [villagerQuestDefinitions.healer,
+			{ title: "Gather healing herbs", description: "Gather five forest herbs for the healer's remedies.", greeting: "My remedy shelf is bare. Could you gather five herbs?", event: "herb", goal: 5, reward: 4 },
+			{ title: "Stock the clinic", description: "Gather six supplies for the clinic.", greeting: "The clinic is running low on everything. Could you gather six supplies?", event: "gathered", goal: 6, reward: 4 }],
+	};
+	const villageQuestNames = ["Mossbrook", "Hollowfen", "Larkspur", "Thistledown", "Ember Glen", "Willowmere", "Brindle Hill", "Foxglove"];
+
+	function villageKey(villageId) {
+		return String(villageId || "spawn").replace(/^village-/, "");
+	}
+
+	function villageHash(text) {
+		let hash = 2166136261;
+		for (const char of text) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+		return hash >>> 0;
+	}
+
+	function villageDisplayName(key) {
+		return key === "spawn" ? "Fernfall" : villageQuestNames[villageHash(key) % villageQuestNames.length];
+	}
+
+	function villageQuestVariant(role, key) {
+		const variants = villagerQuestVariants[role];
+		return key === "spawn" ? variants[0] : variants[villageHash(`${key}:${role}`) % variants.length];
+	}
+
+	// The spawn village keeps the legacy role-only key so existing saves stay valid.
+	function villagerStateKey(role, key, quest) {
+		const base = key === "spawn" ? role : `${key}|${role}`;
+		return quest?.id ? `${base}:${quest.id}` : base;
+	}
+
+	function villageQuestPairs() {
+		const pairs = new Map();
+		for (const villager of villagers) {
+			if (!villagerQuestVariants[villager.role]) continue;
+			const key = villageKey(villager.villageId);
+			pairs.set(`${key}|${villager.role}`, { role: villager.role, key });
+		}
+		return [...pairs.values()];
+	}
 	const craftingSlots = Array(9).fill("");
 	const NIGHT_CYCLE_MS = 600000;
 	const POND_SPAWN_VERSION = 2;
@@ -122,6 +178,7 @@ const FernfallSurvival = (() => {
 	let selectedItem = "";
 	let activeMode = "craft";
 	let activeVillagerRole = "";
+	let activeVillageKey = "spawn";
 	let activeFireId = null;
 	let lastRefresh = 0;
 	let sickUntil = 0;
@@ -200,41 +257,40 @@ const FernfallSurvival = (() => {
 		refreshQuests();
 	}
 
-	function currentVillagerQuest(role) {
-		const firstQuest = villagerQuestDefinitions[role];
-		const firstState = villagerQuestStates[role];
+	function currentVillagerQuest(role, key = "spawn") {
+		const firstQuest = villageQuestVariant(role, key);
+		const firstState = villagerQuestStates[villagerStateKey(role, key)];
 		const followup = villagerFollowupQuestDefinitions[role];
 		return followup && dayProgress().day >= followup.unlockDay && firstState?.claimed ? followup : firstQuest;
 	}
 
-	function villagerQuestState(role, quest = currentVillagerQuest(role)) {
+	function villagerQuestState(role, key = "spawn", quest = currentVillagerQuest(role, key)) {
 		if (!quest) return null;
-		const stateKey = quest.id ? `${role}:${quest.id}` : role;
-		return (villagerQuestStates[stateKey] ??= { accepted: false, progress: 0, claimed: false });
+		return (villagerQuestStates[villagerStateKey(role, key, quest)] ??= { accepted: false, progress: 0, claimed: false });
 	}
 
 	function refreshVillageQuestBoard() {
 		const section = document.querySelector("#village-quest-section");
 		const list = document.querySelector("#village-quest-list");
 		if (!section || !list) return;
-		const activeQuests = Object.keys(villagerQuestDefinitions).flatMap((role) => {
-			const quest = currentVillagerQuest(role);
-			const state = villagerQuestState(role, quest);
-			return state?.accepted && !state.claimed ? [[role, quest, state]] : [];
+		const activeQuests = villageQuestPairs().flatMap(({ role, key }) => {
+			const quest = currentVillagerQuest(role, key);
+			const state = villagerQuestState(role, key, quest);
+			return state?.accepted && !state.claimed ? [[key, quest, state]] : [];
 		});
 		section.hidden = activeQuests.length === 0;
-		list.innerHTML = activeQuests.map(([, quest, state]) => {
+		list.innerHTML = activeQuests.map(([key, quest, state]) => {
 			const ready = state.progress >= quest.goal;
-			return `<p class="survival-quest${ready ? " complete" : ""}"><span>${ready ? "✓" : "○"}</span><span>${quest.title}</span><strong>${Math.min(state.progress, quest.goal)}/${quest.goal}</strong></p>`;
+			return `<p class="survival-quest${ready ? " complete" : ""}" title="${villageDisplayName(key)}"><span>${ready ? "✓" : "○"}</span><span>${quest.title} · ${villageDisplayName(key)}</span><strong>${Math.min(state.progress, quest.goal)}/${quest.goal}</strong></p>`;
 		}).join("");
 	}
 
 	function recordVillagerQuestProgress(event, amount = 1) {
 		if (["carrot", "potato", "grain"].includes(event)) event = "crop";
 		let changed = false;
-		for (const role of Object.keys(villagerQuestDefinitions)) {
-			const quest = currentVillagerQuest(role);
-			const state = villagerQuestState(role, quest);
+		for (const { role, key } of villageQuestPairs()) {
+			const quest = currentVillagerQuest(role, key);
+			const state = villagerQuestState(role, key, quest);
 			if (!state?.accepted || state.claimed || quest.event !== event) continue;
 			const previousProgress = state.progress || 0;
 			state.progress = Math.min(quest.goal, previousProgress + amount);
@@ -248,10 +304,10 @@ const FernfallSurvival = (() => {
 
 	function refreshVillagerDialogue() {
 		const role = activeVillagerRole;
-		const quest = currentVillagerQuest(role);
-		const state = villagerQuestState(role, quest);
+		const quest = currentVillagerQuest(role, activeVillageKey);
+		const state = villagerQuestState(role, activeVillageKey, quest);
 		if (!quest || !state) return;
-		const roleName = role[0].toUpperCase() + role.slice(1);
+		const roleName = `${role[0].toUpperCase() + role.slice(1)} of ${villageDisplayName(activeVillageKey)}`;
 		const ready = state.accepted && !state.claimed && state.progress >= quest.goal;
 		document.querySelector("#villager-dialog-name").textContent = roleName;
 		document.querySelector("#villager-greeting").textContent = quest.greeting;
@@ -279,19 +335,20 @@ const FernfallSurvival = (() => {
 	}
 
 	function openVillagerDialogue(villager) {
-		if (!villagerQuestDefinitions[villager.role]) {
+		if (!villagerQuestVariants[villager.role]) {
 			show("The villager smiles and waves.");
 			return;
 		}
 		activeVillagerRole = villager.role;
+		activeVillageKey = villageKey(villager.villageId);
 		refreshVillagerDialogue();
 		const dialog = document.querySelector("#villager-dialog");
 		if (!dialog.open) dialog.showModal();
 	}
 
 	function handleVillagerQuestAction() {
-		const quest = currentVillagerQuest(activeVillagerRole);
-		const state = villagerQuestState(activeVillagerRole, quest);
+		const quest = currentVillagerQuest(activeVillagerRole, activeVillageKey);
+		const state = villagerQuestState(activeVillagerRole, activeVillageKey, quest);
 		if (!quest || !state || state.claimed) return;
 		if (!state.accepted) {
 			state.accepted = true;
@@ -1281,8 +1338,9 @@ const FernfallSurvival = (() => {
 				ctx.arc(villager.x - camera.x, y - 14, 7, 0, Math.PI * 2);
 				ctx.fill();
 			}
-			const quest = villagerQuestDefinitions[villager.role];
-			const state = villagerQuestStates[villager.role];
+			const key = villageKey(villager.villageId);
+			const quest = villagerQuestVariants[villager.role] && currentVillagerQuest(villager.role, key);
+			const state = quest && villagerQuestStates[villagerStateKey(villager.role, key, quest)];
 			if (!quest || state?.claimed) continue;
 			const ready = Boolean(state?.accepted && state.progress >= quest.goal);
 			if (state?.accepted && !ready) continue;
