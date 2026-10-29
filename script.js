@@ -1199,6 +1199,27 @@ canvas.addEventListener("pointerdown", (event) => {
 	event.stopImmediatePropagation();
 }, { capture: true });
 canvas.addEventListener("pointerdown", setDirectionFromPointer);
+const gameTips = [
+	"Offer a wild berry with E to tame the wolf. Jimothy appears only once.",
+	"Select a tool on the hotbar (1–9) and the ranger holds it. Bare hands work for everything, just slower.",
+	"Pickaxes mine rocks and ore faster. Press E beside a rock and keep still until the bar fills.",
+	"Axes chop trees faster. Each tree gives three wood before it becomes a stump.",
+	"Hoes speed up carrots, potatoes and grain. Shovels speed up mushrooms and herbs.",
+	"Hold shears and press E beside a sheep to take its wool without hurting it. The wool regrows in a minute.",
+	"Hold an empty bucket and press E beside a cow or a pond to fill it.",
+	"Tool tiers, slowest to fastest: wood, stone, iron, gold, crystal. A better tier finishes the job sooner.",
+	"Rocks hide different ores: coal, iron, gold and crystal. Rarer ore takes longer to mine and gives that ore.",
+	"Moving cancels a job in progress, so stand still while the bar fills.",
+	"Berry bushes need no tool. Pick them by hand for a few berries at a time.",
+];
+const tipList = document.querySelector("#tip-list");
+if (tipList) {
+	for (const tip of gameTips) {
+		const item = document.createElement("li");
+		item.textContent = tip;
+		tipList.append(item);
+	}
+}
 document.querySelector("#gather-button").addEventListener("click", gather);
 document.querySelector("#attack-button").addEventListener("click", attack);
 document.querySelector("#potion-button").addEventListener("click", useTonic);

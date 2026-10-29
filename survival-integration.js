@@ -176,7 +176,7 @@ drawResource = function (resource) {
 
 const originalDrawTree = drawTree;
 drawTree = function (tree) {
-	if (tree.chopped && drawArt(ctx, art.forest.tree_stump, tree.x, tree.y - 16, 108, 120)) return;
+	if (tree.chopped && drawArt(ctx, art.forest.tree_stump, tree.x, tree.y + 11, 60, 66)) return;
 	originalDrawTree(tree);
 };
 
