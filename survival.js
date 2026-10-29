@@ -104,6 +104,14 @@ const FernfallSurvival = (() => {
 		innkeeper: { title: "Cook a warm meal", description: "Cook one meal at a campfire.", greeting: "A warm meal lifts everyone's spirits. Could you cook one for the inn?", event: "meal", goal: 1, reward: 4 },
 		healer: { title: "Make a friend", description: "Tame a wolf with a wild berry.", greeting: "A wolf has been wandering nearby. A berry may help you earn its trust.", event: "wolf", goal: 1, reward: 5 },
 	};
+	const villagerFollowupQuestDefinitions = {
+		mayor: { id: "night_watch", unlockDay: 3, title: "Prepare the Night Watch", description: "Craft a campfire so the night watch can keep the village safe.", greeting: "The nights are getting colder. Could you prepare a campfire for the night watch?", event: "campfire", goal: 1, reward: 5 },
+		shopkeeper: { id: "berry_resupply", unlockDay: 3, title: "Restock the Berry Stall", description: "Gather five wild berries for the stall.", greeting: "The berry baskets are empty again. Could you bring five more?", event: "berry", goal: 5, reward: 5 },
+		blacksmith: { id: "forge_fuel", unlockDay: 3, title: "Fuel the Forge", description: "Gather six pieces of softwood for the forge.", greeting: "The forge needs another stack of softwood. Can you bring me six?", event: "wood", goal: 6, reward: 6 },
+		farmer: { id: "harvest_crates", unlockDay: 3, title: "Fill the Harvest Crates", description: "Gather six crops for the village stores.", greeting: "We need another harvest before the next market. Bring six crops, please.", event: "crop", goal: 6, reward: 5 },
+		innkeeper: { id: "second_supper", unlockDay: 3, title: "Serve a Village Supper", description: "Cook two meals for the evening table.", greeting: "The village supper is growing popular. Could you cook two meals for us?", event: "meal", goal: 2, reward: 6 },
+		healer: { id: "find_jimothy", unlockDay: 3, title: "Check on Jimothy", description: "Find Jimothy and let the healer know he is well.", greeting: "Jimothy has been out exploring. Could you find him and make sure he is safe?", event: "jimothy", goal: 1, reward: 6 },
+	};
 	const villagerQuestStates = {};
 	const craftingSlots = Array(9).fill("");
 	const NIGHT_CYCLE_MS = 240000;
@@ -148,16 +156,31 @@ const FernfallSurvival = (() => {
 		showToast(message);
 	}
 
-	function updateWorldClock(now) {
+	function dayProgress(now = Date.now()) {
 		if (!worldEpoch) worldEpoch = now;
+		const elapsed = Math.max(0, now - worldEpoch);
+		const phase = (elapsed % NIGHT_CYCLE_MS) / NIGHT_CYCLE_MS;
+		return { day: Math.floor(elapsed / NIGHT_CYCLE_MS) + 1, progress: phase };
+	}
+
+	function updateWorldClock(now) {
 		const elapsed = Math.max(0, now - worldEpoch);
 		const phase = (elapsed % NIGHT_CYCLE_MS) / NIGHT_CYCLE_MS;
 		const isNight = phase >= 0.68 || phase < 0.16;
 		const timeLabel = document.querySelector("#time-label");
 		if (timeLabel) timeLabel.textContent = isNight ? "Night" : phase < 0.24 ? "Dawn" : phase < 0.5 ? "Morning" : phase < 0.68 ? "Evening" : "Night";
 		const dayLabel = document.querySelector("#day-count");
-		if (dayLabel) dayLabel.textContent = String(Math.floor(elapsed / NIGHT_CYCLE_MS) + 1);
-		return { isNight, nightIndex: Math.floor(elapsed / NIGHT_CYCLE_MS) };
+		const day = Math.floor(elapsed / NIGHT_CYCLE_MS) + 1;
+		if (dayLabel) dayLabel.textContent = String(day);
+		const tracker = document.querySelector("#day-tracker");
+		if (tracker) {
+			const progress = phase * 100;
+			tracker.setAttribute("aria-valuenow", String(Math.round(progress)));
+			tracker.querySelector(".day-fill").style.width = `${progress}%`;
+			tracker.querySelector(".day-value").textContent = `${Math.round(progress)}%`;
+			tracker.querySelector(".day-label").textContent = `DAY ${day}`;
+		}
+		return { isNight, nightIndex: day - 1 };
 	}
 
 	function recordQuest(id, amount = 1) {
@@ -175,23 +198,30 @@ const FernfallSurvival = (() => {
 		refreshQuests();
 	}
 
-	function villagerQuestState(role) {
-		const quest = villagerQuestDefinitions[role];
+	function currentVillagerQuest(role) {
+		const firstQuest = villagerQuestDefinitions[role];
+		const firstState = villagerQuestStates[role];
+		const followup = villagerFollowupQuestDefinitions[role];
+		return followup && dayProgress().day >= followup.unlockDay && firstState?.claimed ? followup : firstQuest;
+	}
+
+	function villagerQuestState(role, quest = currentVillagerQuest(role)) {
 		if (!quest) return null;
-		return (villagerQuestStates[role] ??= { accepted: false, progress: 0, claimed: false });
+		const stateKey = quest.id ? `${role}:${quest.id}` : role;
+		return (villagerQuestStates[stateKey] ??= { accepted: false, progress: 0, claimed: false });
 	}
 
 	function refreshVillageQuestBoard() {
 		const section = document.querySelector("#village-quest-section");
 		const list = document.querySelector("#village-quest-list");
 		if (!section || !list) return;
-		const activeQuests = Object.entries(villagerQuestDefinitions).filter(([role]) => {
-			const state = villagerQuestStates[role];
-			return state?.accepted && !state.claimed;
+		const activeQuests = Object.keys(villagerQuestDefinitions).flatMap((role) => {
+			const quest = currentVillagerQuest(role);
+			const state = villagerQuestState(role, quest);
+			return state?.accepted && !state.claimed ? [[role, quest, state]] : [];
 		});
 		section.hidden = activeQuests.length === 0;
-		list.innerHTML = activeQuests.map(([role, quest]) => {
-			const state = villagerQuestStates[role];
+		list.innerHTML = activeQuests.map(([, quest, state]) => {
 			const ready = state.progress >= quest.goal;
 			return `<p class="survival-quest${ready ? " complete" : ""}"><span>${ready ? "✓" : "○"}</span><span>${quest.title}</span><strong>${Math.min(state.progress, quest.goal)}/${quest.goal}</strong></p>`;
 		}).join("");
@@ -200,8 +230,9 @@ const FernfallSurvival = (() => {
 	function recordVillagerQuestProgress(event, amount = 1) {
 		if (["carrot", "potato", "grain"].includes(event)) event = "crop";
 		let changed = false;
-		for (const [role, quest] of Object.entries(villagerQuestDefinitions)) {
-			const state = villagerQuestStates[role];
+		for (const role of Object.keys(villagerQuestDefinitions)) {
+			const quest = currentVillagerQuest(role);
+			const state = villagerQuestState(role, quest);
 			if (!state?.accepted || state.claimed || quest.event !== event) continue;
 			const previousProgress = state.progress || 0;
 			state.progress = Math.min(quest.goal, previousProgress + amount);
@@ -215,8 +246,8 @@ const FernfallSurvival = (() => {
 
 	function refreshVillagerDialogue() {
 		const role = activeVillagerRole;
-		const quest = villagerQuestDefinitions[role];
-		const state = villagerQuestState(role);
+		const quest = currentVillagerQuest(role);
+		const state = villagerQuestState(role, quest);
 		if (!quest || !state) return;
 		const roleName = role[0].toUpperCase() + role.slice(1);
 		const ready = state.accepted && !state.claimed && state.progress >= quest.goal;
@@ -257,8 +288,8 @@ const FernfallSurvival = (() => {
 	}
 
 	function handleVillagerQuestAction() {
-		const quest = villagerQuestDefinitions[activeVillagerRole];
-		const state = villagerQuestState(activeVillagerRole);
+		const quest = currentVillagerQuest(activeVillagerRole);
+		const state = villagerQuestState(activeVillagerRole, quest);
 		if (!quest || !state || state.claimed) return;
 		if (!state.accepted) {
 			state.accepted = true;
@@ -1736,6 +1767,7 @@ const FernfallSurvival = (() => {
 			worldEpoch = Date.now() - NIGHT_CYCLE_MS * 0.24;
 			mobs.splice(0, mobs.length, ...mobs.filter((mob) => !hostileTypes.includes(mob.type)));
 		}
+		updateWorldClock(Date.now());
 		document.querySelectorAll("[data-inventory-category]").forEach((button) => button.addEventListener("click", () => {
 			selectedCategory = button.dataset.inventoryCategory;
 			refreshInventory();
@@ -1939,7 +1971,9 @@ const FernfallSurvival = (() => {
 
 	return {
 		setup, update, interact, pickupAt, attackAnimal, blocks, spawnBlocked, drawResource, drawPonds, drawVillages, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
-		refreshInventory, openCrafting: () => openPanel("craft"), useItem, recordQuest, recordVillagerQuestProgress, save, respawnPoint,
+		refreshInventory, openCrafting: () => openPanel("craft"), useItem, recordQuest, recordVillagerQuestProgress, dayProgress, save, respawnPoint,
 		campfires, hostileProjectiles,
 	};
 })();
+
+window.FernfallSurvival = FernfallSurvival;

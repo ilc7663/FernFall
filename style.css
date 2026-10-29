@@ -254,6 +254,35 @@ button {
 	background: var(--paper);
 }
 
+.day-tracker {
+	min-width: 154px;
+	display: grid;
+	grid-template-columns: auto minmax(40px, 1fr) auto;
+	align-items: center;
+	gap: 8px;
+	margin-left: auto;
+	color: var(--muted);
+	font-size: 10px;
+	font-weight: 800;
+	font-variant-numeric: tabular-nums;
+}
+
+.day-track {
+	height: 7px;
+	min-width: 0;
+	overflow: hidden;
+	border: 1px solid #87917f;
+	background: #e2e8de;
+}
+
+.day-fill {
+	width: 0;
+	height: 100%;
+	display: block;
+	background: var(--gold);
+	transition: width 180ms linear;
+}
+
 .player-name,
 .health-block,
 .coin-count {

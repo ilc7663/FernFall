@@ -1013,21 +1013,25 @@ function updateHud() {
 	document.querySelector("#health-value").textContent = `${player.health} / ${MAX_HEALTH}`;
 	window.FernfallInventory?.setVitals({ health: player.health, maxHealth: MAX_HEALTH, hunger: player.hunger, maxHunger: MAX_HUNGER, saturation: player.saturation, maxSaturation: MAX_SATURATION });
 	const statusbar = document.querySelector(".statusbar");
-	let saturationMeter = document.querySelector("#saturation-meter");
-	if (!saturationMeter && statusbar) {
-		saturationMeter = document.createElement("div");
-		saturationMeter.id = "saturation-meter";
-		saturationMeter.setAttribute("role", "meter");
-		saturationMeter.setAttribute("aria-label", "Saturation");
-		saturationMeter.innerHTML = '<span class="saturation-label">SAT</span><span class="saturation-track"><span class="saturation-fill"></span></span><span class="saturation-value"></span>';
-		statusbar.append(saturationMeter);
+	let dayTracker = document.querySelector("#day-tracker");
+	if (!dayTracker && statusbar) {
+		dayTracker = document.createElement("div");
+		dayTracker.id = "day-tracker";
+		dayTracker.className = "day-tracker";
+		dayTracker.setAttribute("role", "meter");
+		dayTracker.setAttribute("aria-label", "Day progress");
+		dayTracker.innerHTML = '<span class="day-label">DAY 1</span><span class="day-track"><span class="day-fill"></span></span><span class="day-value">0%</span>';
+		statusbar.append(dayTracker);
 	}
-	if (saturationMeter) {
-		saturationMeter.setAttribute("aria-valuemin", "0");
-		saturationMeter.setAttribute("aria-valuemax", String(MAX_SATURATION));
-		saturationMeter.setAttribute("aria-valuenow", String(Math.round(player.saturation)));
-		saturationMeter.querySelector(".saturation-fill").style.width = `${player.saturation / MAX_SATURATION * 100}%`;
-		saturationMeter.querySelector(".saturation-value").textContent = `${Math.round(player.saturation)}%`;
+	if (dayTracker) {
+		const dayStatus = window.FernfallSurvival?.dayProgress?.() || { day: Number(document.querySelector("#day-count")?.textContent || 1), progress: 0 };
+		const percentage = dayStatus.progress * 100;
+		dayTracker.setAttribute("aria-valuemin", "0");
+		dayTracker.setAttribute("aria-valuemax", "100");
+		dayTracker.setAttribute("aria-valuenow", String(Math.round(percentage)));
+		dayTracker.querySelector(".day-label").textContent = `DAY ${dayStatus.day}`;
+		dayTracker.querySelector(".day-fill").style.width = `${percentage}%`;
+		dayTracker.querySelector(".day-value").textContent = `${Math.round(percentage)}%`;
 	}
 	document.querySelector("#coin-value").textContent = player.coins;
 	document.querySelector("#level-value").textContent = player.level;
