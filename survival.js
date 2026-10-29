@@ -1387,13 +1387,17 @@ const FernfallSurvival = (() => {
 				}
 				if (random() < 0.12) {
 					for (let attempt = 0; attempt < 14; attempt += 1) {
-						const width = random() < 0.38 ? 112 + random() * 92 : 220 + random() * 150;
-						const height = width * (0.54 + random() * 0.2);
+						const small = random() < 0.38;
+						const columns = small ? 4 + Math.floor(random() * 2) : 6 + Math.floor(random() * 2);
+						const rows = small ? 3 + Math.floor(random() * 2) : 4 + Math.floor(random() * 2);
+						const width = columns * 64;
+						const height = rows * 64;
 						const pond = {
 							x: cx * WORLD_CHUNK_SIZE + 110 + random() * 292,
 							y: cy * WORLD_CHUNK_SIZE + 110 + random() * 292,
 							width, height, depth: random(), sizeVersion: 1,
 						};
+						if (window.fernfallPathOverlaps?.(pond.x, pond.y, width + 40, height + 40)) continue;
 						const clear = window.fernfallSpawnAreaIsClear?.(pond.x, pond.y, Math.max(width, height) / 2 + 20) ?? !collides(pond.x, pond.y);
 						if (!clear) continue;
 						ponds.push(pond);
@@ -1433,11 +1437,16 @@ const FernfallSurvival = (() => {
 	function findVillageHousePosition(x, y, houses, relaxed = false) {
 		const houseWidth = HOUSE_WIDTH;
 		const houseHeight = HOUSE_HEIGHT;
-		const offsets = relaxed ? [[0, 0]] : [[0, 0], [0, -260], [0, 260], [-260, 0], [260, 0], [0, -400], [0, 400], [-400, 0], [400, 0], [0, -520], [0, 520]];
+		const offsets = [[0, 0], [0, -260], [0, 260], [-260, 0], [260, 0], [0, -400], [0, 400], [-400, 0], [400, 0], [0, -520], [0, 520]];
 		for (const [offsetX, offsetY] of offsets) {
 			const candidate = { x: x + offsetX, y: y + offsetY };
-			if (!relaxed && window.fernfallPathOverlaps?.(candidate.x, candidate.y, houseWidth + 36, houseHeight + 36)) continue;
-			if (!relaxed && window.fernfallSpawnAreaIsClear && !window.fernfallSpawnAreaIsClear(candidate.x, candidate.y, 86)) continue;
+			if (window.fernfallPathOverlaps?.(candidate.x, candidate.y, houseWidth + 36, houseHeight + 36)) continue;
+			if (ponds.some((pond) => {
+				const radiusX = (pond.width || 120) / 2 + houseWidth / 2 + 24;
+				const radiusY = (pond.height || 84) / 2 + houseHeight / 2 + 24;
+				return ((candidate.x - pond.x) / radiusX) ** 2 + ((candidate.y - pond.y) / radiusY) ** 2 < 1;
+			})) continue;
+			if (!relaxed && window.fernfallSpawnAreaIsClear && !window.fernfallSpawnAreaIsClear(candidate.x, candidate.y, Math.max(houseWidth, houseHeight) / 2 + 32)) continue;
 			if (!window.fernfallSpawnAreaIsClear && collides(candidate.x, candidate.y)) continue;
 			if (!relaxed && obstacles.some((tree) => Math.abs(tree.x - candidate.x) < houseWidth / 2 + tree.r * 0.66 && Math.abs(tree.y - candidate.y) < houseHeight / 2 + tree.r * 0.66)) continue;
 			if (craftingTables.some((table) => Math.abs(table.x - candidate.x) < houseWidth / 2 + 32 && Math.abs(table.y - candidate.y) < houseHeight / 2 + 28)) continue;
@@ -1472,8 +1481,8 @@ const FernfallSurvival = (() => {
 			villagers.splice(0, villagers.length, ...villagers.filter((villager) => villager.villageId !== "0,0"));
 			craftingTables.splice(0, craftingTables.length, ...craftingTables.filter((table) => table.id !== "village-table-0,0"));
 			const houseSpecs = [
-				{ x: 318, y: 300, width: HOUSE_WIDTH, height: HOUSE_HEIGHT, doorSide: "center", role: "mayor", asset: "town_hall" },
-				{ x: 638, y: 300, width: HOUSE_WIDTH, height: HOUSE_HEIGHT, doorSide: "center", role: "shopkeeper", asset: "general_store" },
+				{ x: 318, y: 120, width: HOUSE_WIDTH, height: HOUSE_HEIGHT, doorSide: "center", role: "mayor", asset: "town_hall" },
+				{ x: 638, y: 120, width: HOUSE_WIDTH, height: HOUSE_HEIGHT, doorSide: "center", role: "shopkeeper", asset: "general_store" },
 				{ x: 478, y: 560, width: HOUSE_WIDTH, height: HOUSE_HEIGHT, doorSide: "center", role: "blacksmith", asset: "blacksmith_building" },
 			];
 			const houses = [];
@@ -1792,11 +1801,52 @@ const FernfallSurvival = (() => {
 			state.generatedChunks.forEach((key) => generatedChunks.add(key));
 		}
 		campfires.splice(0, campfires.length, ...(state.campfires || []));
+		craftingTables.splice(0, craftingTables.length, ...(state.craftingTables || []));
+		const restoredPonds = [];
+		for (const savedPond of state.ponds || []) {
+			const width = savedPond.width || 120;
+			const scale = savedPond.sizeVersion === 1 ? 1 : Math.max(1.5, 200 / width);
+			const pond = {
+				...savedPond,
+				width: width * scale,
+				height: (savedPond.height || 84) * scale,
+				sizeVersion: 1,
+			};
+			const radius = Math.max(pond.width, pond.height) / 2 + 20;
+			const stepX = pond.width + 64;
+			const stepY = pond.height + 64;
+			const offsets = [[0, 0], [0, -stepY], [0, stepY], [-stepX, 0], [stepX, 0], [-stepX, -stepY], [stepX, -stepY], [-stepX, stepY], [stepX, stepY]];
+			const position = offsets.map(([offsetX, offsetY]) => ({ x: pond.x + offsetX, y: pond.y + offsetY })).find((candidate) => {
+				if (window.fernfallPathOverlaps?.(candidate.x, candidate.y, pond.width + 40, pond.height + 40)) return false;
+				if (obstacles.some((tree) => Math.hypot(candidate.x - tree.x, candidate.y - tree.y) < radius + tree.r * 0.66)) return false;
+				if (resources.some((resource) => Math.hypot(candidate.x - resource.x, candidate.y - resource.y) < radius + 22)) return false;
+				if (animals.some((animal) => Math.hypot(candidate.x - animal.x, candidate.y - animal.y) < radius + 32)) return false;
+				if (mobs.some((mob) => mob.alive && Math.hypot(candidate.x - mob.x, candidate.y - mob.y) < radius + 24)) return false;
+				if (pickups.some((pickup) => Math.hypot(candidate.x - pickup.x, candidate.y - pickup.y) < radius + 14)) return false;
+				if (campfires.some((fire) => Math.hypot(candidate.x - fire.x, candidate.y - fire.y) < radius + 34)) return false;
+				if (craftingTables.some((table) => Math.abs(candidate.x - table.x) < pond.width / 2 + 32 && Math.abs(candidate.y - table.y) < pond.height / 2 + 28)) return false;
+				if ((state.villages || []).some((village) => village.houses.some((house) => Math.abs(candidate.x - house.x) < pond.width / 2 + house.width / 2 + 24 && Math.abs(candidate.y - house.y) < pond.height / 2 + house.height / 2 + 24))) return false;
+				return !restoredPonds.some((other) => {
+					const radiusX = (other.width || 120) / 2 + pond.width / 2 + 24;
+					const radiusY = (other.height || 84) / 2 + pond.height / 2 + 24;
+					return ((candidate.x - other.x) / radiusX) ** 2 + ((candidate.y - other.y) / radiusY) ** 2 < 1;
+				});
+			});
+			if (position) restoredPonds.push({ ...pond, ...position });
+		}
+		ponds.splice(0, ponds.length, ...restoredPonds);
 		const houseMoves = new Map();
+		const spawnHouseLocations = {
+			mayor: { x: 318, y: 120 },
+			shopkeeper: { x: 638, y: 120 },
+			blacksmith: { x: 478, y: 560 },
+		};
 		const restoredVillages = (state.villages || []).filter((village) => village.id !== "village-spawn" || (village.houses || []).length >= 3 && village.houses.every((house) => house.width === HOUSE_WIDTH && Math.hypot(house.x - 478, house.y - 322) < 500)).map((village) => {
 			const houses = [];
 			for (const house of village.houses || []) {
-				const position = findVillageHousePosition(house.x, house.y, houses);
+				const spawnHouse = village.id === "village-spawn" ? spawnHouseLocations[house.role] : null;
+				const target = spawnHouse || house;
+				const position = findVillageHousePosition(target.x, target.y, houses, Boolean(spawnHouse));
 				if (!position) continue;
 				const restoredHouse = { ...house, ...position, width: HOUSE_WIDTH, height: HOUSE_HEIGHT };
 				houses.push(restoredHouse);
@@ -1806,6 +1856,14 @@ const FernfallSurvival = (() => {
 			}
 			return { ...village, houses };
 		});
+		const starterHouses = restoredVillages.find((village) => village.id === "village-spawn")?.houses || [];
+		const insideStarterHouse = (entry, margin) => starterHouses.some((house) => Math.abs(entry.x - house.x) < house.width / 2 + margin && Math.abs(entry.y - house.y) < house.height / 2 + margin);
+		if (starterHouses.length) {
+			for (let index = obstacles.length - 1; index >= 0; index -= 1) if (insideStarterHouse(obstacles[index], obstacles[index].r * 0.5)) obstacles.splice(index, 1);
+			obstacleChunks.clear();
+			obstacles.forEach(indexObstacle);
+			resources.splice(0, resources.length, ...resources.filter((resource) => !insideStarterHouse(resource, 24)));
+		}
 		villages.splice(0, villages.length, ...restoredVillages);
 		const restoredVillagers = (state.villagers || []).flatMap((villager) => {
 			const move = houseMoves.get(`${villager.villageId}:${villager.role}`);
@@ -1819,14 +1877,6 @@ const FernfallSurvival = (() => {
 			}];
 		});
 		villagers.splice(0, villagers.length, ...restoredVillagers);
-		craftingTables.splice(0, craftingTables.length, ...(state.craftingTables || []));
-		const restoredPonds = (state.ponds || []).map((pond) => {
-			if (pond.sizeVersion === 1) return pond;
-			const width = pond.width || 120;
-			const scale = Math.max(1.5, 200 / width);
-			return { ...pond, width: width * scale, height: (pond.height || 84) * scale, sizeVersion: 1 };
-		});
-		ponds.splice(0, ponds.length, ...restoredPonds);
 		hostileProjectiles.splice(0, hostileProjectiles.length, ...(state.hostileProjectiles || []));
 		(state.resourceChunks || []).forEach((key) => resourceChunks.add(key));
 		(state.villageChunks || []).forEach((key) => villageChunks.add(key));
@@ -1862,7 +1912,7 @@ const FernfallSurvival = (() => {
 	}
 
 	return {
-		setup, update, interact, pickupAt, attackAnimal, blocks, spawnBlocked, drawResource, drawPonds, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
+		setup, update, interact, pickupAt, attackAnimal, blocks, spawnBlocked, drawResource, drawPonds, drawVillages, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
 		refreshInventory, openCrafting: () => openPanel("craft"), useItem, recordQuest, recordVillagerQuestProgress, save, respawnPoint,
 		campfires, hostileProjectiles,
 	};

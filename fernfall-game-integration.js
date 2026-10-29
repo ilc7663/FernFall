@@ -308,10 +308,9 @@
 			return originalNatureResource(resource);
 		};
 
-		const originalNaturePonds = natureSurvival.drawPonds;
 		let pondSnapshot = [];
 		let pondSnapshotAt = 0;
-		function pondTileFor(occupied, row, col, depth, seed) {
+		function pondTileFor(occupied, row, col, depth) {
 			const hasCell = (cellRow, cellCol) => occupied.has(`${cellRow},${cellCol}`);
 			const north = hasCell(row - 1, col);
 			const south = hasCell(row + 1, col);
@@ -325,13 +324,9 @@
 			if (!south) return "pond_edge_s";
 			if (!west) return "pond_edge_w";
 			if (!east) return "pond_edge_e";
-			const detail = (seed + row * 37 + col * 61) % 29;
-			if (detail === 0) return "pond_water_flower";
-			if (detail < 3) return "pond_water_lily";
 			return depth > 0.68 ? "pond_water_deep" : "pond_center";
 		}
 		natureSurvival.drawPonds = function (...args) {
-			originalNaturePonds?.apply(this, args);
 			natureArt ||= window.fernfallNatureArt || null;
 			if (!natureArt) return;
 			if (performance.now() >= pondSnapshotAt) {
@@ -342,8 +337,8 @@
 				const width = pond.width || 120;
 				const height = pond.height || 84;
 				if (pond.x < camera.x - width || pond.x > camera.x + WIDTH + width || pond.y < camera.y - height || pond.y > camera.y + HEIGHT + height) continue;
-				const columns = Math.max(4, Math.round(width / 32));
-				const rows = Math.max(3, Math.round(height / 32));
+				const columns = Math.max(3, Math.round(width / 64));
+				const rows = Math.max(2, Math.round(height / 64));
 				const cellWidth = width / columns;
 				const cellHeight = height / rows;
 				const seed = Math.abs(Math.floor(pond.x * 17 + pond.y * 31));
@@ -382,15 +377,9 @@
 						height: cellBottom - cellTop,
 					};
 				};
-				for (let row = 0; row < rows; row += 1) {
-					for (let col = 0; col < columns; col += 1) {
-						const cell = cellRect(col, row);
-						drawNatureSprite("pond_tiles", "grass", cell.x, cell.y, cell.width, cell.height, false);
-					}
-				}
 				for (const { row, col } of cells) {
 					const cell = cellRect(col, row);
-					const tile = pondTileFor(occupied, row, col, pond.depth, seed);
+					const tile = pondTileFor(occupied, row, col, pond.depth);
 					drawNatureSprite("pond_tiles", tile, cell.x, cell.y, cell.width, cell.height, false);
 				}
 				const decor = window.fernfallNatureArt?.pond_decor;
@@ -418,6 +407,7 @@
 					ctx.restore();
 				}
 			}
+			natureSurvival.drawVillages?.();
 		};
 
 		const originalNatureGround = drawGround;
