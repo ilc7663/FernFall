@@ -174,4 +174,166 @@
 		console.error("Fernfall tool animations could not be loaded.");
 	};
 	document.body.append(animationScript);
+
+	const natureSurvival = typeof FernfallSurvival === "undefined" ? null : FernfallSurvival;
+	const natureRoot = new URL("Video_Game_PNGs/Fernfall_Beds_Berries_Mushrooms_Logs_Ponds_Game_Ready/", document.baseURI);
+	const natureSpriteCache = new WeakMap();
+	let natureArt = null;
+	if (natureSurvival && window.loadFernfallNatureAssets) {
+		window.loadFernfallNatureAssets(new URL("assets", natureRoot).href)
+			.then((loaded) => {
+				natureArt = loaded;
+				for (const [itemId, group, name] of [
+					["berries", "berries", "berries_red"],
+					["blueberries", "berries", "berries_blue"],
+					["mushroom", "mushrooms", "mushroom_brown"],
+					["wood", "logs", "log_plain"],
+				]) {
+					const sprite = natureSprite(loaded[group]?.[name]);
+					if (!sprite?.toDataURL || !window.FERNFALL_ITEM_IMAGES) continue;
+					window.FERNFALL_ITEM_IMAGES[itemId] = sprite.toDataURL("image/png");
+					if (typeof packItemIconCache !== "undefined") packItemIconCache.delete(itemId);
+				}
+			})
+			.catch(() => console.warn("Fernfall nature assets could not be loaded."));
+	}
+
+	function natureSprite(image, removeBackdrop = true) {
+		if (!image?.complete || !image.naturalWidth) return null;
+		if (!removeBackdrop) return image;
+		if (natureSpriteCache.has(image)) return natureSpriteCache.get(image);
+		const canvas = document.createElement("canvas");
+		canvas.width = image.naturalWidth;
+		canvas.height = image.naturalHeight;
+		const context = canvas.getContext("2d", { willReadFrequently: true });
+		context.drawImage(image, 0, 0);
+		const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+		const pixels = imageData.data;
+		const width = canvas.width;
+		const height = canvas.height;
+		const visited = new Uint8Array(width * height);
+		const queue = new Int32Array(width * height);
+		let tail = 0;
+		const isBackdrop = (index) => {
+			const offset = index * 4;
+			const red = pixels[offset];
+			const green = pixels[offset + 1];
+			const blue = pixels[offset + 2];
+			return pixels[offset + 3] > 0 && Math.max(red, green, blue) - Math.min(red, green, blue) <= 18 && (red + green + blue) / 3 >= 165;
+		};
+		const enqueue = (index) => {
+			if (visited[index] || !isBackdrop(index)) return;
+			visited[index] = 1;
+			queue[tail] = index;
+			tail += 1;
+		};
+		for (let x = 0; x < width; x += 1) {
+			enqueue(x);
+			enqueue((height - 1) * width + x);
+		}
+		for (let y = 0; y < height; y += 1) {
+			enqueue(y * width);
+			enqueue(y * width + width - 1);
+		}
+		for (let head = 0; head < tail; head += 1) {
+			const index = queue[head];
+			const x = index % width;
+			const y = Math.floor(index / width);
+			if (x > 0) enqueue(index - 1);
+			if (x + 1 < width) enqueue(index + 1);
+			if (y > 0) enqueue(index - width);
+			if (y + 1 < height) enqueue(index + width);
+		}
+		for (let index = 0; index < tail; index += 1) pixels[queue[index] * 4 + 3] = 0;
+		context.putImageData(imageData, 0, 0);
+		natureSpriteCache.set(image, canvas);
+		return canvas;
+	}
+
+	function drawNatureSprite(group, name, x, y, width, height, removeBackdrop = true) {
+		const image = natureArt?.[group]?.[name];
+		const sprite = natureSprite(image, removeBackdrop);
+		if (!sprite) return false;
+		ctx.save();
+		ctx.imageSmoothingEnabled = false;
+		ctx.drawImage(sprite, Math.round(x - width / 2), Math.round(y - height / 2), width, height);
+		ctx.restore();
+		return true;
+	}
+
+	if (natureSurvival) {
+		const originalNatureResource = natureSurvival.drawResource;
+		natureSurvival.drawResource = function (resource) {
+			const variant = Math.abs(Math.floor(resource.x * 17 + resource.y * 31));
+			if (resource.type === "berry") {
+				ctx.fillStyle = "#30483b55";
+				ctx.beginPath();
+				ctx.ellipse(resource.x, resource.y + 13, 19, 6, 0, 0, Math.PI * 2);
+				ctx.fill();
+				const berries = ["berry_bush_red", "berry_bush_blue", "berry_bush_black"];
+				const sprite = resource.available ? berries[variant % berries.length] : "berry_bush_empty";
+				if (drawNatureSprite("berries", sprite, resource.x, resource.y - 5, 58, 58)) return true;
+			}
+			if (resource.type === "wood") {
+				ctx.fillStyle = "#30483b55";
+				ctx.beginPath();
+				ctx.ellipse(resource.x, resource.y + 10, 23, 6, 0, 0, Math.PI * 2);
+				ctx.fill();
+				const logs = ["log_small", "log_branch", "log_mossy"];
+				const sprite = resource.available ? logs[variant % logs.length] : "log_plain";
+				if (drawNatureSprite("logs", sprite, resource.x, resource.y, 64, 42)) return true;
+			}
+			if (resource.type === "mushroom") {
+				const mushrooms = ["brown", "red", "orange", "purple"];
+				const color = mushrooms[variant % mushrooms.length];
+				const sprite = `mushroom_${color}${resource.available ? "" : "_small"}`;
+				if (drawNatureSprite("mushrooms", sprite, resource.x, resource.y, 38, 42)) return true;
+			}
+			return originalNatureResource(resource);
+		};
+
+		const originalNaturePonds = natureSurvival.drawPonds;
+		let pondSnapshot = [];
+		let pondSnapshotAt = 0;
+		const pondTiles = [
+			["pond_corner_nw", "pond_edge_n", "pond_corner_ne"],
+			["pond_edge_w", "pond_center", "pond_edge_e"],
+			["pond_corner_sw", "pond_edge_s", "pond_corner_se"],
+		];
+		natureSurvival.drawPonds = function (...args) {
+			originalNaturePonds?.apply(this, args);
+			if (!natureArt) return;
+			if (performance.now() >= pondSnapshotAt) {
+				pondSnapshot = natureSurvival.save?.().ponds || [];
+				pondSnapshotAt = performance.now() + 1000;
+			}
+			for (const pond of pondSnapshot) {
+				if (pond.x < camera.x - 160 || pond.x > camera.x + WIDTH + 160 || pond.y < camera.y - 160 || pond.y > camera.y + HEIGHT + 160) continue;
+				for (let row = 0; row < 3; row += 1) {
+					for (let col = 0; col < 3; col += 1) {
+						drawNatureSprite("pond_tiles", pondTiles[row][col], pond.x - camera.x - 64 + col * 64, pond.y - camera.y - 64 + row * 64, 64, 64, false);
+					}
+				}
+				drawNatureSprite("pond_decor", "reeds", pond.x - camera.x - 48, pond.y - camera.y - 38, 24, 34);
+				drawNatureSprite("pond_decor", "lilypad", pond.x - camera.x + 18, pond.y - camera.y + 12, 24, 17);
+				drawNatureSprite("pond_decor", "ripples", pond.x - camera.x - 7, pond.y - camera.y + 26, 28, 17);
+				drawNatureSprite("pond_decor", "pond_rock", pond.x - camera.x + 54, pond.y - camera.y + 47, 18, 19);
+			}
+		};
+
+		const originalNatureGround = drawGround;
+		const props = [
+			{ group: "beds", name: "bed_down", x: 520, y: 260, width: 70, height: 80 },
+			{ group: "mushrooms", name: "mushroom_brown_small", x: 82, y: 275, width: 24, height: 28 },
+			{ group: "mushrooms", name: "mushroom_orange_small", x: 100, y: 285, width: 22, height: 25 },
+			{ group: "mushrooms", name: "mushroom_purple_small", x: 888, y: 322, width: 26, height: 28 },
+		];
+		drawGround = function (...args) {
+			originalNatureGround(...args);
+			for (const prop of props) {
+				if (prop.x < camera.x - 80 || prop.x > camera.x + WIDTH + 80 || prop.y < camera.y - 80 || prop.y > camera.y + HEIGHT + 80) continue;
+				drawNatureSprite(prop.group, prop.name, prop.x - camera.x, prop.y - camera.y, prop.width, prop.height);
+			}
+		};
+	}
 })();
