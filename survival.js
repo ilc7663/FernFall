@@ -729,9 +729,9 @@ const FernfallSurvival = (() => {
 		if (!bed) return;
 		ctx.fillStyle = "#30483b44";
 		ctx.beginPath();
-		ctx.ellipse(bed.x, bed.y + 24, 25, 7, 0, 0, Math.PI * 2);
+		ctx.ellipse(bed.x, bed.y + 28, 25, 7, 0, 0, Math.PI * 2);
 		ctx.fill();
-		if (window.fernfallDrawNatureSprite?.("beds", "bed_down", bed.x, bed.y, 46, 53)) return;
+		if (window.fernfallDrawNatureSprite?.("beds", "bed_down", bed.x, bed.y, 44, 60)) return;
 		ctx.fillStyle = "#8a5a35";
 		ctx.fillRect(bed.x - 20, bed.y - 24, 40, 48);
 		ctx.fillStyle = "#d9d2c0";
