@@ -1208,7 +1208,9 @@ const gameTips = [
 	"Hold shears and press E beside a sheep to take its wool without hurting it. The wool regrows in a minute.",
 	"Hold an empty bucket and press E beside a cow or a pond to fill it.",
 	"Tool tiers, slowest to fastest: wood, stone, iron, gold, crystal. A better tier finishes the job sooner.",
-	"Rocks hide different ores: coal, iron, gold and crystal. Rarer ore takes longer to mine and gives that ore.",
+	"Rocks hide coal, iron, gold and crystal. Rarer ore takes longer to mine and gives that ore.",
+	"Ore must be smelted in a furnace before it can make tools or weapons. Add coal for fuel, then smelt it into an ingot.",
+	"Coal is furnace fuel only. It is smelted with, never smelted itself.",
 	"Moving cancels a job in progress, so stand still while the bar fills.",
 	"Berry bushes need no tool. Pick them by hand for a few berries at a time.",
 ];

@@ -1,0 +1,10 @@
+{
+  "coal_chunk": "assets/coal_chunk.png",
+  "coal_ingot": "assets/coal_ingot.png",
+  "crystal_chunk": "assets/crystal_chunk.png",
+  "crystal_ingot": "assets/crystal_ingot.png",
+  "gold_chunk": "assets/gold_chunk.png",
+  "gold_ingot": "assets/gold_ingot.png",
+  "iron_chunk": "assets/iron_chunk.png",
+  "iron_ingot": "assets/iron_ingot.png"
+}

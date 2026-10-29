@@ -184,15 +184,23 @@ const FernfallSurvival = (() => {
 	const oreSpecs = {
 		rock: { drop: "stone", ms: 1600 },
 		coal: { drop: "coal", ms: 2200 },
-		iron: { drop: "iron", ms: 2800 },
-		gold: { drop: "gold", ms: 3400 },
-		crystal: { drop: "crystal", ms: 4000 },
+		iron: { drop: "iron_ore", ms: 2800 },
+		gold: { drop: "gold_ore", ms: 3400 },
+		crystal: { drop: "crystal_ore", ms: 4000 },
 	};
 	const oreItemDefinitions = {
-		iron: { name: "Iron", category: "materials", icon: "I" },
-		gold: { name: "Gold", category: "materials", icon: "G" },
-		crystal: { name: "Crystal", category: "materials", icon: "C" },
+		iron_ore: { name: "Iron ore", category: "materials", icon: "I" },
+		gold_ore: { name: "Gold ore", category: "materials", icon: "G" },
+		crystal_ore: { name: "Crystal ore", category: "materials", icon: "C" },
+		iron: { name: "Iron ingot", category: "materials", icon: "I" },
+		gold: { name: "Gold ingot", category: "materials", icon: "G" },
+		crystal: { name: "Crystal ingot", category: "materials", icon: "C" },
 	};
+	const oreSmeltRecipes = [
+		{ id: "iron", name: "Iron ingot", ingredients: { iron_ore: 1 }, seconds: 8 },
+		{ id: "gold", name: "Gold ingot", ingredients: { gold_ore: 1 }, seconds: 10 },
+		{ id: "crystal", name: "Crystal ingot", ingredients: { crystal_ore: 1 }, seconds: 12 },
+	];
 
 	function oreKindOf(resource) {
 		return oreKinds[Math.abs(Math.floor(resource.x * 7 + resource.y * 13)) % oreKinds.length];
@@ -617,8 +625,12 @@ const FernfallSurvival = (() => {
 		return true;
 	}
 
+	function furnaceRecipes() {
+		return [...recipes.filter((recipe) => furnaceRecipeIds.has(recipe.id)), ...oreSmeltRecipes];
+	}
+
 	function startFurnaceCook(recipeId, fire) {
-		const recipe = recipes.find((entry) => entry.id === recipeId && furnaceRecipeIds.has(entry.id));
+		const recipe = furnaceRecipes().find((entry) => entry.id === recipeId);
 		if (!recipe || !fire || fire.kind !== "furnace" || fire.cooking) return false;
 		const [inputId, inputCount] = Object.entries(recipe.ingredients)[0] || [];
 		if (!inputId || (player.inventory[inputId] || 0) < inputCount) return show(`You need ${label(inputId || "raw meat")} to smelt this.`), false;
@@ -639,7 +651,7 @@ const FernfallSurvival = (() => {
 		const workspace = document.querySelector("#furnace-workspace");
 		workspace.hidden = activeMode !== "furnace";
 		if (workspace.hidden) return;
-		const smeltRecipes = recipes.filter((recipe) => furnaceRecipeIds.has(recipe.id));
+		const smeltRecipes = furnaceRecipes();
 		const cooking = fire?.cooking;
 		const inputList = document.querySelector("#furnace-recipe-list");
 		inputList.innerHTML = smeltRecipes.map((recipe) => {
@@ -671,7 +683,7 @@ const FernfallSurvival = (() => {
 		document.querySelector("#furnace-fuel-status").textContent = fuelSeconds ? `${label(fire.furnaceFuelType || "coal")} · ${fuelSeconds}s fuel remaining` : "Add coal, wood, or sticks for fuel.";
 		const progress = cooking ? Math.min(100, (Date.now() - cooking.startedAt) / cooking.duration * 100) : 0;
 		document.querySelector("#furnace-progress-fill").style.width = `${progress}%`;
-		document.querySelector("#furnace-status").textContent = cooking ? cooking.ready ? `${label(cooking.recipeId)} is ready.` : `Smelting ${label(cooking.inputId)}…` : "Choose raw meat to smelt.";
+		document.querySelector("#furnace-status").textContent = cooking ? cooking.ready ? `${label(cooking.recipeId)} is ready.` : `Smelting ${label(cooking.inputId)}…` : "Choose raw meat or ore to smelt.";
 		const collect = document.querySelector("#furnace-collect");
 		collect.hidden = !cooking?.ready;
 		collect.disabled = !cooking?.ready;
@@ -1036,7 +1048,7 @@ const FernfallSurvival = (() => {
 		if (!fire.cooking?.ready) return false;
 		const recipeId = fire.cooking.recipeId;
 		player.inventory[recipeId] = (player.inventory[recipeId] || 0) + 1;
-		recordQuest("meal");
+		if (itemInfo[recipeId]?.category === "food") recordQuest("meal");
 		fire.cooking = null;
 		show(`${label(recipeId)} added to your pack.`);
 		updateHud();
