@@ -179,10 +179,11 @@
 	const natureRoot = new URL("Video_Game_PNGs/Fernfall_Beds_Berries_Mushrooms_Logs_Ponds_Game_Ready/", window.location.href);
 	const natureSpriteCache = new WeakMap();
 	let natureArt = null;
-	if (natureSurvival && window.loadFernfallNatureAssets) {
+	if (window.loadFernfallNatureAssets) { 
 		window.loadFernfallNatureAssets(new URL("assets", natureRoot).href)
 			.then((loaded) => {
 				natureArt = loaded;
+				window.fernfallNatureArt = loaded;
 				for (const [itemId, group, name] of [
 					["berries", "berries", "berries_red"],
 					["blueberries", "berries", "berries_blue"],
@@ -251,7 +252,7 @@
 	}
 
 	function drawNatureSprite(group, name, x, y, width, height, removeBackdrop = true) {
-		const image = natureArt?.[group]?.[name];
+		const image = (natureArt || window.fernfallNatureArt)?.[group]?.[name];
 		const sprite = natureSprite(image, removeBackdrop);
 		if (!sprite) return false;
 		ctx.save();
@@ -296,34 +297,87 @@
 		let pondSnapshot = [];
 		let pondSnapshotAt = 0;
 		const pondTiles = [
-			["pond_corner_nw", "pond_edge_n", "pond_corner_ne"],
-			["pond_edge_w", "pond_center", "pond_edge_e"],
-			["pond_corner_sw", "pond_edge_s", "pond_corner_se"],
+			["pond_corner_nw", "pond_corner_ne", "pond_corner_se", "pond_corner_sw"],
 		];
 		natureSurvival.drawPonds = function (...args) {
 			originalNaturePonds?.apply(this, args);
+			natureArt ||= window.fernfallNatureArt || null;
 			if (!natureArt) return;
 			if (performance.now() >= pondSnapshotAt) {
 				pondSnapshot = natureSurvival.save?.().ponds || [];
 				pondSnapshotAt = performance.now() + 1000;
 			}
 			for (const pond of pondSnapshot) {
-				if (pond.x < camera.x - 160 || pond.x > camera.x + WIDTH + 160 || pond.y < camera.y - 160 || pond.y > camera.y + HEIGHT + 160) continue;
-				for (let row = 0; row < 3; row += 1) {
-					for (let col = 0; col < 3; col += 1) {
-						drawNatureSprite("pond_tiles", pondTiles[row][col], pond.x - camera.x - 64 + col * 64, pond.y - camera.y - 64 + row * 64, 64, 64, false);
+				const width = pond.width || 120;
+				const height = pond.height || 84;
+				if (pond.x < camera.x - width || pond.x > camera.x + WIDTH + width || pond.y < camera.y - height || pond.y > camera.y + HEIGHT + height) continue;
+				const columns = Math.max(3, Math.round(width / 64));
+				const rows = Math.max(2, Math.round(height / 64));
+				const cellWidth = width / columns;
+				const cellHeight = height / rows;
+				const seed = Math.abs(Math.floor(pond.x * 17 + pond.y * 31));
+				const cells = [];
+				for (let row = 0; row < rows; row += 1) {
+					for (let col = 0; col < columns; col += 1) {
+						const nx = ((col + 0.5) / columns) * 2 - 1;
+						const ny = ((row + 0.5) / rows) * 2 - 1;
+						const jitter = ((((seed + col * 19 + row * 31) % 7) - 3) * 0.045);
+						const shape = seed % 3;
+						const round = nx * nx + ny * ny <= 1 + jitter;
+						const kidney = ((nx + 0.2) ** 2 + ny * ny * 1.1 <= 1.15 + jitter || (nx - 0.42) ** 2 * 1.4 + ny * ny * 1.2 <= 0.62 + jitter) && !(nx > 0.08 && nx < 0.43 && ny > -0.08 && ny < 0.5);
+						const angular = Math.abs(nx) ** 1.35 + Math.abs(ny) ** 1.35 + 0.12 * nx * ny <= 1.18 + jitter;
+						if (!(shape === 0 ? round : shape === 1 ? kidney : angular)) continue;
+						const top = ny < -0.62;
+						const bottom = ny > 0.62;
+						const left = nx < -0.62;
+						const right = nx > 0.62;
+						let tile = "pond_center";
+						if (top && left) tile = "pond_corner_nw";
+					else if (top && right) tile = "pond_corner_ne";
+					else if (bottom && right) tile = "pond_corner_se";
+					else if (bottom && left) tile = "pond_corner_sw";
+					else if (top) tile = "pond_edge_n";
+					else if (bottom) tile = "pond_edge_s";
+				else if (left) tile = "pond_edge_w";
+				else if (right) tile = "pond_edge_e";
+					else if (pond.depth > 0.68) tile = "pond_water_deep";
+					cells.push({ row, col, tile });
 					}
 				}
-				drawNatureSprite("pond_decor", "reeds", pond.x - camera.x - 48, pond.y - camera.y - 38, 24, 34);
-				drawNatureSprite("pond_decor", "lilypad", pond.x - camera.x + 18, pond.y - camera.y + 12, 24, 17);
-				drawNatureSprite("pond_decor", "ripples", pond.x - camera.x - 7, pond.y - camera.y + 26, 28, 17);
-				drawNatureSprite("pond_decor", "pond_rock", pond.x - camera.x + 54, pond.y - camera.y + 47, 18, 19);
+				const occupied = new Set(cells.map(({ row, col }) => `${row},${col}`));
+				for (let row = 0; row < rows; row += 1) {
+					for (let col = 0; col < columns; col += 1) {
+						const x = pond.x - camera.x - width / 2 + col * cellWidth + cellWidth / 2;
+						const y = pond.y - camera.y - height / 2 + row * cellHeight + cellHeight / 2;
+						drawNatureSprite("pond_tiles", "grass", x, y, cellWidth, cellHeight, false);
+						if (occupied.has(`${row},${col}`)) continue;
+					}
+				}
+				for (const { row, col, tile } of cells) {
+					const x = pond.x - camera.x - width / 2 + col * cellWidth + cellWidth / 2;
+					const y = pond.y - camera.y - height / 2 + row * cellHeight + cellHeight / 2;
+					drawNatureSprite("pond_tiles", tile, x, y, cellWidth, cellHeight, false);
+				}
+				const decor = window.fernfallNatureArt?.pond_decor;
+				for (const [image, x, y, spriteWidth, spriteHeight] of [
+					[decor?.reeds, pond.x - camera.x - width * 0.36, pond.y - camera.y - height * 0.35, 24, 34],
+					[pond.depth < 0.8 ? decor?.lilypad : null, pond.x - camera.x + width * 0.17, pond.y - camera.y + height * 0.12, 24, 17],
+					[decor?.ripples, pond.x - camera.x - width * 0.04, pond.y - camera.y + height * 0.28, 28, 17],
+					[decor?.pond_rock, pond.x - camera.x + width * 0.42, pond.y - camera.y + height * 0.4, 18, 19],
+				]) {
+					if (!image?.complete || !image.naturalWidth) continue;
+					ctx.save();
+					ctx.imageSmoothingEnabled = false;
+					ctx.drawImage(image, Math.round(x - spriteWidth / 2), Math.round(y - spriteHeight / 2), spriteWidth, spriteHeight);
+					ctx.restore();
+					}
+				}
 			}
 		};
 
 		const originalNatureGround = drawGround;
 		const props = [
-			{ group: "beds", name: "bed_down", x: 520, y: 242, width: 58, height: 66 },
+			{ group: "beds", name: "bed_down", x: 650, y: 210, width: 58, height: 66 },
 			{ group: "mushrooms", name: "mushroom_brown_small", x: 82, y: 275, width: 24, height: 28 },
 			{ group: "mushrooms", name: "mushroom_orange_small", x: 100, y: 285, width: 22, height: 25 },
 			{ group: "mushrooms", name: "mushroom_purple_small", x: 888, y: 322, width: 26, height: 28 },

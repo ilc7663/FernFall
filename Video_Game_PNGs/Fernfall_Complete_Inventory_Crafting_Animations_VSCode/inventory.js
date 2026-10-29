@@ -67,7 +67,7 @@
     if(cleaned!==source)image.src=cleaned;
   },true);
   function tile(i,bar=false){const s=slots[i],hidden=s && category!=='all'&&catalog[s.id]?.[2]!==category && open&&!bar;
-    return `<button class="fi-slot ${selected===i&&bar?'fi-selected':''} ${hidden?'fi-dim':''}" data-index="${i}" aria-label="Slot ${i+1}${s?' '+catalog[s.id][0]+' '+s.count:''}">${bar?`<small>${i+1}</small>`:''}${s?icon(s.id)+`<b>${s.count>1?s.count:''}</b>`:''}</button>`}
+    return `<button class="fi-slot ${s?'fi-item-'+s.id:''} ${selected===i&&bar?'fi-selected':''} ${hidden?'fi-dim':''}" data-index="${i}" aria-label="Slot ${i+1}${s?' '+catalog[s.id][0]+' '+s.count:''}">${bar?`<small>${i+1}</small>`:''}${s?icon(s.id)+`<b>${s.count>1?s.count:''}</b>`:''}</button>`}
   function save(){try{localStorage.setItem(KEY,JSON.stringify({slots,selected}))}catch{} window.dispatchEvent(new CustomEvent('fernfall:inventory-change',{detail:{slots:getSlots(),selected}}))}
   function getSlots(){return slots.map(s=>s?{...s}:null)}
   function hasCursor(){return Boolean(cursor)}

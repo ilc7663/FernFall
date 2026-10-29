@@ -1213,6 +1213,13 @@ kbd {
 	image-rendering: pixelated;
 }
 
+#fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-item-wood img,
+#fernfall-inventory-root.fi-open .fi-hotbar .fi-item-wood img,
+#fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-item-mushroom img,
+#fernfall-inventory-root.fi-open .fi-hotbar .fi-item-mushroom img {
+	transform: scale(0.78);
+}
+
 #fernfall-inventory-root.fi-game-overlay .fi-hotbar .fi-slot img[src*="slime_gel.png"],
 #fernfall-inventory-root.fi-open .fi-hotbar .fi-slot img[src*="slime_gel.png"] {
 	transform: scaleX(1.4);

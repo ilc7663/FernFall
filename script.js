@@ -77,23 +77,23 @@ obstacles.forEach((obstacle, index) => {
 });
 
 const resources = [
-	{ x: 167, y: 190, type: "berry", available: true },
-	{ x: 335, y: 161, type: "wood", available: true },
+	{ x: 70, y: 210, type: "berry", available: true },
+	{ x: 310, y: 230, type: "wood", available: true },
 	{ x: 571, y: 186, type: "berry", available: true },
 	{ x: 830, y: 214, type: "seed", available: true },
 	{ x: 257, y: 360, type: "berry", available: true },
-	{ x: 470, y: 424, type: "wood", available: true },
+	{ x: 250, y: 550, type: "wood", available: true },
 	{ x: 739, y: 365, type: "seed", available: true },
 ];
 
 const mobs = [];
 
 const animals = [
-	{ type: "sheep", x: 518, y: 170, phase: 0, roamAngle: 1.8, turnTimer: 0, direction: "down", moving: false },
-	{ type: "cow", x: 340, y: 365, phase: 1, roamAngle: 0.4, turnTimer: 0, direction: "down", moving: false },
-	{ type: "pig", x: 700, y: 390, phase: 2, roamAngle: 2.7, turnTimer: 0, direction: "down", moving: false },
+	{ type: "sheep", x: 910, y: 250, phase: 0, roamAngle: 1.8, turnTimer: 0, direction: "down", moving: false },
+	{ type: "cow", x: 180, y: 560, phase: 1, roamAngle: 0.4, turnTimer: 0, direction: "down", moving: false },
+	{ type: "pig", x: 900, y: 560, phase: 2, roamAngle: 2.7, turnTimer: 0, direction: "down", moving: false },
 	{ type: "rabbit", x: 140, y: 330, phase: 3, roamAngle: 5.2, turnTimer: 0, direction: "down", moving: false },
-	{ type: "wolf", x: 520, y: 500, phase: 4, roamAngle: 3.3, turnTimer: 0, direction: "down", moving: false, tamed: saved?.wolfTamed ?? false },
+	{ type: "wolf", x: 600, y: 580, phase: 4, roamAngle: 3.3, turnTimer: 0, direction: "down", moving: false, tamed: saved?.wolfTamed ?? false },
 	...(!saved?.jimothyMet ? [{ type: "jimothy", name: "Jimothy", x: 760, y: 165, phase: 5, roamAngle: 2.2, turnTimer: 0, direction: "down", moving: false }] : []),
 ];
 
@@ -112,31 +112,10 @@ function randomChunkPosition(random, chunkX, chunkY) {
 		y: chunkY * WORLD_CHUNK_SIZE + 40 + random() * (WORLD_CHUNK_SIZE - 80),
 	};
 }
-
-function spawnAreaIsClear(x, y, radius = 24) {
-	if (collides(x, y) || window.fernfallPathOverlaps?.(x, y, radius * 2, radius * 2)) return false;
-	if (obstacles.some((tree) => Math.hypot(x - tree.x, y - tree.y) < radius + tree.r * 0.66)) return false;
-	if (resources.some((resource) => Math.hypot(x - resource.x, y - resource.y) < radius + 24)) return false;
-	if (animals.some((animal) => Math.hypot(x - animal.x, y - animal.y) < radius + 28)) return false;
-	if (mobs.some((mob) => mob.alive && Math.hypot(x - mob.x, y - mob.y) < radius + 28)) return false;
-	if (pickups.some((pickup) => Math.hypot(x - pickup.x, y - pickup.y) < radius + 18)) return false;
-	if (Math.hypot(x - player.x, y - player.y) < radius + 48) return false;
-	if (window.FernfallSurvival?.blocks?.(x, y)) return false;
-	return true;
-}
-
-window.fernfallSpawnAreaIsClear = spawnAreaIsClear;
-
-function randomClearChunkPosition(random, chunkX, chunkY, radius, attempts = 16) {
-	for (let attempt = 0; attempt < attempts; attempt += 1) {
-		const position = randomClearChunkPosition(random, chunkX, chunkY, 44);
-		if (spawnAreaIsClear(position.x, position.y, radius)) return position;
-	}
-	return null;
-}
-
+ 
 function spawnAreaIsClear(x, y, radius = 24, spawnGroup = null) {
 	if (collides(x, y) || window.fernfallPathOverlaps?.(x, y, radius * 2, radius * 2)) return false;
+	if (Math.hypot(x - player.x, y - player.y) < radius + 48) return false;
 	if (obstacles.some((tree) => Math.hypot(x - tree.x, y - tree.y) < radius + tree.r * 0.66)) return false;
 	if (resources.some((resource) => Math.hypot(x - resource.x, y - resource.y) < radius + 22)) return false;
 	if (animals.some((animal) => {
@@ -145,7 +124,20 @@ function spawnAreaIsClear(x, y, radius = 24, spawnGroup = null) {
 	})) return false;
 	if (mobs.some((mob) => mob.alive && Math.hypot(x - mob.x, y - mob.y) < radius + 24)) return false;
 	if (pickups.some((pickup) => Math.hypot(x - pickup.x, y - pickup.y) < radius + 14)) return false;
-	if (typeof FernfallSurvival !== "undefined" && FernfallSurvival.spawnBlocked?.(x, y, radius)) return false;
+	if (typeof FernfallSurvival !== "undefined") {
+		const world = FernfallSurvival.save?.();
+		if (world?.ponds?.some((pond) => {
+			const pondWidth = pond.width || 90;
+			const pondHeight = pond.height || 56;
+			const radiusX = pondWidth / 2 + radius + 12;
+			const radiusY = pondHeight / 2 + radius + 12;
+			return ((x - pond.x) / radiusX) ** 2 + ((y - pond.y) / radiusY) ** 2 < 1;
+		})) return false;
+		if (world?.campfires?.some((fire) => Math.hypot(x - fire.x, y - fire.y) < radius + 34)) return false;
+		if (world?.craftingTables?.some((table) => Math.abs(x - table.x) < radius + 26 && Math.abs(y - table.y) < radius + 24)) return false;
+		if (world?.villages?.some((village) => village.houses.some((house) => Math.abs(x - house.x) < radius + house.width / 2 && Math.abs(y - house.y) < radius + house.height / 2))) return false;
+		if (FernfallSurvival.blocks?.(x, y)) return false;
+	}
 	return true;
 }
 

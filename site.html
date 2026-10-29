@@ -311,6 +311,11 @@
 	<script src="Video_Game_PNGs/Fernfall_Passive_Mobs_Game_Ready/recropped%20assets/Fernfall_Assets_ReCropped_Game_Ready/assets/Fernfall_Survival_Expansion_Game_Ready/survival-assets.js"></script>
 	<script src="Video_Game_PNGs/Fernfall_Mining_Farming_Combat_Effects_Game_Ready/Fernfall_Missing_Textures_Effects_Game_Ready/effects-loader.js"></script>
 	<script src="Video_Game_PNGs/Fernfall_Beds_Berries_Mushrooms_Logs_Ponds_Game_Ready/fernfall-nature-assets.js"></script>
+	<script>
+		window.fernfallNatureAssetsReady = window.loadFernfallNatureAssets(
+			new URL("Video_Game_PNGs/Fernfall_Beds_Berries_Mushrooms_Logs_Ponds_Game_Ready/assets/", window.location.href).href,
+		).catch(() => null);
+	</script>
 	<script src="survival.js"></script>
 	<script src="script.js"></script>
 	<script src="survival-integration.js"></script>

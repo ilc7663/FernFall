@@ -632,6 +632,11 @@ const FernfallSurvival = (() => {
 
 	function blocks(x, y, animalType = "") {
 		if (animalType !== "rabbit" && campfires.some((fire) => Math.hypot(x - fire.x, y - fire.y) < (fire.kind === "furnace" ? 34 : 27))) return true;
+		if (ponds.some((pond) => {
+			const radiusX = (pond.width || 120) * 0.39;
+			const radiusY = (pond.height || 84) * 0.39;
+			return ((x - pond.x) / radiusX) ** 2 + ((y - pond.y) / radiusY) ** 2 < 1;
+		})) return true;
 		if (animalType !== "rabbit") {
 			for (const village of villages) {
 				for (const house of village.houses) {
@@ -644,6 +649,17 @@ const FernfallSurvival = (() => {
 			}
 		}
 		return craftingTables.some((table) => Math.abs(x - table.x) < 22 && Math.abs(y - table.y) < 17);
+	}
+
+	function spawnBlocked(x, y, radius = 24) {
+		if (ponds.some((pond) => {
+			const radiusX = (pond.width || 120) / 2 + radius + 12;
+			const radiusY = (pond.height || 84) / 2 + radius + 12;
+			return ((x - pond.x) / radiusX) ** 2 + ((y - pond.y) / radiusY) ** 2 < 1;
+		})) return true;
+		if (campfires.some((fire) => Math.hypot(x - fire.x, y - fire.y) < radius + (fire.kind === "furnace" ? 34 : 27))) return true;
+		if (craftingTables.some((table) => Math.abs(x - table.x) < radius + 26 && Math.abs(y - table.y) < radius + 24)) return true;
+		return villages.some((village) => village.houses.some((house) => Math.abs(x - house.x) < radius + house.width / 2 && Math.abs(y - house.y) < radius + house.height / 2));
 	}
 
 	function keepAnimalsOffRoofs() {
@@ -942,14 +958,41 @@ const FernfallSurvival = (() => {
 
 	function drawPonds() {
 		for (const pond of ponds) {
-			ctx.fillStyle = "#536d52";
+			const x = pond.x - camera.x;
+			const y = pond.y - camera.y;
+			const radiusX = (pond.width || 120) / 2;
+			const radiusY = (pond.height || 84) / 2;
+			const depth = pond.depth ?? 0.5;
+			ctx.fillStyle = "#34473866";
 			ctx.beginPath();
-			ctx.ellipse(pond.x - camera.x, pond.y - camera.y, 45, 28, -0.2, 0, Math.PI * 2);
+			ctx.ellipse(x, y + 7, radiusX + 8, radiusY + 7, -0.12, 0, Math.PI * 2);
 			ctx.fill();
-			ctx.fillStyle = "#6eaaa1";
+			ctx.fillStyle = "#70834f";
 			ctx.beginPath();
-			ctx.ellipse(pond.x - camera.x, pond.y - camera.y - 2, 39, 22, -0.2, 0, Math.PI * 2);
+			ctx.ellipse(x, y, radiusX + 3, radiusY + 3, -0.12, 0, Math.PI * 2);
 			ctx.fill();
+			const water = ctx.createLinearGradient(x, y - radiusY, x, y + radiusY);
+			water.addColorStop(0, depth > 0.65 ? "#427e89" : "#679c91");
+			water.addColorStop(0.52, depth > 0.65 ? "#286276" : "#3b8290");
+			water.addColorStop(1, depth > 0.65 ? "#20495d" : "#315d68");
+			ctx.fillStyle = water;
+			ctx.beginPath();
+			ctx.ellipse(x, y, radiusX - 2, radiusY - 2, -0.12, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.save();
+			ctx.beginPath();
+			ctx.ellipse(x, y, radiusX - 3, radiusY - 3, -0.12, 0, Math.PI * 2);
+			ctx.clip();
+			ctx.strokeStyle = "#b0d7c354";
+			ctx.lineWidth = 2;
+			for (let index = 0; index < Math.floor(radiusX / 18); index += 1) {
+				const rippleX = x - radiusX + 14 + index * 31;
+				const rippleY = y - radiusY * 0.45 + ((index * 19) % Math.max(12, radiusY));
+				ctx.beginPath();
+				ctx.ellipse(rippleX, rippleY, 8 + (index % 3) * 3, 2, -0.12, 0, Math.PI);
+				ctx.stroke();
+			}
+			ctx.restore();
 		}
 		drawVillages();
 	}
@@ -1051,7 +1094,7 @@ const FernfallSurvival = (() => {
 				const x = house.x - camera.x;
 				const y = house.y - camera.y;
 				const image = settlementArt?.village_assets?.[house.asset];
-				if (!drawVillageSprite(image, x, y, 132, 112)) {
+				if (!drawVillageSprite(image, x, y, house.width, house.height)) {
 					const left = x - house.width / 2;
 					const top = y - house.height / 2;
 					ctx.fillStyle = "#d5bd8a";
@@ -1230,25 +1273,47 @@ const FernfallSurvival = (() => {
 				const types = ["stone", "carrot", "potato", "berry", "mushroom", "grain", "herb"];
 				if (random() < 0.5) continue;
 				for (let index = 0; index < 7; index += 1) {
-					const resource = {
-						x: cx * WORLD_CHUNK_SIZE + 32 + random() * (WORLD_CHUNK_SIZE - 64),
-						y: cy * WORLD_CHUNK_SIZE + 32 + random() * (WORLD_CHUNK_SIZE - 64),
-						type: types[Math.floor(random() * types.length)], available: true,
-					};
-					if (!collides(resource.x, resource.y) && Math.hypot(player.x - resource.x, player.y - resource.y) > 85) {
-						if (resource.type === "berry" && random() < 0.55) continue;
-						resources.push(resource);
-						if (resource.type === "berry") {
-							const offsets = [[-22, -12], [24, -8], [-14, 22], [18, 24]];
-							const clusterSize = 2 + Math.floor(random() * 2);
-							for (const [offsetX, offsetY] of offsets.slice(0, clusterSize)) {
-								const berry = { ...resource, x: resource.x + offsetX, y: resource.y + offsetY };
-								if (!collides(berry.x, berry.y) && Math.hypot(player.x - berry.x, player.y - berry.y) > 85) resources.push(berry);
-							}
+					let resource = null;
+					for (let attempt = 0; attempt < 14; attempt += 1) {
+						const candidate = {
+							x: cx * WORLD_CHUNK_SIZE + 32 + random() * (WORLD_CHUNK_SIZE - 64),
+							y: cy * WORLD_CHUNK_SIZE + 32 + random() * (WORLD_CHUNK_SIZE - 64),
+							type: types[Math.floor(random() * types.length)], available: true,
+						};
+						const clear = window.fernfallSpawnAreaIsClear?.(candidate.x, candidate.y, 24) ?? !collides(candidate.x, candidate.y);
+						if (clear) {
+							resource = candidate;
+							break;
+						}
+					}
+					if (!resource || Math.hypot(player.x - resource.x, player.y - resource.y) <= 85) continue;
+					if (resource.type === "berry" && random() < 0.55) continue;
+					resources.push(resource);
+					if (resource.type === "berry") {
+						const offsets = [[-58, -20], [58, -20], [-20, 58], [20, 58]];
+						const clusterSize = 2 + Math.floor(random() * 2);
+						for (const [offsetX, offsetY] of offsets.slice(0, clusterSize)) {
+							const berry = { ...resource, x: resource.x + offsetX, y: resource.y + offsetY };
+							const clear = window.fernfallSpawnAreaIsClear?.(berry.x, berry.y, 18) ?? !collides(berry.x, berry.y);
+							if (clear && Math.hypot(player.x - berry.x, player.y - berry.y) > 85) resources.push(berry);
 						}
 					}
 				}
-				if (random() < 0.22) ponds.push({ x: cx * WORLD_CHUNK_SIZE + 100 + random() * 300, y: cy * WORLD_CHUNK_SIZE + 100 + random() * 300 });
+				if (random() < 0.12) {
+					for (let attempt = 0; attempt < 14; attempt += 1) {
+						const width = 84 + random() * 124;
+						const height = width * (0.54 + random() * 0.2);
+						const pond = {
+							x: cx * WORLD_CHUNK_SIZE + 110 + random() * 292,
+							y: cy * WORLD_CHUNK_SIZE + 110 + random() * 292,
+							width, height, depth: random(),
+						};
+						const clear = window.fernfallSpawnAreaIsClear?.(pond.x, pond.y, Math.max(width, height) / 2 + 20) ?? !collides(pond.x, pond.y);
+						if (!clear) continue;
+						ponds.push(pond);
+						break;
+					}
+				}
 				generateVillage(random, cx, cy);
 			}
 		}
@@ -1269,13 +1334,14 @@ const FernfallSurvival = (() => {
 			const role = roles[houses.length];
 			const position = findVillageHousePosition(center.x + offsetX, center.y + offsetY, houses);
 			if (!position) continue;
-			const house = { ...position, width: 88, height: 76, doorSide: "center", role: role.role, asset: role.asset };
+			const house = { ...position, width: 144, height: 124, doorSide: "center", role: role.role, asset: role.asset };
 			houses.push(house);
 			villagers.push({ id: `${key}-${role.role}`, role: role.role, x: house.x, y: house.y + house.height / 2 + 20, direction: "down", phase: random() * 6, villageId: key });
 		}
 		if (houses.length < 3) return;
 		villages.push({ id: `village-${key}`, ...center, houses });
-		craftingTables.push({ id: `village-table-${key}`, x: center.x, y: center.y + 8, village: true });
+		const tablePosition = findVillageTablePosition(center, houses);
+		if (tablePosition) craftingTables.push({ id: `village-table-${key}`, ...tablePosition, village: true });
 	}
 
 	function findVillageHousePosition(x, y, houses) {
@@ -1296,11 +1362,13 @@ const FernfallSurvival = (() => {
 	}
 
 	function findVillageTablePosition(center, houses) {
-		const offsets = [[0, 220], [0, -220], [220, 0], [-220, 0], [0, 300], [0, -300]];
+		const offsets = [[0, -130], [0, -180], [0, 130], [150, -120], [-150, -120], [170, 0], [-170, 0], [0, 220]];
 		for (const [offsetX, offsetY] of offsets) {
 			const candidate = { x: center.x + offsetX, y: center.y + offsetY };
-			if (window.fernfallSpawnAreaIsClear && !window.fernfallSpawnAreaIsClear(candidate.x, candidate.y, 36)) continue;
-			if (!window.fernfallSpawnAreaIsClear && collides(candidate.x, candidate.y)) continue;
+			if (collides(candidate.x, candidate.y)) continue;
+			if (window.fernfallPathOverlaps?.(candidate.x, candidate.y, 56, 56)) continue;
+			if (obstacles.some((tree) => Math.hypot(candidate.x - tree.x, candidate.y - tree.y) < tree.r * 0.66 + 42)) continue;
+			if (ponds.some((pond) => ((candidate.x - pond.x) / (pond.width / 2 + 28)) ** 2 + ((candidate.y - pond.y) / (pond.height / 2 + 28)) ** 2 < 1)) continue;
 			if (houses.some((house) => Math.abs(house.x - candidate.x) < house.width / 2 + 34 && Math.abs(house.y - candidate.y) < house.height / 2 + 30)) continue;
 			if (craftingTables.some((table) => Math.hypot(table.x - candidate.x, table.y - candidate.y) < 64)) continue;
 			return candidate;
@@ -1338,13 +1406,11 @@ const FernfallSurvival = (() => {
 				villageId,
 			})));
 		}
-		if (!craftingTables.some((table) => table.id === tableId)) {
-			craftingTables.push({ id: tableId, x: center.x - 58, y: center.y - 112, village: true });
-		} else {
-			const table = craftingTables.find((entry) => entry.id === tableId);
-			table.x = center.x - 58;
-			table.y = center.y - 112;
-		}
+		const oldTableIndex = craftingTables.findIndex((table) => table.id === tableId);
+		if (oldTableIndex >= 0) craftingTables.splice(oldTableIndex, 1);
+		const spawnVillage = villages.find((village) => village.id === villageId);
+		const tablePosition = findVillageTablePosition(center, spawnVillage?.houses || []);
+		if (tablePosition) craftingTables.push({ id: tableId, ...tablePosition, village: true });
 		villageChunks.add("0,0");
 	}
 
@@ -1374,11 +1440,19 @@ const FernfallSurvival = (() => {
 				if (random() > 0.62) continue;
 				const roll = random();
 				const type = roll < 0.12 ? "witch" : roll < 0.33 ? "spider" : roll < 0.48 ? "bat" : roll < 0.7 ? "skeleton" : roll < 0.82 ? "zombie" : "slime";
-				const position = {
-					x: cx * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
-					y: cy * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
-				};
-				if (collides(position.x, position.y) || Math.hypot(player.x - position.x, player.y - position.y) < 120) continue;
+				let position = null;
+				for (let attempt = 0; attempt < 16; attempt += 1) {
+					const candidate = {
+						x: cx * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
+						y: cy * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
+					};
+					const clear = window.fernfallSpawnAreaIsClear?.(candidate.x, candidate.y, 22) ?? !collides(candidate.x, candidate.y);
+					if (clear && Math.hypot(player.x - candidate.x, player.y - candidate.y) >= 120) {
+						position = candidate;
+						break;
+					}
+				}
+				if (!position) continue;
 				const hp = type === "witch" ? 5 : type === "zombie" ? 4 : type === "bat" || type === "slime" ? 2 : 3;
 				mobs.push({ ...position, type, hp, maxHp: hp, alive: true, phase: random() * 6, hit: 0, lastSpell: 0 });
 			}
@@ -1627,7 +1701,7 @@ const FernfallSurvival = (() => {
 			for (const house of village.houses || []) {
 				const position = findVillageHousePosition(house.x, house.y, houses);
 				if (!position) continue;
-				const restoredHouse = { ...house, ...position };
+				const restoredHouse = { ...house, ...position, width: 144, height: 124 };
 				houses.push(restoredHouse);
 				const move = { x: position.x - house.x, y: position.y - house.y };
 				houseMoves.set(`${village.id}:${house.role}`, move);
@@ -1681,7 +1755,7 @@ const FernfallSurvival = (() => {
 	}
 
 	return {
-		setup, update, interact, pickupAt, attackAnimal, blocks, drawResource, drawPonds, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
+		setup, update, interact, pickupAt, attackAnimal, blocks, spawnBlocked, drawResource, drawPonds, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
 		refreshInventory, openCrafting: () => openPanel("craft"), useItem, recordQuest, recordVillagerQuestProgress, save,
 		campfires, hostileProjectiles,
 	};
