@@ -1233,6 +1233,7 @@ canvas.addEventListener("pointerdown", (event) => {
 }, { capture: true });
 canvas.addEventListener("pointerdown", setDirectionFromPointer);
 const gameTips = [
+	"Ores need a pickaxe one tier below them: coal needs wood, iron stone, gold iron, crystal gold. Stone needs none.",
 	"Offer meat with E to tame the wolf. Your wolf will chase down and bite nearby monsters. Bring a carrot to tame Jimothy instead of just meeting him.",
 	"Select a tool on the hotbar (1–9) and the ranger holds it. Bare hands work for everything, just slower.",
 	"Pickaxes mine rocks and ore faster. Press E beside a rock and keep still until the bar fills.",

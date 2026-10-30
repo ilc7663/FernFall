@@ -206,8 +206,12 @@ const FernfallSurvival = (() => {
 		{ id: "crystal", name: "Crystal ingot", ingredients: { crystal_ore: 1 }, seconds: 12 },
 	];
 
+	// Cumulative spawn odds out of 100: stone 34, coal 28, iron 18, gold 12, crystal 8.
+	const oreSpawnLimits = [["rock", 34], ["coal", 62], ["iron", 80], ["gold", 92], ["crystal", 100]];
+
 	function oreKindOf(resource) {
-		return oreKinds[Math.abs(Math.floor(resource.x * 7 + resource.y * 13)) % oreKinds.length];
+		const roll = Math.abs(Math.floor(resource.x * 7 + resource.y * 13)) % 100;
+		return oreSpawnLimits.find(([, limit]) => roll < limit)[0];
 	}
 	const gatherSpecs = {
 		stone: { tool: "pickaxe", baseMs: 1600 },
@@ -221,6 +225,23 @@ const FernfallSurvival = (() => {
 		shear: { tool: "shears", baseMs: 1200 },
 	};
 
+	// Each ore needs a pickaxe one tier below its own level; stone needs none.
+	const orePickaxeTier = { rock: 0, coal: 1, iron: 2, gold: 3, crystal: 4 };
+	const pickaxeMaterials = ["wood", "stone", "iron", "gold", "crystal"];
+
+	function heldPickaxeTier() {
+		const id = window.FernfallGameInventory?.heldTool?.().id || "";
+		return pickaxeMaterials.indexOf(id.replace(/_pickaxe$/, "")) + 1;
+	}
+
+	function canMineOre(target) {
+		const ore = oreKindOf(target);
+		const needed = orePickaxeTier[ore];
+		if (heldPickaxeTier() >= needed) return true;
+		show(`${label(oreSpecs[ore].drop)} needs a ${pickaxeMaterials[needed - 1]} pickaxe or better. Hold one on the hotbar.`);
+		return false;
+	}
+
 	function gatherDuration(kind, target) {
 		const spec = gatherSpecs[kind];
 		const baseMs = kind === "stone" ? oreSpecs[oreKindOf(target)].ms : spec.baseMs;
@@ -230,6 +251,7 @@ const FernfallSurvival = (() => {
 
 	function startGather(kind, target, finish, remote = false) {
 		if (gatherTask?.target === target) return;
+		if (kind === "stone" && !canMineOre(target)) return;
 		const dx = target.x - player.x;
 		const dy = target.y - player.y;
 		player.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : dy < 0 ? "up" : "down";
