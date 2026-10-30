@@ -297,7 +297,7 @@
 				ctx.beginPath();
 				ctx.ellipse(resource.x, resource.y + 10, 23, 6, 0, 0, Math.PI * 2);
 				ctx.fill();
-				const logs = ["log_small", "log_branch", "log_mossy"];
+				const logs = ["log_small", "log_branch", "log_mossy", "log_plain", "log_plain"];
 				const sprite = resource.available ? logs[variant % logs.length] : "log_plain";
 				if (drawNatureSprite("logs", sprite, resource.x, resource.y, 64, 42)) return true;
 			}
@@ -424,18 +424,10 @@
 			natureSurvival.drawVillages?.();
 		};
 
-		const originalNatureGround = drawGround;
-		const props = [
-			{ group: "mushrooms", name: "mushroom_brown_small", x: 82, y: 275, width: 24, height: 28 },
-			{ group: "mushrooms", name: "mushroom_orange_small", x: 100, y: 285, width: 22, height: 25 },
-			{ group: "mushrooms", name: "mushroom_purple_small", x: 888, y: 322, width: 26, height: 28 },
-		];
-		drawGround = function (...args) {
-			originalNatureGround(...args);
-			for (const prop of props) {
-				if (prop.x < camera.x - 80 || prop.x > camera.x + WIDTH + 80 || prop.y < camera.y - 80 || prop.y > camera.y + HEIGHT + 80) continue;
-				drawNatureSprite(prop.group, prop.name, prop.x - camera.x, prop.y - camera.y, prop.width, prop.height);
-			}
-		};
+	}
+
+	// Starting-area mushrooms used to be unpickable scenery; keep them as real resources.
+	for (const [x, y] of [[82, 275], [100, 285], [888, 322]]) {
+		if (!resources.some((resource) => Math.hypot(resource.x - x, resource.y - y) < 20)) resources.push({ x, y, type: "mushroom", available: true });
 	}
 })();
