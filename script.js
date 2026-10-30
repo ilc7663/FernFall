@@ -1209,12 +1209,22 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener("keyup", (event) => keys.delete(event.key.length === 1 ? event.key.toLowerCase() : event.key));
 window.addEventListener("blur", () => { keys.clear(); heldDirections.clear(); });
+const CLICK_REACH = 110;
+function inClickReach(point) {
+	return Math.hypot(point.x - player.x, point.y - player.y) <= CLICK_REACH;
+}
 canvas.addEventListener("pointerdown", (event) => {
 	if (event.button !== 0) return;
 	const bounds = canvas.getBoundingClientRect();
 	const x = (event.clientX - bounds.left) * WIDTH / bounds.width + camera.x;
 	const y = (event.clientY - bounds.top) * HEIGHT / bounds.height + camera.y;
 	const pickup = pickups.find((item) => Math.hypot(item.x - x, item.y - y) < 24);
+	if (pickup && !inClickReach(pickup)) {
+		showToast("Too far away. Move closer to pick that up.");
+		event.preventDefault();
+		event.stopImmediatePropagation();
+		return;
+	}
 	if (pickup) {
 		pickups.splice(pickups.indexOf(pickup), 1);
 		const amount = pickup.amount || 1;
@@ -1227,7 +1237,7 @@ canvas.addEventListener("pointerdown", (event) => {
 		event.stopImmediatePropagation();
 		return;
 	}
-	if (!window.FernfallSurvival?.pickupAt(x, y)) return;
+	if (!inClickReach({ x, y }) || !window.FernfallSurvival?.pickupAt(x, y)) return;
 	event.preventDefault();
 	event.stopImmediatePropagation();
 }, { capture: true });
