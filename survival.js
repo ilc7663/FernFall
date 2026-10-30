@@ -89,6 +89,9 @@ const FernfallSurvival = (() => {
 	const villageSpriteCache = new WeakMap();
 	const villagers = [];
 	const craftingTables = [];
+	const torches = [];
+	const TORCH_LIGHT_RADIUS = 160;
+	let nightLayer = null;
 	const ponds = [];
 	const hostileProjectiles = [];
 	const resourceChunks = new Set();
@@ -195,6 +198,7 @@ const FernfallSurvival = (() => {
 		iron: { name: "Iron ingot", category: "materials", icon: "I" },
 		gold: { name: "Gold ingot", category: "materials", icon: "G" },
 		crystal: { name: "Crystal ingot", category: "materials", icon: "C" },
+		torch: { name: "Torch", category: "equipment", icon: "i" },
 	};
 	const oreSmeltRecipes = [
 		{ id: "iron", name: "Iron ingot", ingredients: { iron_ore: 1 }, seconds: 8 },
@@ -975,6 +979,22 @@ const FernfallSurvival = (() => {
 		saveGame();
 	}
 
+	function placeTorch() {
+		const offset = { up: [0, -40], down: [0, 40], left: [-40, 0], right: [40, 0] }[player.direction];
+		const x = player.x + offset[0];
+		const y = player.y + offset[1];
+		if (collides(x, y) || spawnBlocked(x, y, 8) || torches.some((torch) => near(torch, { x, y }, 28))) return show("There is no clear space for a torch.");
+		torches.push({ id: `torch-${Date.now()}-${torches.length}`, x, y });
+		player.inventory.torch -= 1;
+		show("Torch placed. It lights the night and keeps monsters from spawning nearby.");
+		updateHud();
+		saveGame();
+	}
+
+	function torchLit(x, y) {
+		return torches.some((torch) => Math.hypot(torch.x - x, torch.y - y) < TORCH_LIGHT_RADIUS);
+	}
+
 	function placeBed() {
 		if (bed) return show("Your bed is already placed. Click it to pick it up first.");
 		const offset = { up: [0, -60], down: [0, 60], left: [-60, 0], right: [60, 0] }[player.direction];
@@ -1159,6 +1179,9 @@ const FernfallSurvival = (() => {
 		} else if (selectedItem === "bed") {
 			placeBed();
 			return;
+		} else if (selectedItem === "torch") {
+			placeTorch();
+			return;
 		} else if (selectedItem === "cooking_pot" || selectedItem === "frying_pan") {
 			const fire = campfires.find((entry) => near(entry, player, 74));
 			if (!fire) return show("Stand beside a campfire to place cookware.");
@@ -1226,6 +1249,16 @@ const FernfallSurvival = (() => {
 			campfires.splice(furnaceIndex, 1);
 			player.inventory.furnace = (player.inventory.furnace || 0) + 1;
 			show(contents.some(Boolean) ? "Picked up furnace and everything inside." : "Picked up furnace.");
+			updateHud();
+			saveGame();
+			return true;
+		}
+
+		const torchIndex = torches.findIndex((torch) => Math.hypot(torch.x - x, torch.y - y) < 20);
+		if (torchIndex >= 0) {
+			torches.splice(torchIndex, 1);
+			player.inventory.torch = (player.inventory.torch || 0) + 1;
+			show("Picked up torch.");
 			updateHud();
 			saveGame();
 			return true;
@@ -1663,6 +1696,21 @@ const FernfallSurvival = (() => {
 
 	function drawStations() {
 		drawBed();
+		for (const torch of torches) {
+			const flicker = 0.85 + Math.sin(performance.now() / 110 + torch.x) * 0.15;
+			ctx.fillStyle = "#30483b44";
+			ctx.beginPath();
+			ctx.ellipse(torch.x, torch.y + 8, 9, 3, 0, 0, Math.PI * 2);
+			ctx.fill();
+			if (!drawPackStationArt("torch", torch.x, torch.y - 6, 34)) {
+				ctx.fillStyle = "#7a5632";
+				ctx.fillRect(torch.x - 2, torch.y - 10, 4, 18);
+				ctx.fillStyle = "#ef9b4b";
+				ctx.beginPath();
+				ctx.arc(torch.x, torch.y - 14, 5 * flicker, 0, Math.PI * 2);
+				ctx.fill();
+			}
+		}
 		if (gatherTask) {
 			const progress = Math.min(1, (performance.now() - gatherTask.startedAt) / (gatherTask.until - gatherTask.startedAt));
 			ctx.fillStyle = "#1b2a21cc";
@@ -1973,7 +2021,7 @@ const FernfallSurvival = (() => {
 						y: cy * WORLD_CHUNK_SIZE + 70 + random() * (WORLD_CHUNK_SIZE - 140),
 					};
 					const clear = window.fernfallSpawnAreaIsClear?.(candidate.x, candidate.y, 22) ?? !collides(candidate.x, candidate.y);
-					if (clear && Math.hypot(player.x - candidate.x, player.y - candidate.y) >= 120) {
+					if (clear && Math.hypot(player.x - candidate.x, player.y - candidate.y) >= 120 && !torchLit(candidate.x, candidate.y)) {
 						position = candidate;
 						break;
 					}
@@ -2022,9 +2070,53 @@ const FernfallSurvival = (() => {
 		else if (phase >= 0.68 || phase < 0.1) opacity = maxOpacity;
 		else if (phase < 0.16) opacity = (0.16 - phase) / 0.06 * maxOpacity;
 		if (!opacity) return;
+		const lights = torches.filter((torch) => torch.x > camera.x - TORCH_LIGHT_RADIUS && torch.x < camera.x + WIDTH + TORCH_LIGHT_RADIUS && torch.y > camera.y - TORCH_LIGHT_RADIUS && torch.y < camera.y + HEIGHT + TORCH_LIGHT_RADIUS);
+		if (!lights.length) {
+			ctx.save();
+			ctx.fillStyle = `rgba(15, 27, 48, ${opacity})`;
+			ctx.fillRect(0, 0, WIDTH, HEIGHT);
+			ctx.restore();
+			return;
+		}
+		// Punch soft holes in the darkness around each torch so the lit band is visible.
+		if (!nightLayer) {
+			nightLayer = document.createElement("canvas");
+			nightLayer.width = WIDTH;
+			nightLayer.height = HEIGHT;
+		}
+		const layer = nightLayer.getContext("2d");
+		layer.globalCompositeOperation = "source-over";
+		layer.clearRect(0, 0, WIDTH, HEIGHT);
+		layer.fillStyle = `rgba(15, 27, 48, ${opacity})`;
+		layer.fillRect(0, 0, WIDTH, HEIGHT);
+		layer.globalCompositeOperation = "destination-out";
+		const now = performance.now();
+		for (const torch of lights) {
+			const radius = TORCH_LIGHT_RADIUS * (1 + Math.sin(now / 140 + torch.x) * 0.03);
+			const lx = torch.x - camera.x;
+			const ly = torch.y - camera.y;
+			const hole = layer.createRadialGradient(lx, ly, radius * 0.25, lx, ly, radius);
+			hole.addColorStop(0, "rgba(0, 0, 0, 1)");
+			hole.addColorStop(1, "rgba(0, 0, 0, 0)");
+			layer.fillStyle = hole;
+			layer.beginPath();
+			layer.arc(lx, ly, radius, 0, Math.PI * 2);
+			layer.fill();
+		}
+		ctx.drawImage(nightLayer, 0, 0);
 		ctx.save();
-		ctx.fillStyle = `rgba(15, 27, 48, ${opacity})`;
-		ctx.fillRect(0, 0, WIDTH, HEIGHT);
+		ctx.globalCompositeOperation = "lighter";
+		for (const torch of lights) {
+			const lx = torch.x - camera.x;
+			const ly = torch.y - camera.y;
+			const glow = ctx.createRadialGradient(lx, ly, 0, lx, ly, TORCH_LIGHT_RADIUS);
+			glow.addColorStop(0, `rgba(255, 170, 80, ${opacity * 0.35})`);
+			glow.addColorStop(1, "rgba(255, 170, 80, 0)");
+			ctx.fillStyle = glow;
+			ctx.beginPath();
+			ctx.arc(lx, ly, TORCH_LIGHT_RADIUS, 0, Math.PI * 2);
+			ctx.fill();
+		}
 		ctx.restore();
 	}
 
@@ -2240,6 +2332,7 @@ const FernfallSurvival = (() => {
 		}
 		campfires.splice(0, campfires.length, ...(state.campfires || []));
 		craftingTables.splice(0, craftingTables.length, ...(state.craftingTables || []));
+		torches.splice(0, torches.length, ...(state.torches || []));
 		const restoredPonds = [];
 		for (const savedPond of state.ponds || []) {
 			const width = savedPond.width || 120;
@@ -2346,7 +2439,7 @@ const FernfallSurvival = (() => {
 		return {
 			inventory: player.inventory, resources, animals, mobs, pickups, obstacles,
 			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], pondChunks: [...pondChunks], pondSpawnVersion: POND_SPAWN_VERSION, villageChunks: [...villageChunks],
-			villages, villagers, craftingTables, ponds, campfires, hostileProjectiles, craftingSlots,
+			villages, villagers, craftingTables, torches, ponds, campfires, hostileProjectiles, craftingSlots,
 			discoveredRecipes: [...discoveredRecipes], jimothyMet, spawnTableTaken, furnaceCursor, selectedItem, questProgress, villagerQuestStates,
 			completedSurvivalQuests: [...completedSurvivalQuests], worldEpoch,
 			hostileChunks: [...hostileChunks],

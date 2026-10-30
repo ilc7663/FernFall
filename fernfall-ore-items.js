@@ -18,4 +18,5 @@
 		window.FERNFALL_ITEM_LABELS[id] = name;
 		window.FERNFALL_ITEM_CATEGORIES[id] = "materials";
 	}
+	window.FERNFALL_ITEM_CATEGORIES.torch = "placeables";
 })();

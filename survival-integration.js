@@ -197,6 +197,7 @@ render = function () {
 	survivalModule?.drawStations();
 	survivalModule?.drawProjectiles();
 	drawZombieDeaths();
+	drawPlayerHead();
 	ctx.restore();
 	survivalModule?.drawNightOverlay();
 };

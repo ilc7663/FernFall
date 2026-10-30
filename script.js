@@ -545,6 +545,18 @@ function drawRangerSprite(now, bob) {
 	return true;
 }
 
+// Called after trees and stations so the head always stays visible.
+function drawPlayerHead() {
+	const now = performance.now();
+	const bob = Math.sin(now / 90) * (moving() ? 2 : 0.6);
+	ctx.save();
+	ctx.beginPath();
+	ctx.rect(player.x - 32, player.y + bob - 45, 64, 24);
+	ctx.clip();
+	drawRangerSprite(now, bob);
+	ctx.restore();
+}
+
 function drawMob(mob) {
 	if (!mob.alive) return;
 	const wobble = Math.sin(performance.now() / 180 + mob.phase) * 3;
@@ -1210,6 +1222,7 @@ const gameTips = [
 	"Tool tiers, slowest to fastest: wood, stone, iron, gold, crystal. A better tier finishes the job sooner.",
 	"Rocks hide coal, iron, gold and crystal. Rarer ore takes longer to mine and gives that ore.",
 	"Ore must be smelted in a furnace before it can make tools or weapons. Add coal for fuel, then smelt it into an ingot.",
+	"Craft torches from coal and a stick, then place them. At night they light a circle and monsters can't spawn inside it.",
 	"Coal is furnace fuel only. It is smelted with, never smelted itself.",
 	"Moving cancels a job in progress, so stand still while the bar fills.",
 	"Berry bushes need no tool. Pick them by hand for a few berries at a time.",

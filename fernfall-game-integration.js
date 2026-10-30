@@ -95,7 +95,7 @@
 			const selected = window.FernfallInventory.getSelected();
 			if (!selected) return false;
 			const gameId = gameIdFor(selected.id);
-			if (!["campfire_kit", "furnace", "crafting_table", "cooking_pot", "frying_pan", "bed"].includes(gameId)) return false;
+			if (!["campfire_kit", "furnace", "crafting_table", "cooking_pot", "frying_pan", "bed", "torch"].includes(gameId)) return false;
 			if (!(player.inventory[gameId] > 0)) return false;
 			return Boolean(survivalModule?.useItem(gameId));
 		},
