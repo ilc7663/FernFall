@@ -104,7 +104,8 @@
   function select(i){selected=(i+9)%9;save();render()}
   root.addEventListener('click',e=>{pointer={x:e.clientX,y:e.clientY};if(e.target.closest('.fi-close'))return setOpen(false);if(e.target.closest('.fi-use'))return window.FernfallInventory.useSelected();const cat=e.target.closest('[data-cat]');if(cat){category=cat.dataset.cat;render();return}const el=e.target.closest('.fi-slot');if(!el)return;const i=Number(el.dataset.index);if(!open){select(i);return}clickSlot(i,false,e.shiftKey)});
   root.addEventListener('contextmenu',e=>{pointer={x:e.clientX,y:e.clientY};const el=e.target.closest('.fi-slot');if(el){e.preventDefault();if(open)clickSlot(Number(el.dataset.index),true,false)}});
-  root.addEventListener('mousemove',e=>{const b=e.target.closest('.fi-slot');const item=b&&slots[Number(b.dataset.index)];tip.hidden=!item;if(item){tip.textContent=catalog[item.id][0]+` ×${item.count}`;tip.style.left=e.clientX+16+'px';tip.style.top=e.clientY-35+'px'}});
+  function placeTip(x,y){const wantX=x+16,wantY=y+(cursor?54:20);tip.style.left=wantX+'px';tip.style.top=wantY+'px';const box=tip.getBoundingClientRect();tip.style.left=wantX+(wantX-box.left)+'px';tip.style.top=wantY+(wantY-box.top)+'px'}
+  root.addEventListener('mousemove',e=>{const b=e.target.closest('.fi-slot');const item=b&&slots[Number(b.dataset.index)];tip.hidden=!item;if(item){tip.textContent=catalog[item.id][0]+` ×${item.count}`;placeTip(e.clientX,e.clientY)}});
   root.addEventListener('mouseleave',()=>tip.hidden=true);
   document.addEventListener('keydown',e=>{if(e.repeat||e.target.closest('input, textarea, select,[contenteditable]'))return;
     if(e.key.toLowerCase()==='i'){e.preventDefault();setOpen(!open)}

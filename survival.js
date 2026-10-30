@@ -825,17 +825,24 @@ const FernfallSurvival = (() => {
 		const inputIds = [...new Set(furnaceRecipes().map((recipe) => Object.keys(recipe.ingredients)[0]))];
 		setHtml(document.querySelector("#furnace-recipe-list"), inputIds.map((id) => {
 			const count = player.inventory[id] || 0;
-			return `<button type="button" class="furnace-recipe" data-furnace-pick="${id}" ${count < 1 ? "disabled" : ""}>${furnaceItemMarkup(id)}<span>${label(id)} → ${smeltRecipeFor(id).name}</span><small>${count}</small></button>`;
+			return `<button type="button" class="furnace-recipe" data-furnace-pick="${id}" data-tip="${label(id)}" ${count < 1 ? "disabled" : ""}>${furnaceItemMarkup(id)}<span>${label(id)} → ${smeltRecipeFor(id).name}</span><small>${count}</small></button>`;
 		}).join(""));
 		setHtml(document.querySelector("#furnace-fuel-list"), Object.entries(furnaceFuelMs).map(([id, burnMs]) => {
 			const count = player.inventory[id] || 0;
-			return `<button type="button" class="furnace-fuel" data-furnace-pick="${id}" ${count < 1 ? "disabled" : ""}>${furnaceItemMarkup(id)}<span>${label(id)}</span><small>${count} · ${Math.round(burnMs / 1000)}s</small></button>`;
+			return `<button type="button" class="furnace-fuel" data-furnace-pick="${id}" data-tip="${label(id)}" ${count < 1 ? "disabled" : ""}>${furnaceItemMarkup(id)}<span>${label(id)}</span><small>${count} · ${Math.round(burnMs / 1000)}s</small></button>`;
 		}).join(""));
 		const cooking = fire?.cooking;
 		const slotMarkup = (stack) => (stack ? `${furnaceItemMarkup(stack.id)}${stack.count > 1 ? `<b class="furnace-slot-count">${stack.count}</b>` : ""}` : "");
-		setHtml(document.querySelector("#furnace-input-slot"), slotMarkup(fire?.input || (cooking ? { id: cooking.inputId, count: 1 } : null)));
-		setHtml(document.querySelector("#furnace-fuel-slot"), slotMarkup(fire?.fuel || (fire?.burnMs > 0 ? { id: fire.burnId || "coal", count: 1 } : null)));
+		const inputStack = fire?.input || (cooking ? { id: cooking.inputId, count: 1 } : null);
+		const fuelStack = fire?.fuel || (fire?.burnMs > 0 ? { id: fire.burnId || "coal", count: 1 } : null);
+		setHtml(document.querySelector("#furnace-input-slot"), slotMarkup(inputStack));
+		setHtml(document.querySelector("#furnace-fuel-slot"), slotMarkup(fuelStack));
 		setHtml(document.querySelector("#furnace-output-slot"), slotMarkup(fire?.output));
+		for (const [selector, stack] of [["#furnace-input-slot", inputStack], ["#furnace-fuel-slot", fuelStack], ["#furnace-output-slot", fire?.output]]) {
+			const slotElement = document.querySelector(selector);
+			if (stack) slotElement.dataset.tip = `${label(stack.id)}${stack.count > 1 ? ` ×${stack.count}` : ""}`;
+			else delete slotElement.dataset.tip;
+		}
 		const burning = (fire?.burnMs || 0) > 0;
 		document.querySelector("#furnace-fuel-status").textContent = burning ? `Burning · ${Math.ceil(fire.burnMs / 1000)}s left on this fuel` : fire?.fuel ? "Fuel loaded. It burns while smelting." : "Add coal, wood, or sticks for fuel.";
 		const progress = cooking ? Math.min(100, (Date.now() - cooking.startedAt) / cooking.duration * 100) : 0;
@@ -2365,6 +2372,19 @@ const FernfallSurvival = (() => {
 			if (furnaceAction(event, true)) event.preventDefault();
 		});
 		document.addEventListener("pointermove", moveFurnaceCursor);
+		const nameTip = document.createElement("div");
+		nameTip.id = "item-name-tip";
+		nameTip.hidden = true;
+		nameTip.style.cssText = "position:fixed;z-index:2147483001;pointer-events:none;padding:5px 9px;background:#263324;color:#fbf1d4;border:2px solid #9cad87;border-radius:4px;font:12px 'DM Sans',sans-serif";
+		document.body.append(nameTip);
+		document.addEventListener("pointermove", (event) => {
+			const text = event.target.closest?.("[data-tip]")?.dataset.tip;
+			nameTip.hidden = !text;
+			if (!text) return;
+			nameTip.textContent = text;
+			nameTip.style.left = `${event.clientX + 16}px`;
+			nameTip.style.top = `${event.clientY + (furnaceCursor ? 54 : 20)}px`;
+		});
 		document.querySelector("#survival-dialog").addEventListener("close", returnFurnaceCursor);
 		document.querySelector("#craft-menu-button").addEventListener("click", () => openPanel("craft"));
 		document.querySelector("#survival-close").addEventListener("click", () => document.querySelector("#survival-dialog").close());
