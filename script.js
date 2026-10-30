@@ -1023,10 +1023,7 @@ const wolfMeatTypes = ["beef_raw", "pork_raw", "mutton_raw", "rabbit_raw", "beef
 function gather() {
 	const nearbyJimothy = animals.find((animal) => animal.type === "jimothy" && !animal.tamed && Math.hypot(player.x - animal.x, player.y - animal.y) < 58);
 	if (nearbyJimothy) {
-		jimothyMet = true;
-		animals.splice(animals.indexOf(nearbyJimothy), 1);
-		showToast("Jimothy waves goodbye and slips into the woods. That was your one meeting!");
-		saveGame();
+		FernfallSurvival.meetJimothy(nearbyJimothy);
 		return true;
 	}
 	const nearbyWolf = animals.find((animal) => animal.type === "wolf" && Math.hypot(player.x - animal.x, player.y - animal.y) < 58);
@@ -1306,6 +1303,13 @@ canvas.addEventListener("pointerdown", (event) => {
 	const x = (event.clientX - bounds.left) * WIDTH / bounds.width + camera.x;
 	const y = (event.clientY - bounds.top) * HEIGHT / bounds.height + camera.y;
 	const pickup = pickups.find((item) => Math.hypot(item.x - x, item.y - y) < 24);
+	const clickedJimothy = animals.find((animal) => animal.type === "jimothy" && !animal.tamed && Math.hypot(animal.x - x, animal.y - y) < 30);
+	if (clickedJimothy && inClickReach(clickedJimothy)) {
+		FernfallSurvival.meetJimothy(clickedJimothy);
+		event.preventDefault();
+		event.stopImmediatePropagation();
+		return;
+	}
 	if (pickup && !inClickReach(pickup)) {
 		showToast("Too far away. Move closer to pick that up.");
 		event.preventDefault();

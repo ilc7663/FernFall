@@ -1306,6 +1306,44 @@ const FernfallSurvival = (() => {
 		return false;
 	}
 
+	function relocateJimothy(jimothy) {
+		for (let attempt = 0; attempt < 24; attempt += 1) {
+			const angle = Math.random() * Math.PI * 2;
+			const distance = 650 + Math.random() * 800;
+			const x = player.x + Math.cos(angle) * distance;
+			const y = player.y + Math.sin(angle) * distance;
+			if (!(window.fernfallSpawnAreaIsClear?.(x, y, 20) ?? !collides(x, y)) && attempt < 23) continue;
+			jimothy.x = x;
+			jimothy.y = y;
+			break;
+		}
+		jimothy.roamAngle = Math.random() * Math.PI * 2;
+	}
+
+	function ensureJimothy() {
+		if (animals.some((animal) => animal.type === "jimothy")) return;
+		const jimothy = { type: "jimothy", name: "Jimothy", x: player.x, y: player.y, phase: 5, roamAngle: 2.2, turnTimer: 0, direction: "down", moving: false };
+		relocateJimothy(jimothy);
+		animals.push(jimothy);
+	}
+
+	// Untamed Jimothy wanders off to another part of the world; a carrot tames him for good.
+	function meetJimothy(jimothy) {
+		jimothyMet = true;
+		recordQuest("jimothy");
+		if (player.inventory.carrot > 0) {
+			player.inventory.carrot -= 1;
+			jimothy.tamed = true;
+			jimothy.happyUntil = performance.now() + 1800;
+			show("Jimothy happily crunches the carrot and joins you!");
+		} else {
+			relocateJimothy(jimothy);
+			show("Jimothy bounds off to another part of the forest. A carrot might make him stay.");
+		}
+		updateHud();
+		saveGame();
+	}
+
 	function interact() {
 		if (bed && near(bed, player, 66) && !campfires.some((entry) => near(entry, player, 68))) {
 			if (updateWorldClock(Date.now()).isNight) sleepInBed();
@@ -1329,24 +1367,7 @@ const FernfallSurvival = (() => {
 		}
 		const jimothy = animals.find((animal) => animal.type === "jimothy" && !animal.tamed && near(animal, player, 58));
 		if (jimothy) {
-			jimothyMet = true;
-			recordQuest("jimothy");
-			if (player.inventory.carrot > 0) {
-				player.inventory.carrot -= 1;
-				jimothy.tamed = true;
-				jimothy.happyUntil = performance.now() + 1800;
-				show("Jimothy happily crunches the carrot and joins you!");
-				updateHud();
-				saveGame();
-				return true;
-			}
-			animals.splice(animals.indexOf(jimothy), 1);
-			if (player.inventory.berry > 0) {
-				player.inventory.berry -= 1;
-				addDrop(jimothy.x, jimothy.y, "berry_hand_pie");
-				show("Jimothy shares a berry hand pie, then slips back into the woods.");
-			} else show("Jimothy gives you a friendly wave and slips back into the woods. You met him only once.");
-			saveGame();
+			meetJimothy(jimothy);
 			return true;
 		}
 		if ((selectedItem === "bucket_empty" || window.FernfallGameInventory?.heldTool?.().id === "bucket_empty") && player.inventory.bucket_empty > 0) {
@@ -2158,6 +2179,7 @@ const FernfallSurvival = (() => {
 	}
 
 	function update() {
+		ensureJimothy();
 		generateVillageChunks();
 		generateResourceChunks();
 		generatePondChunks();
@@ -2485,7 +2507,7 @@ const FernfallSurvival = (() => {
 	}
 
 	return {
-		setup, update, interact, pickupAt, oreKindOf, attackAnimal, blocks, spawnBlocked, drawResource, drawPonds, drawVillages, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
+		setup, update, interact, meetJimothy, pickupAt, oreKindOf, attackAnimal, blocks, spawnBlocked, drawResource, drawPonds, drawVillages, drawStations, drawCraftingTablesBehindTrees, drawProjectiles, drawPickup, drawNightOverlay,
 		refreshInventory, openCrafting: () => openPanel("craft"), useItem, recordQuest, recordVillagerQuestProgress, dayProgress, save, respawnPoint,
 		campfires, hostileProjectiles,
 	};
