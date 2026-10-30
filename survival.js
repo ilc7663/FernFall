@@ -285,7 +285,7 @@ const FernfallSurvival = (() => {
 		if (!resource.available) return;
 		const amount = resource.type === "berry" ? 2 + Math.floor(Math.random() * 2) : 1;
 		resource.available = false;
-		resource.respawnAt = Date.now() + 30000;
+		resource.respawnAt = Date.now() + NIGHT_CYCLE_MS * 3;
 		const drop = resource.type === "stone" ? oreSpecs[oreKindOf(resource)].drop : resource.type;
 		player.inventory[drop] = (player.inventory[drop] || 0) + amount;
 		recordQuest("gathered", amount);

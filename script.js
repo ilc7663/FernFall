@@ -978,7 +978,7 @@ function gather() {
 	addItem(resource.type, 1);
 	playTone(620);
 	showToast(`Gathered ${itemInfo[resource.type].name.toLowerCase()}!`);
-	setTimeout(() => { resource.available = true; }, 12000);
+	setTimeout(() => { resource.available = true; }, 1800000);
 	return true;
 }
 
