@@ -1682,7 +1682,7 @@ const FernfallSurvival = (() => {
 			const state = quest && villagerQuestStates[villagerStateKey(villager.role, key, quest)];
 			if (!quest || state?.claimed) continue;
 			const ready = Boolean(state?.accepted && state.progress >= quest.goal);
-			if (state?.accepted && !ready) continue;
+			const inProgress = Boolean(state?.accepted && !ready);
 			const markX = villager.x - camera.x;
 			const markY = y - 38 + Math.sin(performance.now() / 240 + villager.phase) * 2;
 			ctx.save();
@@ -1692,7 +1692,7 @@ const FernfallSurvival = (() => {
 			ctx.lineWidth = 4;
 			ctx.strokeStyle = "#2d2a1f";
 			ctx.strokeText("!", markX, markY);
-			ctx.fillStyle = ready ? "#59c466" : "#f4cf3d";
+			ctx.fillStyle = ready ? "#59c466" : inProgress ? "#a9adb0" : "#f4cf3d";
 			ctx.fillText("!", markX, markY);
 			ctx.restore();
 		}
@@ -1865,8 +1865,8 @@ const FernfallSurvival = (() => {
 				let seed = (Math.imul(cx, 374761393) ^ Math.imul(cy, 668265263)) >>> 0;
 				const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
 				const types = ["stone", "carrot", "potato", "berry", "mushroom", "grain", "herb"];
-				if (random() < 0.5) continue;
-				for (let index = 0; index < 7; index += 1) {
+				if (random() < 0.68) continue;
+				for (let index = 0; index < 5; index += 1) {
 					let resource = null;
 					for (let attempt = 0; attempt < 14; attempt += 1) {
 						const candidate = {
@@ -2074,7 +2074,7 @@ const FernfallSurvival = (() => {
 				hostileChunks.add(key);
 				let seed = (Math.imul(cx, 374761393) ^ Math.imul(cy, 668265263) ^ Math.imul(nightIndex + 1, 2246822519)) >>> 0;
 				const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-				if (random() > 0.62) continue;
+				if (random() > 0.75) continue;
 				const roll = random();
 				const type = roll < 0.12 ? "witch" : roll < 0.33 ? "spider" : roll < 0.48 ? "bat" : roll < 0.7 ? "skeleton" : roll < 0.82 ? "zombie" : "slime";
 				let position = null;

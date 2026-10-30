@@ -152,7 +152,7 @@ function randomClearChunkPosition(random, chunkX, chunkY, radius, attempts = 16)
 }
 
 function spawnPassiveGroup(random, chunkX, chunkY) {
-	if (random() >= 0.28) return;
+	if (random() >= 0.18) return;
 	const roll = random();
 	const herd = roll < 0.34
 		? { type: "sheep", min: 3, max: 5 }
@@ -222,12 +222,12 @@ function generateWorldChunk(chunkX, chunkY) {
 		addObstacle(tree);
 		placedTrees.push(tree);
 	};
-	const groves = 1 + Math.floor(random() * 2);
+	const groves = random() < 0.5 ? 2 : 1;
 	for (let grove = 0; grove < groves; grove += 1) {
 		const anchor = randomClearChunkPosition(random, chunkX, chunkY, 44);
 		if (!anchor || Math.hypot(player.x - anchor.x, player.y - anchor.y) <= 90) continue;
 		plantTree(anchor);
-		const size = 2 + Math.floor(random() * 4);
+		const size = 1 + Math.floor(random() * 3);
 		for (let member = 0; member < size; member += 1) {
 			for (let attempt = 0; attempt < 12; attempt += 1) {
 				const angle = random() * Math.PI * 2;
@@ -240,13 +240,13 @@ function generateWorldChunk(chunkX, chunkY) {
 			}
 		}
 	}
-	const loneTrees = 1 + Math.floor(random() * 2);
+	const loneTrees = Math.floor(random() * 2);
 	for (let index = 0; index < loneTrees; index += 1) {
 		const position = randomClearChunkPosition(random, chunkX, chunkY, 44);
 		if (position && Math.hypot(player.x - position.x, player.y - position.y) > 90) plantTree(position);
 	}
 	// Fallen logs only appear beside standing trees.
-	const logs = Math.min(placedTrees.length, 1 + Math.floor(random() * 2));
+	const logs = Math.min(placedTrees.length, Math.floor(random() * 2) + (random() < 0.5 ? 1 : 0));
 	for (let index = 0; index < logs; index += 1) {
 		const tree = placedTrees[Math.floor(random() * placedTrees.length)];
 		for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -259,7 +259,7 @@ function generateWorldChunk(chunkX, chunkY) {
 			break;
 		}
 	}
-	for (let index = 0; index < 3; index += 1) {
+	for (let index = 0; index < 2; index += 1) {
 			const position = randomClearChunkPosition(random, chunkX, chunkY, 22);
 			if (position && Math.hypot(player.x - position.x, player.y - position.y) > 70) {
 				resources.push({ ...position, type: ["berry", "seed"][Math.floor(random() * 2)], available: true });
