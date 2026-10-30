@@ -1334,6 +1334,13 @@ canvas.addEventListener("pointerdown", (event) => {
 }, { capture: true });
 canvas.addEventListener("pointerdown", setDirectionFromPointer);
 const gameTips = [
+	"Pressing C opens a 2×2 crafting grid. Tools, furnaces and campfires need the 3×3 grid at a crafting table.",
+	"Tools wear out. Watch the bar under a tool's slot; when it empties the tool breaks, and the next copy starts fresh.",
+	"Ore gets rarer with every tier: stone and coal are common, iron less so, then gold, and crystal is the rarest.",
+	"Gathered plants and ore take about three days to grow back, so plan your trips and move on to new ground.",
+	"You can only left-click things within arm's reach. Walk closer if a click does nothing.",
+	"Click Jimothy and he runs off to another part of the world. Carry a carrot to tame him, or a berry to get a hand pie as he goes.",
+	"Villagers wait a day after you finish a quest before they have another one for you.",
 	"Ores need a pickaxe one tier below them: coal needs wood, iron stone, gold iron, crystal gold. Stone needs none.",
 	"Offer meat with E to tame the wolf. Your wolf will chase down and bite nearby monsters. Bring a carrot to tame Jimothy instead of just meeting him.",
 	"Select a tool on the hotbar (1–9) and the ranger holds it. Bare hands work for everything, just slower.",

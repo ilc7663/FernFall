@@ -1337,8 +1337,13 @@ const FernfallSurvival = (() => {
 			jimothy.happyUntil = performance.now() + 1800;
 			show("Jimothy happily crunches the carrot and joins you!");
 		} else {
+			const hasBerry = player.inventory.berry > 0;
+			if (hasBerry) {
+				player.inventory.berry -= 1;
+				addDrop(jimothy.x, jimothy.y, "berry_hand_pie");
+			}
 			relocateJimothy(jimothy);
-			show("Jimothy bounds off to another part of the forest. A carrot might make him stay.");
+			show(hasBerry ? "Jimothy shares a berry hand pie, then bounds off to another part of the forest." : "Jimothy bounds off to another part of the forest. A carrot might make him stay.");
 		}
 		updateHud();
 		saveGame();
