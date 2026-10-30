@@ -48,7 +48,8 @@ function drawZombieDeaths() {
 		if (!zombiesSeenAlive.has(mob)) continue;
 		mob.diedAt ??= now;
 		const age = now - mob.diedAt;
-		if (age > ZOMBIE_DEATH_MS || !visible(mob)) continue;
+		const onScreen = mob.x > camera.x - 96 && mob.x < camera.x + WIDTH + 96 && mob.y > camera.y - 96 && mob.y < camera.y + HEIGHT + 96;
+		if (age > ZOMBIE_DEATH_MS || !onScreen) continue;
 		const sprite = zombieFrame(mob.lastFacing || "down", "death");
 		if (sprite) drawZombieFrame(sprite, mob.x, mob.y, Math.min(1, (ZOMBIE_DEATH_MS - age) / 300));
 	}
@@ -194,11 +195,16 @@ render = function () {
 	originalRender();
 	ctx.save();
 	ctx.translate(-camera.x, -camera.y);
-	survivalModule?.drawStations();
-	survivalModule?.drawProjectiles();
-	drawZombieDeaths();
-	drawPlayerHead();
-	ctx.restore();
+	try {
+		survivalModule?.drawStations();
+		survivalModule?.drawProjectiles();
+		drawZombieDeaths();
+		drawPlayerHead();
+	} catch (error) {
+		console.error(error);
+	} finally {
+		ctx.restore();
+	}
 	survivalModule?.drawNightOverlay();
 };
 
