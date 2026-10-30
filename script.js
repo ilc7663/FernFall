@@ -1035,6 +1035,16 @@ function gather() {
 		} else {
 			const meat = wolfMeatTypes.find((type) => player.inventory[type] > 0);
 			player.inventory[meat] -= 1;
+			// Some wolves are easy, others need several pieces of meat before they trust you.
+			nearbyWolf.tameNeeded ??= Math.random() < 0.5 ? 1 : 2 + Math.floor(Math.random() * 3);
+			nearbyWolf.tameProgress = (nearbyWolf.tameProgress || 0) + 1;
+			if (nearbyWolf.tameProgress < nearbyWolf.tameNeeded) {
+				nearbyWolf.happyUntil = performance.now() + 600;
+				showToast("The wolf wolfs down the meat but still eyes you warily. Maybe a little more?");
+				updateHud();
+				saveGame();
+				return true;
+			}
 			nearbyWolf.tamed = true;
 			nearbyWolf.happyUntil = performance.now() + 1800;
 			playTone(700);

@@ -1333,6 +1333,13 @@ const FernfallSurvival = (() => {
 		recordQuest("jimothy");
 		if (player.inventory.carrot > 0) {
 			player.inventory.carrot -= 1;
+			if (Math.random() < 0.35) {
+				relocateJimothy(jimothy);
+				show("Jimothy nibbles the carrot, isn't satisfied, and trots off. Try again with another.");
+				updateHud();
+				saveGame();
+				return;
+			}
 			jimothy.tamed = true;
 			jimothy.happyUntil = performance.now() + 1800;
 			show("Jimothy happily crunches the carrot and joins you!");
