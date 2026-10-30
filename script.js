@@ -215,16 +215,54 @@ function generateWorldChunk(chunkX, chunkY) {
 	}
 	generatedChunks.add(key);
 	const random = chunkRandom(chunkX, chunkY);
-	for (let index = 0; index < 5; index += 1) {
-			const position = randomClearChunkPosition(random, chunkX, chunkY, 44);
-			if (position && Math.hypot(player.x - position.x, player.y - position.y) > 90) {
-			addObstacle({ ...position, r: 30 + random() * 12 });
+	const placedTrees = [];
+	const inChunk = (x, y) => x > chunkX * WORLD_CHUNK_SIZE + 32 && x < (chunkX + 1) * WORLD_CHUNK_SIZE - 32 && y > chunkY * WORLD_CHUNK_SIZE + 32 && y < (chunkY + 1) * WORLD_CHUNK_SIZE - 32;
+	const plantTree = (position) => {
+		const tree = { ...position, r: 30 + random() * 12 };
+		addObstacle(tree);
+		placedTrees.push(tree);
+	};
+	const groves = 1 + Math.floor(random() * 2);
+	for (let grove = 0; grove < groves; grove += 1) {
+		const anchor = randomClearChunkPosition(random, chunkX, chunkY, 44);
+		if (!anchor || Math.hypot(player.x - anchor.x, player.y - anchor.y) <= 90) continue;
+		plantTree(anchor);
+		const size = 2 + Math.floor(random() * 4);
+		for (let member = 0; member < size; member += 1) {
+			for (let attempt = 0; attempt < 12; attempt += 1) {
+				const angle = random() * Math.PI * 2;
+				const distance = 52 + random() * 56;
+				const candidate = { x: anchor.x + Math.cos(angle) * distance, y: anchor.y + Math.sin(angle) * distance };
+				if (!inChunk(candidate.x, candidate.y) || Math.hypot(player.x - candidate.x, player.y - candidate.y) <= 90) continue;
+				if (!spawnAreaIsClear(candidate.x, candidate.y, 14)) continue;
+				plantTree(candidate);
+				break;
+			}
+		}
+	}
+	const loneTrees = 1 + Math.floor(random() * 2);
+	for (let index = 0; index < loneTrees; index += 1) {
+		const position = randomClearChunkPosition(random, chunkX, chunkY, 44);
+		if (position && Math.hypot(player.x - position.x, player.y - position.y) > 90) plantTree(position);
+	}
+	// Fallen logs only appear beside standing trees.
+	const logs = Math.min(placedTrees.length, 1 + Math.floor(random() * 2));
+	for (let index = 0; index < logs; index += 1) {
+		const tree = placedTrees[Math.floor(random() * placedTrees.length)];
+		for (let attempt = 0; attempt < 8; attempt += 1) {
+			const angle = random() * Math.PI * 2;
+			const distance = 48 + random() * 26;
+			const position = { x: tree.x + Math.cos(angle) * distance, y: tree.y + Math.sin(angle) * distance };
+			if (!inChunk(position.x, position.y) || Math.hypot(player.x - position.x, player.y - position.y) <= 70) continue;
+			if (!spawnAreaIsClear(position.x, position.y, 16)) continue;
+			resources.push({ ...position, type: "wood", available: true });
+			break;
 		}
 	}
 	for (let index = 0; index < 3; index += 1) {
 			const position = randomClearChunkPosition(random, chunkX, chunkY, 22);
 			if (position && Math.hypot(player.x - position.x, player.y - position.y) > 70) {
-				resources.push({ ...position, type: ["berry", "wood", "seed"][Math.floor(random() * 3)], available: true });
+				resources.push({ ...position, type: ["berry", "seed"][Math.floor(random() * 2)], available: true });
 			}
 	}
 		spawnPassiveGroup(random, chunkX, chunkY);
@@ -423,6 +461,47 @@ function drawTree(tree) {
 	}
 }
 
+// The slime gel art ships with a light backdrop; clear it the same way the inventory icon does.
+const cleanedGelIcons = new WeakMap();
+function cleanedGelIcon(image) {
+	if (cleanedGelIcons.has(image)) return cleanedGelIcons.get(image);
+	const canvas = document.createElement("canvas");
+	canvas.width = image.naturalWidth;
+	canvas.height = image.naturalHeight;
+	const context = canvas.getContext("2d", { willReadFrequently: true });
+	context.drawImage(image, 0, 0);
+	const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+	const pixels = imageData.data;
+	const pixelCount = canvas.width * canvas.height;
+	const visited = new Uint8Array(pixelCount);
+	const isBackdrop = (index) => {
+		const offset = index * 4;
+		const min = Math.min(pixels[offset], pixels[offset + 1], pixels[offset + 2]);
+		const max = Math.max(pixels[offset], pixels[offset + 1], pixels[offset + 2]);
+		return pixels[offset + 3] > 0 && min >= 210 && max - min <= 55;
+	};
+	for (let start = 0; start < pixelCount; start += 1) {
+		if (visited[start]) continue;
+		visited[start] = 1;
+		if (!isBackdrop(start)) continue;
+		const component = [start];
+		for (let head = 0; head < component.length; head += 1) {
+			const index = component[head];
+			const x = index % canvas.width;
+			const y = Math.floor(index / canvas.width);
+			for (const neighbor of [x ? index - 1 : -1, x < canvas.width - 1 ? index + 1 : -1, y ? index - canvas.width : -1, y < canvas.height - 1 ? index + canvas.width : -1]) {
+				if (neighbor < 0 || visited[neighbor]) continue;
+				visited[neighbor] = 1;
+				if (isBackdrop(neighbor)) component.push(neighbor);
+			}
+		}
+		if (component.length >= 64) for (const index of component) pixels[index * 4 + 3] = 0;
+	}
+	context.putImageData(imageData, 0, 0);
+	cleanedGelIcons.set(image, canvas);
+	return canvas;
+}
+
 function drawPackItemIcon(itemType, x, y, size) {
 	const iconId = {
 		berry: "berries", herb: "herbs", gel: "slime_gel", tonic: "item_potion", wooden_stick: "stick",
@@ -435,6 +514,14 @@ function drawPackItemIcon(itemType, x, y, size) {
 		sprite = new Image();
 		sprite.src = source;
 		packItemIconCache.set(iconId, sprite);
+	}
+	if (iconId === "slime_gel") {
+		if (!sprite.complete || !sprite.naturalWidth) return false;
+		ctx.save();
+		ctx.imageSmoothingEnabled = false;
+		ctx.drawImage(cleanedGelIcon(sprite), Math.round(x - size / 2), Math.round(y - size / 2), size, size);
+		ctx.restore();
+		return true;
 	}
 	return drawArt(ctx, sprite, x, y, size, size);
 }

@@ -1857,6 +1857,20 @@ const FernfallSurvival = (() => {
 					if (!resource || Math.hypot(player.x - resource.x, player.y - resource.y) <= 85) continue;
 					if (resource.type === "berry" && random() < 0.55) continue;
 					resources.push(resource);
+					if (resource.type === "mushroom") {
+						const clusterSize = 2 + Math.floor(random() * 3);
+						for (let member = 0; member < clusterSize; member += 1) {
+							for (let attempt = 0; attempt < 6; attempt += 1) {
+								const angle = random() * Math.PI * 2;
+								const distance = 26 + random() * 26;
+								const mushroom = { ...resource, x: resource.x + Math.cos(angle) * distance, y: resource.y + Math.sin(angle) * distance };
+								const clear = window.fernfallSpawnAreaIsClear?.(mushroom.x, mushroom.y, 10) ?? !collides(mushroom.x, mushroom.y);
+								if (!clear || Math.hypot(player.x - mushroom.x, player.y - mushroom.y) <= 85) continue;
+								resources.push(mushroom);
+								break;
+							}
+						}
+					}
 					if (resource.type === "berry") {
 						const offsets = [[-58, -20], [58, -20], [-20, 58], [20, 58]];
 						const clusterSize = 2 + Math.floor(random() * 2);
