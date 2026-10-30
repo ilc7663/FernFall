@@ -21,6 +21,7 @@
   let slots = Array.from({length:SIZE},(_,i)=> {const v=saved?.slots?.[i];return v && catalog[v.id] && Number.isInteger(v.count) && v.count>0 ? {id:v.id,count:Math.min(v.count,maxFor(v.id))}:null});
   let selected = Number.isInteger(saved?.selected) ? Math.max(0,Math.min(8,saved.selected)) : 0;
   let cursor=null, open=false, category='all';
+  let pointer={x:0,y:0};
   let portraitPainter=null;
   const root=document.createElement('div');root.id='fernfall-inventory-root';
   root.innerHTML=`<div class="fi-hotbar" aria-label="Item hotbar"></div><div class="fi-window" hidden role="dialog" aria-label="Inventory"><header><strong>✦ Ranger's Pack</strong><button class="fi-close" aria-label="Close inventory">×</button></header><div class="fi-content"><aside class="fi-character"><div class="fi-character-title">ADVENTURER</div><div class="fi-avatar-frame"><canvas class="fi-avatar" width="128" height="160" aria-label="Ranger character preview"></canvas></div><strong>Little Ranger</strong></aside><section class="fi-storage"><div class="fi-tabs"><button data-cat="all">All</button><button data-cat="food">Food</button><button data-cat="materials">Materials</button><button data-cat="tools">Tools</button><button data-cat="placeables">Placeables</button></div><div class="fi-title">BACKPACK · 27 SLOTS</div><div class="fi-backpack"></div><div class="fi-title">HOTBAR · 9 SLOTS</div><div class="fi-gridbar"></div><button class="fi-use" type="button">Use selected</button><div class="fi-hint">Click: pick up / place · Shift+click: move stack · Right-click: split / place one · 1–9: select hotbar · I: inventory</div></section></div></div><div class="fi-cursor" hidden></div><div class="fi-tooltip" hidden></div>`;
@@ -71,10 +72,13 @@
   function save(){try{localStorage.setItem(KEY,JSON.stringify({slots,selected}))}catch{} window.dispatchEvent(new CustomEvent('fernfall:inventory-change',{detail:{slots:getSlots(),selected}}))}
   function getSlots(){return slots.map(s=>s?{...s}:null)}
   function hasCursor(){return Boolean(cursor)}
+  // A transformed ancestor makes position:fixed relative to it, so correct by the measured offset.
+  function placeCursor(){if(cur.hidden)return;cur.style.left=pointer.x+14+'px';cur.style.top=pointer.y+14+'px';const box=cur.getBoundingClientRect();cur.style.left=pointer.x+14+(pointer.x+14-box.left)+'px';cur.style.top=pointer.y+14+(pointer.y+14-box.top)+'px'}
+  document.addEventListener('mousemove',e=>{pointer={x:e.clientX,y:e.clientY};placeCursor()},true);
   function render(){hotbar.innerHTML=Array.from({length:9},(_,i)=>tile(i,true)).join(''); gridbar.innerHTML=Array.from({length:9},(_,i)=>tile(i,true)).join('');backpack.innerHTML=Array.from({length:27},(_,i)=>tile(i+9)).join('');
     root.querySelectorAll('.fi-tabs button').forEach(x=>x.classList.toggle('fi-active',x.dataset.cat===category));
     root.querySelector('.fi-use').disabled=!slots[selected];
-    cur.innerHTML=cursor?icon(cursor.id)+`<b>${cursor.count>1?cursor.count:''}</b>`:'';cur.hidden=!cursor;
+    cur.innerHTML=cursor?icon(cursor.id)+`<b>${cursor.count>1?cursor.count:''}</b>`:'';cur.hidden=!cursor;placeCursor();
     if(portraitPainter){const context=portrait.getContext('2d');context.clearRect(0,0,portrait.width,portrait.height);portraitPainter(context,portrait.width,portrait.height)}}
   function setVitals({health=0,maxHealth=10,hunger=0,maxHunger=100}={}){for(const [id,current,maximum] of [['health',health,maxHealth],['hunger',hunger,maxHunger]]){const track=root.querySelector(`[data-vital="${id}"]`),fill=track?.querySelector('.fi-vital-fill'),max=Math.max(1,Number(maximum)||1),amount=Math.max(0,Math.min(max,Number(current)||0));if(!track||!fill)continue;fill.style.width=`${amount/max*100}%`;track.setAttribute('aria-valuemax',String(max));track.setAttribute('aria-valuenow',String(Math.round(amount)))} }
   function add(id,count=1){if(!catalog[id]||!Number.isInteger(count)||count<=0)return count;let left=count;
@@ -98,9 +102,9 @@
   function setOpen(val){if(!val&&cursor){const left=add(cursor.id,cursor.count);cursor=left?{...cursor,count:left}:null;if(cursor)return;save()}open=val;if(gameWindow&&root.parentElement!==gameWindow){gameWindow.append(root);root.classList.add('fi-game-overlay')}panel.hidden=!open;root.classList.toggle('fi-open',open);render();window.dispatchEvent(new CustomEvent('fernfall:inventory-open',{detail:{open}}));}
   window.addEventListener('fernfall:crafting-open',event=>{if(event.detail?.open&&open)setOpen(false)});
   function select(i){selected=(i+9)%9;save();render()}
-  root.addEventListener('click',e=>{if(e.target.closest('.fi-close'))return setOpen(false);if(e.target.closest('.fi-use'))return window.FernfallInventory.useSelected();const cat=e.target.closest('[data-cat]');if(cat){category=cat.dataset.cat;render();return}const el=e.target.closest('.fi-slot');if(!el)return;const i=Number(el.dataset.index);if(!open){select(i);return}clickSlot(i,false,e.shiftKey)});
-  root.addEventListener('contextmenu',e=>{const el=e.target.closest('.fi-slot');if(el){e.preventDefault();if(open)clickSlot(Number(el.dataset.index),true,false)}});
-  root.addEventListener('mousemove',e=>{cur.style.left=e.clientX+14+'px';cur.style.top=e.clientY+14+'px';const b=e.target.closest('.fi-slot');const item=b&&slots[Number(b.dataset.index)];tip.hidden=!item;if(item){tip.textContent=catalog[item.id][0]+` ×${item.count}`;tip.style.left=e.clientX+16+'px';tip.style.top=e.clientY-35+'px'}});
+  root.addEventListener('click',e=>{pointer={x:e.clientX,y:e.clientY};if(e.target.closest('.fi-close'))return setOpen(false);if(e.target.closest('.fi-use'))return window.FernfallInventory.useSelected();const cat=e.target.closest('[data-cat]');if(cat){category=cat.dataset.cat;render();return}const el=e.target.closest('.fi-slot');if(!el)return;const i=Number(el.dataset.index);if(!open){select(i);return}clickSlot(i,false,e.shiftKey)});
+  root.addEventListener('contextmenu',e=>{pointer={x:e.clientX,y:e.clientY};const el=e.target.closest('.fi-slot');if(el){e.preventDefault();if(open)clickSlot(Number(el.dataset.index),true,false)}});
+  root.addEventListener('mousemove',e=>{const b=e.target.closest('.fi-slot');const item=b&&slots[Number(b.dataset.index)];tip.hidden=!item;if(item){tip.textContent=catalog[item.id][0]+` ×${item.count}`;tip.style.left=e.clientX+16+'px';tip.style.top=e.clientY-35+'px'}});
   root.addEventListener('mouseleave',()=>tip.hidden=true);
   document.addEventListener('keydown',e=>{if(e.repeat||e.target.closest('input, textarea, select,[contenteditable]'))return;
     if(e.key.toLowerCase()==='i'){e.preventDefault();setOpen(!open)}
