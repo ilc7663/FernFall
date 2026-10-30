@@ -106,7 +106,7 @@ const FernfallSurvival = (() => {
 		blacksmith: { title: "Gather softwood", description: "Gather four pieces of softwood for the forge.", greeting: "I need good softwood for a new tool handle. Can you gather four pieces?", event: "wood", goal: 4, reward: 4 },
 		farmer: { title: "Help with the harvest", description: "Gather four crops from the forest edge.", greeting: "The harvest could use a hand. Bring back four crops, please.", event: "crop", goal: 4, reward: 3 },
 		innkeeper: { title: "Cook a warm meal", description: "Cook one meal at a campfire.", greeting: "A warm meal lifts everyone's spirits. Could you cook one for the inn?", event: "meal", goal: 1, reward: 4 },
-		healer: { title: "Make a friend", description: "Tame a wolf with a wild berry.", greeting: "A wolf has been wandering nearby. A berry may help you earn its trust.", event: "wolf", goal: 1, reward: 5 },
+		healer: { title: "Make a friend", description: "Tame a wolf with a piece of meat.", greeting: "A wolf has been wandering nearby. A bit of meat may help you earn its trust.", event: "wolf", goal: 1, reward: 5 },
 	};
 	const villagerFollowupQuestDefinitions = {
 		mayor: { id: "night_watch", unlockDay: 3, title: "Prepare the Night Watch", description: "Craft a campfire so the night watch can keep the village safe.", greeting: "The nights are getting colder. Could you prepare a campfire for the night watch?", event: "campfire", goal: 1, reward: 5 },

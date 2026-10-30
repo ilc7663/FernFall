@@ -874,6 +874,21 @@ function update() {
 
 function updateAnimal(animal) {
 	if ((animal.type === "wolf" || animal.type === "jimothy") && animal.tamed) {
+		const prey = animal.type === "wolf" ? mobs.filter((mob) => mob.alive && Math.hypot(mob.x - player.x, mob.y - player.y) < 260).sort((a, b) => Math.hypot(a.x - animal.x, a.y - animal.y) - Math.hypot(b.x - animal.x, b.y - animal.y))[0] : null;
+		if (prey && Math.hypot(prey.x - animal.x, prey.y - animal.y) > 34) {
+			const gap = Math.hypot(prey.x - animal.x, prey.y - animal.y);
+			const dx = (prey.x - animal.x) / gap * 1.7;
+			const dy = (prey.y - animal.y) / gap * 1.7;
+			if (!collides(animal.x + dx, animal.y, animal.type)) animal.x += dx;
+			if (!collides(animal.x, animal.y + dy, animal.type)) animal.y += dy;
+			animal.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : (dy < 0 ? "up" : "down");
+			animal.moving = true;
+			return;
+		}
+		if (prey) {
+			animal.moving = false;
+			return;
+		}
 		const distance = Math.hypot(player.x - animal.x, player.y - animal.y);
 		if (distance > 68) {
 			const speed = 0.95;
@@ -916,6 +931,8 @@ function addItem(type, amount) {
 	saveGame();
 }
 
+const wolfMeatTypes = ["beef_raw", "pork_raw", "mutton_raw", "rabbit_raw", "beef_cooked", "pork_cooked", "mutton_cooked", "rabbit_cooked"];
+
 function gather() {
 	const nearbyJimothy = animals.find((animal) => animal.type === "jimothy" && !animal.tamed && Math.hypot(player.x - animal.x, player.y - animal.y) < 58);
 	if (nearbyJimothy) {
@@ -929,10 +946,11 @@ function gather() {
 	if (nearbyWolf) {
 		if (nearbyWolf.tamed) {
 			showToast("Your wolf is already by your side.");
-		} else if (!player.inventory.berry) {
-			showToast("This wolf needs a wild berry to trust you.");
+		} else if (!wolfMeatTypes.some((type) => player.inventory[type] > 0)) {
+			showToast("This wolf needs meat to trust you.");
 		} else {
-			player.inventory.berry -= 1;
+			const meat = wolfMeatTypes.find((type) => player.inventory[type] > 0);
+			player.inventory[meat] -= 1;
 			nearbyWolf.tamed = true;
 			nearbyWolf.happyUntil = performance.now() + 1800;
 			playTone(700);
@@ -1215,7 +1233,7 @@ canvas.addEventListener("pointerdown", (event) => {
 }, { capture: true });
 canvas.addEventListener("pointerdown", setDirectionFromPointer);
 const gameTips = [
-	"Offer a wild berry with E to tame the wolf. Bring a carrot to tame Jimothy instead of just meeting him.",
+	"Offer meat with E to tame the wolf. Your wolf will chase down and bite nearby monsters. Bring a carrot to tame Jimothy instead of just meeting him.",
 	"Select a tool on the hotbar (1–9) and the ranger holds it. Bare hands work for everything, just slower.",
 	"Pickaxes mine rocks and ore faster. Press E beside a rock and keep still until the bar fills.",
 	"Axes chop trees faster. Each tree gives three wood before it becomes a stump.",
