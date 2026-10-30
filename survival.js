@@ -1286,7 +1286,7 @@ const FernfallSurvival = (() => {
 			return true;
 		}
 
-		const coalFire = campfires.find((fire) => fire.kind !== "furnace" && !fire.coalCollected && Math.hypot(fire.x + 32 - x, fire.y + 12 - y) < 14);
+		const coalFire = campfires.find((fire) => fire.kind !== "furnace" && !fire.coalCollected && Math.hypot(fire.x + 24 - x, fire.y + 10 - y) < 14);
 		if (coalFire) {
 			coalFire.coalCollected = true;
 			player.inventory.coal = (player.inventory.coal || 0) + 1;
@@ -1742,8 +1742,8 @@ const FernfallSurvival = (() => {
 		}
 		for (const fire of campfires) {
 			if (fire.kind !== "furnace" && !fire.coalCollected) {
-				const coalX = fire.x + 32;
-				const coalY = fire.y + 12;
+				const coalX = fire.x + 24;
+				const coalY = fire.y + 10;
 				ctx.fillStyle = "#342d22";
 				ctx.beginPath();
 				ctx.arc(coalX, coalY, 11, 0, Math.PI * 2);
@@ -1761,9 +1761,9 @@ const FernfallSurvival = (() => {
 					ctx.fillRect(fire.x - 9, fire.y - 8, 18, 19);
 				}
 			} else {
-				const x = fire.x - 39;
-				const y = fire.y - 39;
-				if (!FernfallCooking.drawCampfire(ctx, x, y, performance.now(), 78, true)) {
+				const x = fire.x - 28;
+				const y = fire.y - 28;
+				if (!FernfallCooking.drawCampfire(ctx, x, y, performance.now(), 56, true)) {
 					ctx.fillStyle = "#875938";
 					ctx.fillRect(fire.x - 17, fire.y - 6, 34, 12);
 					ctx.fillStyle = "#ef9b4b";
@@ -1772,7 +1772,7 @@ const FernfallSurvival = (() => {
 					ctx.fill();
 				}
 			}
-			if (fire.cookware) FernfallCooking.draw(ctx, fire.cooking ? `${fire.cookware}_food` : `${fire.cookware}_empty`, fire.x - 18, fire.y - 43, 36, 30);
+			if (fire.cookware) FernfallCooking.draw(ctx, fire.cooking ? `${fire.cookware}_food` : `${fire.cookware}_empty`, fire.x - 18, fire.y - 36, 36, 30);
 			if (fire.cooking) {
 				const progress = Math.min(1, (Date.now() - fire.cooking.startedAt) / fire.cooking.duration);
 				ctx.fillStyle = "#30483b";
