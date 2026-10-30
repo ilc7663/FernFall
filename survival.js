@@ -1208,13 +1208,16 @@ const FernfallSurvival = (() => {
 
 		const furnaceIndex = campfires.findIndex((fire) => fire.kind === "furnace" && Math.hypot(fire.x - x, fire.y - y) < 36);
 		if (furnaceIndex >= 0) {
-			if (furnaceHasItems(furnaceState(campfires[furnaceIndex]))) {
-				show("Empty the furnace before picking it up.");
-				return true;
+			const furnace = furnaceState(campfires[furnaceIndex]);
+			const contents = [furnace.input, furnace.fuel, furnace.output, furnace.cooking ? { id: furnace.cooking.inputId, count: 1 } : null];
+			for (const stack of contents) {
+				if (stack) player.inventory[stack.id] = (player.inventory[stack.id] || 0) + stack.count;
 			}
 			campfires.splice(furnaceIndex, 1);
 			player.inventory.furnace = (player.inventory.furnace || 0) + 1;
-			show("Picked up furnace.");
+			show(contents.some(Boolean) ? "Picked up furnace and everything inside." : "Picked up furnace.");
+			updateHud();
+			saveGame();
 			return true;
 		}
 
@@ -1258,10 +1261,19 @@ const FernfallSurvival = (() => {
 			openPanel("craft");
 			return true;
 		}
-		const jimothy = animals.find((animal) => animal.type === "jimothy" && near(animal, player, 58));
+		const jimothy = animals.find((animal) => animal.type === "jimothy" && !animal.tamed && near(animal, player, 58));
 		if (jimothy) {
 			jimothyMet = true;
 			recordQuest("jimothy");
+			if (player.inventory.carrot > 0) {
+				player.inventory.carrot -= 1;
+				jimothy.tamed = true;
+				jimothy.happyUntil = performance.now() + 1800;
+				show("Jimothy happily crunches the carrot and joins you!");
+				updateHud();
+				saveGame();
+				return true;
+			}
 			animals.splice(animals.indexOf(jimothy), 1);
 			if (player.inventory.berry > 0) {
 				player.inventory.berry -= 1;

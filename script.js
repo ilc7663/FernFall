@@ -628,7 +628,7 @@ function drawAnimal(animal) {
 	ctx.imageSmoothingEnabled = false;
 	ctx.drawImage(sprite, bounds.left, bounds.top, bounds.width, bounds.height, Math.round(animal.x - drawWidth / 2), Math.round(animal.y - drawHeight / 2), Math.round(drawWidth), Math.round(drawHeight));
 	ctx.restore();
-	if (animal.type === "wolf" && animal.tamed) {
+	if ((animal.type === "wolf" || animal.type === "jimothy") && animal.tamed) {
 		ctx.strokeStyle = "#e7c56e";
 		ctx.lineWidth = 2;
 		ctx.beginPath();
@@ -811,7 +811,7 @@ function update() {
 	if (player.swing > 0) player.swing = Math.max(0, player.swing - 0.06);
 	if (player.hurt > 0) player.hurt -= 1;
 	for (const animal of animals) {
-		if (animal.type === "wolf" && animal.tamed || Math.hypot(player.x - animal.x, player.y - animal.y) < 720) updateAnimal(animal);
+		if ((animal.type === "wolf" || animal.type === "jimothy") && animal.tamed || Math.hypot(player.x - animal.x, player.y - animal.y) < 720) updateAnimal(animal);
 	}
 	for (const mob of mobs) {
 		if (!mob.alive) continue;
@@ -858,7 +858,7 @@ function update() {
 }
 
 function updateAnimal(animal) {
-	if (animal.type === "wolf" && animal.tamed) {
+	if ((animal.type === "wolf" || animal.type === "jimothy") && animal.tamed) {
 		const distance = Math.hypot(player.x - animal.x, player.y - animal.y);
 		if (distance > 68) {
 			const speed = 0.95;
@@ -902,7 +902,7 @@ function addItem(type, amount) {
 }
 
 function gather() {
-	const nearbyJimothy = animals.find((animal) => animal.type === "jimothy" && Math.hypot(player.x - animal.x, player.y - animal.y) < 58);
+	const nearbyJimothy = animals.find((animal) => animal.type === "jimothy" && !animal.tamed && Math.hypot(player.x - animal.x, player.y - animal.y) < 58);
 	if (nearbyJimothy) {
 		jimothyMet = true;
 		animals.splice(animals.indexOf(nearbyJimothy), 1);
@@ -1200,7 +1200,7 @@ canvas.addEventListener("pointerdown", (event) => {
 }, { capture: true });
 canvas.addEventListener("pointerdown", setDirectionFromPointer);
 const gameTips = [
-	"Offer a wild berry with E to tame the wolf. Jimothy appears only once.",
+	"Offer a wild berry with E to tame the wolf. Bring a carrot to tame Jimothy instead of just meeting him.",
 	"Select a tool on the hotbar (1–9) and the ranger holds it. Bare hands work for everything, just slower.",
 	"Pickaxes mine rocks and ore faster. Press E beside a rock and keep still until the bar fills.",
 	"Axes chop trees faster. Each tree gives three wood before it becomes a stump.",
