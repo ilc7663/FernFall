@@ -172,7 +172,7 @@ gather = function () {
 	if (survivalModule && untamedWolves.some((animal) => animal.tamed)) survivalModule.recordQuest("wolf");
 	if (gathered) return true;
 	if (window.FernfallGameInventory?.eatSelectedFood()) return true;
-	showToast("Nothing to gather nearby. Look for a sparkle!");
+	showToast("Nothing to gather nearby. Walk up to a plant, rock, tree or item and press E.");
 	return false;
 };
 
