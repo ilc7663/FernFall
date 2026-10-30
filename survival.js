@@ -831,7 +831,7 @@ const FernfallSurvival = (() => {
 	function openPanel(mode, fire = null) {
 		returnFurnaceCursor();
 		if (mode === "craft" && window.FernfallCrafting) {
-			window.FernfallCrafting.open();
+			window.FernfallCrafting.open({ table: true });
 			return;
 		}
 		activeMode = mode;
