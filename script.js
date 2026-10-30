@@ -259,9 +259,9 @@ function generateWorldChunk(chunkX, chunkY) {
 			break;
 		}
 	}
-	for (let index = 0; index < 2; index += 1) {
+	for (let index = 0; index < 1; index += 1) {
 			const position = randomClearChunkPosition(random, chunkX, chunkY, 22);
-			if (position && Math.hypot(player.x - position.x, player.y - position.y) > 70) {
+			if (position && random() < 0.6 && Math.hypot(player.x - position.x, player.y - position.y) > 70) {
 				resources.push({ ...position, type: ["berry", "seed"][Math.floor(random() * 2)], available: true });
 			}
 	}

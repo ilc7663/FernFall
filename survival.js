@@ -1878,7 +1878,7 @@ const FernfallSurvival = (() => {
 				resourceChunks.add(key);
 				let seed = (Math.imul(cx, 374761393) ^ Math.imul(cy, 668265263)) >>> 0;
 				const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-				const types = ["stone", "carrot", "potato", "berry", "mushroom", "grain", "herb"];
+				const types = ["stone", "stone", "carrot", "potato", "berry", "mushroom", "grain", "herb"];
 				if (random() < 0.68) continue;
 				for (let index = 0; index < 5; index += 1) {
 					let resource = null;
@@ -1895,6 +1895,7 @@ const FernfallSurvival = (() => {
 						}
 					}
 					if (!resource || Math.hypot(player.x - resource.x, player.y - resource.y) <= 85) continue;
+					if (resource.type !== "stone" && random() < 0.4) continue;
 					if (resource.type === "berry" && random() < 0.55) continue;
 					resources.push(resource);
 					if (resource.type === "mushroom") {
