@@ -1,6 +1,8 @@
 import json
 import math
+import shutil
 import sqlite3
+import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -8,7 +10,12 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent
 SAVE_DB_PATH = Path.home() / ".fernfall" / "save.sqlite3"
+BACKUP_DIR = SAVE_DB_PATH.parent / "backups"
+BACKUP_INTERVAL_SECONDS = 600
+BACKUP_KEEP = 5
 WORLD_CHUNK_SIZE = 512
+TREE_SPACING = 62
+_last_backup_at = 0.0
 
 
 def generate_chunk(chunk_x, chunk_y, player_x, player_y, obstacles):
@@ -27,20 +34,67 @@ def generate_chunk(chunk_x, chunk_y, player_x, player_y, obstacles):
 			"y": chunk_y * WORLD_CHUNK_SIZE + 40 + random_value() * (WORLD_CHUNK_SIZE - 80),
 		}
 
+	def in_chunk(x, y):
+		return (
+			chunk_x * WORLD_CHUNK_SIZE + 32 < x < (chunk_x + 1) * WORLD_CHUNK_SIZE - 32
+			and chunk_y * WORLD_CHUNK_SIZE + 32 < y < (chunk_y + 1) * WORLD_CHUNK_SIZE - 32
+		)
+
 	def collides(x, y):
 		return any(math.hypot(x - tree["x"], y - (tree["y"] + 5)) < tree["r"] * 0.66 + 9 for tree in obstacles)
 
+	def crowded(x, y):
+		return any(math.hypot(x - tree["x"], y - tree["y"]) < TREE_SPACING for tree in obstacles)
+
+	def far_from_player(x, y, distance):
+		return math.hypot(player_x - x, player_y - y) > distance
+
 	generated_obstacles = []
-	for _ in range(5):
+
+	def plant_tree(position):
+		tree = {**position, "r": 30 + random_value() * 12}
+		generated_obstacles.append(tree)
+		obstacles.append(tree)
+
+	# Trees grow in groves, with a few lone trees between them.
+	for _ in range(2 if random_value() < 0.5 else 1):
+		anchor = random_position()
+		if collides(anchor["x"], anchor["y"]) or crowded(anchor["x"], anchor["y"]) or not far_from_player(anchor["x"], anchor["y"], 90):
+			continue
+		plant_tree(anchor)
+		for _ in range(1 + int(random_value() * 3)):
+			for _ in range(12):
+				angle = random_value() * math.pi * 2
+				distance = 76 + random_value() * 60
+				candidate = {"x": anchor["x"] + math.cos(angle) * distance, "y": anchor["y"] + math.sin(angle) * distance}
+				if not in_chunk(candidate["x"], candidate["y"]) or not far_from_player(candidate["x"], candidate["y"], 90):
+					continue
+				if collides(candidate["x"], candidate["y"]) or crowded(candidate["x"], candidate["y"]):
+					continue
+				plant_tree(candidate)
+				break
+	for _ in range(int(random_value() * 2)):
 		position = random_position()
-		if not collides(position["x"], position["y"]) and math.hypot(player_x - position["x"], player_y - position["y"]) > 90:
-			obstacle = {**position, "r": 30 + random_value() * 12}
-			generated_obstacles.append(obstacle)
-			obstacles.append(obstacle)
+		if not collides(position["x"], position["y"]) and not crowded(position["x"], position["y"]) and far_from_player(position["x"], position["y"], 90):
+			plant_tree(position)
 
 	resources = []
-	for _ in range(3):
-		resources.append({**random_position(), "type": ["berry", "wood", "seed"][int(random_value() * 3)], "available": True})
+	# Fallen logs only appear beside standing trees.
+	if generated_obstacles:
+		for _ in range(min(len(generated_obstacles), int(random_value() * 2) + (1 if random_value() < 0.5 else 0))):
+			tree = generated_obstacles[int(random_value() * len(generated_obstacles))]
+			for _ in range(8):
+				angle = random_value() * math.pi * 2
+				distance = 48 + random_value() * 26
+				x = tree["x"] + math.cos(angle) * distance
+				y = tree["y"] + math.sin(angle) * distance
+				if in_chunk(x, y) and not collides(x, y) and far_from_player(x, y, 70):
+					resources.append({"x": x, "y": y, "type": "wood", "available": True})
+					break
+	if random_value() < 0.6:
+		position = random_position()
+		if far_from_player(position["x"], position["y"], 70):
+			resources.append({**position, "type": ["berry", "seed"][int(random_value() * 2)], "available": True})
 
 	animal_types = ["sheep", "cow", "pig", "rabbit", "wolf"]
 	animals = []
@@ -58,6 +112,42 @@ def generate_chunk(chunk_x, chunk_y, player_x, player_y, obstacles):
 	return {"obstacles": generated_obstacles, "resources": resources, "animals": animals}
 
 
+def save_stats(save):
+	if not isinstance(save, dict):
+		return {"hasSave": False}
+	inventory = save.get("inventory") if isinstance(save.get("inventory"), dict) else {}
+	items = {name: count for name, count in inventory.items() if isinstance(count, (int, float)) and count > 0}
+	return {
+		"hasSave": True,
+		"level": save.get("level"),
+		"coins": save.get("coins"),
+		"xp": save.get("xp"),
+		"health": save.get("health"),
+		"distinctItems": len(items),
+		"totalItems": sum(items.values()),
+		"richestStacks": sorted(items.items(), key=lambda entry: entry[1], reverse=True)[:5],
+	}
+
+
+def prune_backups():
+	backups = sorted(BACKUP_DIR.glob("save-*.sqlite3"))
+	for old in backups[:-BACKUP_KEEP]:
+		old.unlink(missing_ok=True)
+
+
+def backup_saves(now=None):
+	"""Copies the save database at most once per BACKUP_INTERVAL_SECONDS and keeps the newest few."""
+	global _last_backup_at
+	now = time.time() if now is None else now
+	if now - _last_backup_at < BACKUP_INTERVAL_SECONDS or not SAVE_DB_PATH.exists():
+		return False
+	_last_backup_at = now
+	BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+	shutil.copyfile(SAVE_DB_PATH, BACKUP_DIR / f"save-{time.strftime('%Y%m%d-%H%M%S', time.localtime(now))}.sqlite3")
+	prune_backups()
+	return True
+
+
 class GameHandler(SimpleHTTPRequestHandler):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -69,6 +159,9 @@ class GameHandler(SimpleHTTPRequestHandler):
 			request_path = "/site.html"
 		if request_path == "/api/save":
 			self._send_json(200, self._load_save())
+			return
+		if request_path == "/api/stats":
+			self._send_json(200, save_stats(self._load_save()))
 			return
 		if request_path == "/site.html":
 			save_json = json.dumps(self._load_save()).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
@@ -143,6 +236,7 @@ class GameHandler(SimpleHTTPRequestHandler):
 
 	def _store_save(self, save):
 		SAVE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+		backup_saves()
 		with sqlite3.connect(SAVE_DB_PATH) as connection:
 			connection.execute("CREATE TABLE IF NOT EXISTS saves (id INTEGER PRIMARY KEY CHECK (id = 1), data TEXT NOT NULL)")
 			connection.execute(
