@@ -395,7 +395,7 @@ const FernfallSurvival = (() => {
 		const firstQuest = villageQuestVariant(role, key);
 		const firstState = villagerQuestStates[villagerStateKey(role, key)];
 		const followup = villagerFollowupQuestDefinitions[role];
-		return followup && dayProgress().day >= followup.unlockDay && firstState?.claimed ? followup : firstQuest;
+		return followup && dayProgress().day >= followup.unlockDay && firstState?.claimed && (firstState.claimedDay === undefined || dayProgress().day > firstState.claimedDay) ? followup : firstQuest;
 	}
 
 	function villagerQuestState(role, key = "spawn", quest = currentVillagerQuest(role, key)) {
@@ -489,6 +489,7 @@ const FernfallSurvival = (() => {
 			show(`Quest accepted: ${quest.title}.`);
 		} else if (state.progress >= quest.goal) {
 			state.claimed = true;
+			state.claimedDay = dayProgress().day;
 			player.coins += quest.reward;
 			show(`Quest complete: +${quest.reward} coins.`);
 			updateHud();
