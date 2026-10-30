@@ -540,7 +540,10 @@ function drawRangerSprite(now, bob) {
 	ctx.imageSmoothingEnabled = true;
 	ctx.imageSmoothingQuality = "high";
 	// Frames are 352px with feet at ~92% of the height; anchor the feet near the shadow.
-	ctx.drawImage(sprite, Math.round(player.x - 32), Math.round(player.y + bob - 45), 64, 64);
+	// Front/back frames fill ~16% less height than side frames, so scale them up around the feet.
+	const size = player.direction === "down" || player.direction === "up" ? 64 * 1.12 : 64;
+	const feetY = player.y + bob - 45 + 64 * 0.94;
+	ctx.drawImage(sprite, Math.round(player.x - size / 2), Math.round(feetY - size * 0.94), size, size);
 	ctx.restore();
 	return true;
 }
@@ -551,7 +554,7 @@ function drawPlayerHead() {
 	const bob = Math.sin(now / 90) * (moving() ? 2 : 0.6);
 	ctx.save();
 	ctx.beginPath();
-	ctx.rect(player.x - 32, player.y + bob - 45, 64, 24);
+	ctx.rect(player.x - 36, player.y + bob - 54, 72, 33);
 	ctx.clip();
 	drawRangerSprite(now, bob);
 	ctx.restore();
