@@ -231,10 +231,10 @@ function generateWorldChunk(chunkX, chunkY) {
 		for (let member = 0; member < size; member += 1) {
 			for (let attempt = 0; attempt < 12; attempt += 1) {
 				const angle = random() * Math.PI * 2;
-				const distance = 52 + random() * 56;
+				const distance = 76 + random() * 60;
 				const candidate = { x: anchor.x + Math.cos(angle) * distance, y: anchor.y + Math.sin(angle) * distance };
 				if (!inChunk(candidate.x, candidate.y) || Math.hypot(player.x - candidate.x, player.y - candidate.y) <= 90) continue;
-				if (!spawnAreaIsClear(candidate.x, candidate.y, 14)) continue;
+				if (!spawnAreaIsClear(candidate.x, candidate.y, 40)) continue;
 				plantTree(candidate);
 				break;
 			}

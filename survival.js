@@ -2281,10 +2281,24 @@ const FernfallSurvival = (() => {
 		}
 	}
 
+	// Drops trees that sit on top of an earlier tree, such as those from older saves.
+	function thinOverlappingTrees() {
+		const kept = [];
+		for (const tree of obstacles) {
+			if (kept.some((other) => Math.hypot(other.x - tree.x, other.y - tree.y) < 62)) continue;
+			kept.push(tree);
+		}
+		if (kept.length === obstacles.length) return;
+		obstacles.splice(0, obstacles.length, ...kept);
+		obstacleChunks.clear();
+		obstacles.forEach(indexObstacle);
+	}
+
 	function setup(state) {
 		Object.assign(itemInfo, itemDefinitions, oreItemDefinitions);
 		for (const id of [...Object.keys(itemDefinitions), ...Object.keys(oreItemDefinitions)]) player.inventory[id] ??= 0;
 		restore(state);
+		thinOverlappingTrees();
 		ensureSpawnVillage();
 		ensureStartBed();
 		if (!worldEpoch) {
