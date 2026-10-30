@@ -744,6 +744,16 @@ const FernfallSurvival = (() => {
 		const fire = currentFire();
 		if (!fire) return;
 		furnaceState(fire);
+		if (placeOne && !furnaceCursor && slot !== "collect" && fire[slot]) {
+			const stack = fire[slot];
+			const half = Math.ceil(stack.count / 2);
+			player.inventory[stack.id] = (player.inventory[stack.id] || 0) + half;
+			stack.count -= half;
+			if (stack.count <= 0) fire[slot] = null;
+			updateHud();
+			saveGame();
+			return;
+		}
 		if (slot === "output" || slot === "collect") {
 			if (furnaceCursor && slot === "output") return show("Nothing can be put in the output.");
 			const output = fire.output;
@@ -2163,7 +2173,8 @@ const FernfallSurvival = (() => {
 		const furnaceAction = (event, placeOne) => {
 			const pick = event.target.closest("[data-furnace-pick]");
 			const slot = event.target.closest("#furnace-collect") ? "collect" : event.target.closest("#furnace-input-slot") ? "input" : event.target.closest("#furnace-fuel-slot") ? "fuel" : event.target.closest("#furnace-output-slot") ? "output" : "";
-			if (pick && !pick.disabled) pickUpForFurnace(pick.dataset.furnacePick);
+			if (furnaceCursor && event.target.closest(".furnace-input-panel")) returnFurnaceCursor();
+			else if (pick && !pick.disabled) pickUpForFurnace(pick.dataset.furnacePick);
 			else if (slot) useFurnaceSlot(slot, placeOne);
 			else return false;
 			renderFurnaceCursor();
