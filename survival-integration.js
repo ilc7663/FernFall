@@ -8,9 +8,71 @@ const survivalAssetsReady = loadFernfallSurvivalAssets(survivalAssetRoot).catch(
 const hostileMotion = new WeakMap();
 const hostileTypes = ["skeleton", "witch", "spider", "bat", "zombie"];
 
+const cleanedZombieFrames = new WeakMap();
+
+// Some zombie frames hold two figures side by side plus stray specks; keep one whole zombie, centred.
+function singleZombieFrame(image) {
+	if (cleanedZombieFrames.has(image)) return cleanedZombieFrames.get(image);
+	const width = image.naturalWidth;
+	const height = image.naturalHeight;
+	const canvas = document.createElement("canvas");
+	canvas.width = width;
+	canvas.height = height;
+	const context = canvas.getContext("2d", { willReadFrequently: true });
+	context.drawImage(image, 0, 0);
+	const data = context.getImageData(0, 0, width, height);
+	const pixels = data.data;
+	const label = new Int32Array(width * height);
+	const components = [];
+	for (let start = 0; start < width * height; start += 1) {
+		if (label[start] || pixels[start * 4 + 3] < 20) continue;
+		const id = components.length + 1;
+		const members = [start];
+		label[start] = id;
+		let minX = width, maxX = 0;
+		for (let head = 0; head < members.length; head += 1) {
+			const index = members[head];
+			const x = index % width;
+			const y = Math.floor(index / width);
+			if (x < minX) minX = x;
+			if (x > maxX) maxX = x;
+			for (let offsetY = -2; offsetY <= 2; offsetY += 1) {
+				for (let offsetX = -2; offsetX <= 2; offsetX += 1) {
+					const nextX = x + offsetX;
+					const nextY = y + offsetY;
+					if (nextX < 0 || nextY < 0 || nextX >= width || nextY >= height) continue;
+					const next = nextY * width + nextX;
+					if (label[next] || pixels[next * 4 + 3] < 20) continue;
+					label[next] = id;
+					members.push(next);
+				}
+			}
+		}
+		components.push({ id, size: members.length, minX, maxX });
+	}
+	components.sort((a, b) => b.size - a.size);
+	const main = components[0];
+	if (!main) {
+		cleanedZombieFrames.set(image, image);
+		return image;
+	}
+	const hasTwin = components[1] && components[1].size > main.size * 0.3;
+	for (let index = 0; index < width * height; index += 1) {
+		if (label[index] !== main.id) pixels[index * 4 + 3] = 0;
+	}
+	const shift = hasTwin ? Math.round(width / 2 - (main.minX + main.maxX) / 2) : 0;
+	const cleaned = document.createElement("canvas");
+	cleaned.width = width;
+	cleaned.height = height;
+	context.putImageData(data, 0, 0);
+	cleaned.getContext("2d").drawImage(canvas, shift, 0);
+	cleanedZombieFrames.set(image, cleaned);
+	return cleaned;
+}
+
 function zombieFrame(direction, frame) {
 	const image = window.FernfallSprites?.get("zombie", null, direction, frame);
-	return image?.complete && image.naturalWidth ? image : null;
+	return image?.complete && image.naturalWidth ? singleZombieFrame(image) : null;
 }
 
 function directionToward(from, to) {
