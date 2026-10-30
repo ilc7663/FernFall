@@ -64,6 +64,44 @@
 		#furnace-fuel-slot,
 		#furnace-output-slot {
 			cursor: pointer;
+			position: relative;
+		}
+		#furnace-collect[hidden] {
+			display: none !important;
+		}
+		.furnace-slot-count {
+			position: absolute;
+			right: 4px;
+			bottom: 2px;
+			color: #fff;
+			font: 700 13px/1 "DM Sans", sans-serif;
+			text-shadow: 0 1px 2px #000, 0 0 3px #000;
+			pointer-events: none;
+		}
+		#furnace-cursor {
+			position: fixed;
+			z-index: 2147483000;
+			width: 44px;
+			height: 44px;
+			pointer-events: none;
+		}
+		#furnace-cursor[hidden] {
+			display: none;
+		}
+		#furnace-cursor img,
+		#furnace-cursor .item-icon {
+			width: 100%;
+			height: 100%;
+			object-fit: contain;
+			filter: drop-shadow(0 2px 3px #000a);
+		}
+		#furnace-cursor b {
+			position: absolute;
+			right: -4px;
+			bottom: -2px;
+			color: #fff;
+			font: 700 14px/1 "DM Sans", sans-serif;
+			text-shadow: 0 1px 2px #000, 0 0 3px #000;
 		}
 		#survival-dialog.game-box-popup .survival-dialog-header {
 			padding: 8px 16px !important;

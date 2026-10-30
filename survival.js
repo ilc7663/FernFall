@@ -611,85 +611,211 @@ const FernfallSurvival = (() => {
 		return campfires.find((fire) => fire.id === activeFireId);
 	}
 
-	function addFurnaceFuel(fire, fuelId) {
-		const burnMs = furnaceFuelMs[fuelId];
-		if (!fire || fire.kind !== "furnace" || !burnMs || !(player.inventory[fuelId] > 0)) return false;
-		if ((fire.furnaceFuelMs || 0) >= 120000) return show("The furnace is already full of fuel."), false;
-		player.inventory[fuelId] -= 1;
-		fire.furnaceFuelMs = Math.min(120000, (fire.furnaceFuelMs || 0) + burnMs);
-		fire.furnaceFuelType = fuelId;
-		show(`${label(fuelId)} added to the furnace.`);
-		updateHud();
-		saveGame();
-		refreshPanel();
-		return true;
-	}
+	const FURNACE_STACK = 64;
+	let furnaceCursor = null;
 
 	function furnaceRecipes() {
 		return [...recipes.filter((recipe) => furnaceRecipeIds.has(recipe.id)), ...oreSmeltRecipes];
 	}
 
-	function startFurnaceCook(recipeId, fire) {
-		const recipe = furnaceRecipes().find((entry) => entry.id === recipeId);
-		if (!recipe || !fire || fire.kind !== "furnace" || fire.cooking) return false;
-		const [inputId, inputCount] = Object.entries(recipe.ingredients)[0] || [];
-		if (!inputId || (player.inventory[inputId] || 0) < inputCount) return show(`You need ${label(inputId || "raw meat")} to smelt this.`), false;
-		const duration = recipe.seconds * 1000;
-		if ((fire.furnaceFuelMs || 0) < duration) return show("Add more furnace fuel before smelting."), false;
-		player.inventory[inputId] -= inputCount;
-		fire.furnaceFuelMs -= duration;
-		if (fire.furnaceFuelMs <= 0) fire.furnaceFuelType = "";
-		fire.cooking = { recipeId: recipe.id, inputId, startedAt: Date.now(), duration, ready: false, notified: false };
+	function smeltRecipeFor(inputId) {
+		return furnaceRecipes().find((recipe) => Object.keys(recipe.ingredients)[0] === inputId);
+	}
+
+	// Converts older single-item furnace saves to the slot model once.
+	function furnaceState(fire) {
+		if (fire.furnaceReady) return fire;
+		fire.furnaceReady = true;
+		fire.input ??= null;
+		fire.fuel ??= null;
+		fire.output ??= null;
+		fire.burnMs = fire.furnaceFuelMs || 0;
+		if (fire.cooking) {
+			if (fire.cooking.ready) fire.output = { id: fire.cooking.recipeId, count: 1 };
+			else if (fire.cooking.inputId) fire.input = { id: fire.cooking.inputId, count: 1 };
+			fire.cooking = null;
+		}
+		return fire;
+	}
+
+	function furnaceHasItems(fire) {
+		return Boolean(fire.input || fire.fuel || fire.output || fire.cooking);
+	}
+
+	function stackIntoSlot(fire, slot, id, count) {
+		const current = fire[slot];
+		if (current && current.id !== id) return 0;
+		const moved = Math.min(FURNACE_STACK - (current?.count || 0), count);
+		if (moved <= 0) return 0;
+		fire[slot] = { id, count: (current?.count || 0) + moved };
+		return moved;
+	}
+
+	function refuelFurnace(fire) {
+		if (fire.burnMs > 0) return true;
+		const burnMs = fire.fuel && furnaceFuelMs[fire.fuel.id];
+		if (!burnMs) return false;
+		fire.burnId = fire.fuel.id;
+		fire.fuel.count -= 1;
+		if (fire.fuel.count <= 0) fire.fuel = null;
+		fire.burnMs = burnMs;
+		return true;
+	}
+
+	function tryStartSmelt(fire) {
+		const recipe = fire.input && smeltRecipeFor(fire.input.id);
+		if (!recipe) return;
+		if (fire.output && (fire.output.id !== recipe.id || fire.output.count >= FURNACE_STACK)) return;
+		if (!(fire.burnMs > 0) && !(fire.fuel && furnaceFuelMs[fire.fuel.id])) return;
+		const inputId = fire.input.id;
+		fire.input.count -= 1;
+		if (fire.input.count <= 0) fire.input = null;
+		fire.cooking = { recipeId: recipe.id, inputId, startedAt: Date.now(), duration: recipe.seconds * 1000, ready: false };
 		discoveredRecipes.add(recipe.id);
+	}
+
+	// Fuel only burns while something is smelting, so a coal stack keeps the furnace running.
+	function updateFurnaces(now) {
+		for (const fire of campfires) {
+			if (fire.kind !== "furnace") continue;
+			furnaceState(fire);
+			const elapsed = Math.min(now - (fire.lastTick || now), 500);
+			fire.lastTick = now;
+			if (!fire.cooking) {
+				tryStartSmelt(fire);
+				continue;
+			}
+			if (!refuelFurnace(fire)) {
+				fire.cooking.startedAt += elapsed;
+				continue;
+			}
+			fire.burnMs -= elapsed;
+			if (now - fire.cooking.startedAt < fire.cooking.duration) continue;
+			stackIntoSlot(fire, "output", fire.cooking.recipeId, 1);
+			fire.cooking = null;
+			tryStartSmelt(fire);
+			saveGame();
+		}
+	}
+
+	function furnaceItemMarkup(id) {
+		if (!id) return "";
+		const image = inventoryImageSource(id);
+		return image ? `<img class="item-texture" src="${image}" alt="">` : `<span class="item-icon">${itemInfo[id]?.icon || "?"}</span>`;
+	}
+
+	function renderFurnaceCursor() {
+		let element = document.querySelector("#furnace-cursor");
+		if (!element) {
+			element = document.createElement("div");
+			element.id = "furnace-cursor";
+			element.hidden = true;
+			document.body.append(element);
+		}
+		element.hidden = !furnaceCursor;
+		element.innerHTML = furnaceCursor ? `${furnaceItemMarkup(furnaceCursor.id)}<b>${furnaceCursor.count}</b>` : "";
+	}
+
+	function moveFurnaceCursor(event) {
+		const element = document.querySelector("#furnace-cursor");
+		if (!element || !furnaceCursor) return;
+		element.style.left = `${event.clientX + 14}px`;
+		element.style.top = `${event.clientY + 14}px`;
+	}
+
+	function returnFurnaceCursor() {
+		if (!furnaceCursor) return;
+		player.inventory[furnaceCursor.id] = (player.inventory[furnaceCursor.id] || 0) + furnaceCursor.count;
+		furnaceCursor = null;
+		renderFurnaceCursor();
 		updateHud();
 		saveGame();
-		refreshPanel();
-		return true;
+	}
+
+	function pickUpForFurnace(id) {
+		returnFurnaceCursor();
+		const count = Math.min(player.inventory[id] || 0, FURNACE_STACK);
+		if (count < 1) return;
+		player.inventory[id] -= count;
+		furnaceCursor = { id, count };
+	}
+
+	function useFurnaceSlot(slot, placeOne) {
+		const fire = currentFire();
+		if (!fire) return;
+		furnaceState(fire);
+		if (slot === "output" || slot === "collect") {
+			if (furnaceCursor && slot === "output") return show("Nothing can be put in the output.");
+			const output = fire.output;
+			if (!output) return;
+			player.inventory[output.id] = (player.inventory[output.id] || 0) + output.count;
+			fire.output = null;
+			if (itemInfo[output.id]?.category === "food") recordQuest("meal");
+			show(`Collected ${label(output.id).toLowerCase()} x${output.count}.`);
+			updateHud();
+			saveGame();
+			return;
+		}
+		if (!furnaceCursor) {
+			if (!fire[slot]) return;
+			furnaceCursor = fire[slot];
+			fire[slot] = null;
+			saveGame();
+			return;
+		}
+		const id = furnaceCursor.id;
+		if (slot === "input" && !smeltRecipeFor(id)) return show(furnaceFuelMs[id] ? `${label(id)} is fuel. Put it in the FUEL slot.` : `${label(id)} can't be smelted.`);
+		if (slot === "fuel" && !furnaceFuelMs[id]) return show(`${label(id)} isn't fuel. Use coal, wood or sticks.`);
+		if (fire[slot] && fire[slot].id !== id) return show("Take out what is in that slot first.");
+		const moved = stackIntoSlot(fire, slot, id, placeOne ? 1 : furnaceCursor.count);
+		if (!moved) return show("That slot is full.");
+		furnaceCursor.count -= moved;
+		if (furnaceCursor.count <= 0) furnaceCursor = null;
+		updateHud();
+		saveGame();
 	}
 
 	function renderFurnaceWorkspace(fire) {
 		const workspace = document.querySelector("#furnace-workspace");
 		workspace.hidden = activeMode !== "furnace";
 		if (workspace.hidden) return;
-		const smeltRecipes = furnaceRecipes();
-		const cooking = fire?.cooking;
-		const inputList = document.querySelector("#furnace-recipe-list");
-		inputList.innerHTML = smeltRecipes.map((recipe) => {
-			const inputId = Object.keys(recipe.ingredients)[0];
-			const image = inventoryImageSource(inputId);
-			const icon = image ? `<img class="item-texture" src="${image}" alt="">` : `<span class="item-icon">${itemInfo[inputId]?.icon || "?"}</span>`;
-			const count = player.inventory[inputId] || 0;
-			const fuelReady = (fire?.furnaceFuelMs || 0) >= recipe.seconds * 1000;
-			return `<button type="button" class="furnace-recipe" data-furnace-recipe="${recipe.id}" ${!fire || fire.cooking || count < 1 || !fuelReady ? "disabled" : ""}>${icon}<span>${label(inputId)} → ${recipe.name}</span><small>${count}</small></button>`;
-		}).join("");
-		const fuelList = document.querySelector("#furnace-fuel-list");
-		fuelList.innerHTML = Object.entries(furnaceFuelMs).map(([id, burnMs]) => {
-			const image = inventoryImageSource(id);
-			const icon = image ? `<img class="item-texture" src="${image}" alt="">` : `<span class="item-icon">${itemInfo[id]?.icon || "?"}</span>`;
-			const count = player.inventory[id] || 0;
-			return `<button type="button" class="furnace-fuel" data-furnace-fuel="${id}" ${!fire || count < 1 || (fire.furnaceFuelMs || 0) >= 120000 ? "disabled" : ""}>${icon}<span>${label(id)}</span><small>${count} · ${Math.round(burnMs / 1000)}s</small></button>`;
-		}).join("");
-		const imageMarkup = (id) => {
-			if (!id) return "";
-			const image = inventoryImageSource(id);
-			return image ? `<img class="item-texture" src="${image}" alt="">` : `<span class="item-icon">${itemInfo[id]?.icon || "?"}</span>`;
+		if (fire) furnaceState(fire);
+		const setHtml = (element, html) => {
+			if (element.dataset.html === html) return;
+			element.dataset.html = html;
+			element.innerHTML = html;
 		};
-		const inputId = cooking?.inputId || "";
-		const outputId = cooking?.recipeId || "";
-		document.querySelector("#furnace-input-slot").innerHTML = imageMarkup(inputId);
-		document.querySelector("#furnace-output-slot").innerHTML = imageMarkup(outputId);
-		document.querySelector("#furnace-fuel-slot").innerHTML = fire?.furnaceFuelType ? imageMarkup(fire.furnaceFuelType) : "";
-		const fuelSeconds = Math.ceil((fire?.furnaceFuelMs || 0) / 1000);
-		document.querySelector("#furnace-fuel-status").textContent = fuelSeconds ? `${label(fire.furnaceFuelType || "coal")} · ${fuelSeconds}s fuel remaining` : "Add coal, wood, or sticks for fuel.";
+		const inputIds = [...new Set(furnaceRecipes().map((recipe) => Object.keys(recipe.ingredients)[0]))];
+		setHtml(document.querySelector("#furnace-recipe-list"), inputIds.map((id) => {
+			const count = player.inventory[id] || 0;
+			return `<button type="button" class="furnace-recipe" data-furnace-pick="${id}" ${count < 1 ? "disabled" : ""}>${furnaceItemMarkup(id)}<span>${label(id)} → ${smeltRecipeFor(id).name}</span><small>${count}</small></button>`;
+		}).join(""));
+		setHtml(document.querySelector("#furnace-fuel-list"), Object.entries(furnaceFuelMs).map(([id, burnMs]) => {
+			const count = player.inventory[id] || 0;
+			return `<button type="button" class="furnace-fuel" data-furnace-pick="${id}" ${count < 1 ? "disabled" : ""}>${furnaceItemMarkup(id)}<span>${label(id)}</span><small>${count} · ${Math.round(burnMs / 1000)}s</small></button>`;
+		}).join(""));
+		const cooking = fire?.cooking;
+		const slotMarkup = (stack) => (stack ? `${furnaceItemMarkup(stack.id)}${stack.count > 1 ? `<b class="furnace-slot-count">${stack.count}</b>` : ""}` : "");
+		setHtml(document.querySelector("#furnace-input-slot"), slotMarkup(fire?.input || (cooking ? { id: cooking.inputId, count: 1 } : null)));
+		setHtml(document.querySelector("#furnace-fuel-slot"), slotMarkup(fire?.fuel || (fire?.burnMs > 0 ? { id: fire.burnId || "coal", count: 1 } : null)));
+		setHtml(document.querySelector("#furnace-output-slot"), slotMarkup(fire?.output));
+		const burning = (fire?.burnMs || 0) > 0;
+		document.querySelector("#furnace-fuel-status").textContent = burning ? `Burning · ${Math.ceil(fire.burnMs / 1000)}s left on this fuel` : fire?.fuel ? "Fuel loaded. It burns while smelting." : "Add coal, wood, or sticks for fuel.";
 		const progress = cooking ? Math.min(100, (Date.now() - cooking.startedAt) / cooking.duration * 100) : 0;
 		document.querySelector("#furnace-progress-fill").style.width = `${progress}%`;
-		document.querySelector("#furnace-status").textContent = cooking ? cooking.ready ? `${label(cooking.recipeId)} is ready.` : `Smelting ${label(cooking.inputId)}…` : (fire?.furnaceFuelMs ? "Choose raw meat or ore to smelt." : "Add coal, wood or sticks as fuel first, then choose something to smelt.");
+		let status = "Pick up an item on the left, then click INPUT or FUEL.";
+		if (cooking) status = burning || fire.fuel ? `Smelting ${label(cooking.inputId)} → ${label(cooking.recipeId)}…` : "Out of fuel. Add more to keep smelting.";
+		else if (fire?.input && !(burning || fire.fuel)) status = "Add fuel to start smelting.";
+		else if (fire?.input && fire.output && fire.output.id !== smeltRecipeFor(fire.input.id)?.id) status = "Collect the output to smelt something different.";
+		else if (fire?.output) status = "Click OUTPUT to collect.";
+		document.querySelector("#furnace-status").textContent = status;
 		const collect = document.querySelector("#furnace-collect");
-		collect.hidden = !cooking?.ready;
-		collect.disabled = !cooking?.ready;
+		collect.hidden = !fire?.output;
+		collect.disabled = !fire?.output;
 	}
 
 	function openPanel(mode, fire = null) {
+		returnFurnaceCursor();
 		if (mode === "craft" && window.FernfallCrafting) {
 			window.FernfallCrafting.open();
 			return;
@@ -1080,8 +1206,12 @@ const FernfallSurvival = (() => {
 			return true;
 		}
 
-		const furnaceIndex = campfires.findIndex((fire) => fire.kind === "furnace" && !fire.cooking && Math.hypot(fire.x - x, fire.y - y) < 36);
+		const furnaceIndex = campfires.findIndex((fire) => fire.kind === "furnace" && Math.hypot(fire.x - x, fire.y - y) < 36);
 		if (furnaceIndex >= 0) {
+			if (furnaceHasItems(furnaceState(campfires[furnaceIndex]))) {
+				show("Empty the furnace before picking it up.");
+				return true;
+			}
 			campfires.splice(furnaceIndex, 1);
 			player.inventory.furnace = (player.inventory.furnace || 0) + 1;
 			show("Picked up furnace.");
@@ -1532,7 +1662,7 @@ const FernfallSurvival = (() => {
 				}
 			}
 			if (fire.kind === "furnace") {
-				if (!drawPackStationArt(fire.cooking ? "furnace_lit" : "furnace_unlit", fire.x, fire.y, 58)) {
+				if (!drawPackStationArt(fire.cooking && fire.burnMs > 0 ? "furnace_lit" : "furnace_unlit", fire.x, fire.y, 58)) {
 					ctx.fillStyle = "#77776f";
 					ctx.fillRect(fire.x - 20, fire.y - 20, 40, 40);
 					ctx.fillStyle = fire.cooking ? "#ef9b4b" : "#343b39";
@@ -1959,8 +2089,9 @@ const FernfallSurvival = (() => {
 			nextSicknessDamage = now + 2500;
 			updateHud();
 		}
+		updateFurnaces(now);
 		for (const fire of campfires) {
-			if (fire.cooking && !fire.cooking.ready && now - fire.cooking.startedAt >= fire.cooking.duration) {
+			if (fire.kind !== "furnace" && fire.cooking && !fire.cooking.ready && now - fire.cooking.startedAt >= fire.cooking.duration) {
 				fire.cooking.ready = true;
 				show(`${label(fire.cooking.recipeId)} is ready to collect.`);
 				saveGame();
@@ -2016,20 +2147,25 @@ const FernfallSurvival = (() => {
 			if (recipe) addCraftedItem(recipe);
 		});
 		document.querySelector("#use-selected-button").addEventListener("click", useSelected);
-		document.querySelector("#furnace-fuel-slot").addEventListener("click", () => {
-			const fuelId = Object.keys(furnaceFuelMs).find((id) => player.inventory[id] > 0);
-			if (fuelId) addFurnaceFuel(currentFire(), fuelId);
-			else show("You have no fuel. Coal, wood or sticks will work.");
+		const furnaceWorkspace = document.querySelector("#furnace-workspace");
+		const furnaceAction = (event, placeOne) => {
+			const pick = event.target.closest("[data-furnace-pick]");
+			const slot = event.target.closest("#furnace-collect") ? "collect" : event.target.closest("#furnace-input-slot") ? "input" : event.target.closest("#furnace-fuel-slot") ? "fuel" : event.target.closest("#furnace-output-slot") ? "output" : "";
+			if (pick && !pick.disabled) pickUpForFurnace(pick.dataset.furnacePick);
+			else if (slot) useFurnaceSlot(slot, placeOne);
+			else return false;
+			renderFurnaceCursor();
+			moveFurnaceCursor(event);
+			updateHud();
+			refreshPanel();
+			return true;
+		};
+		furnaceWorkspace.addEventListener("click", (event) => furnaceAction(event, false));
+		furnaceWorkspace.addEventListener("contextmenu", (event) => {
+			if (furnaceAction(event, true)) event.preventDefault();
 		});
-		document.querySelector("#furnace-input-slot").addEventListener("click", () => {
-			const fire = currentFire();
-			const recipe = furnaceRecipes().find((entry) => (player.inventory[Object.keys(entry.ingredients)[0]] || 0) >= 1 && (fire?.furnaceFuelMs || 0) >= entry.seconds * 1000);
-			if (recipe) startFurnaceCook(recipe.id, fire);
-			else show("Add fuel and something to smelt first.");
-		});
-		document.querySelector("#furnace-output-slot").addEventListener("click", () => {
-			if (collectFire(currentFire())) refreshPanel();
-		});
+		document.addEventListener("pointermove", moveFurnaceCursor);
+		document.querySelector("#survival-dialog").addEventListener("close", returnFurnaceCursor);
 		document.querySelector("#craft-menu-button").addEventListener("click", () => openPanel("craft"));
 		document.querySelector("#survival-close").addEventListener("click", () => document.querySelector("#survival-dialog").close());
 		document.querySelector("#villager-quest-action").addEventListener("click", handleVillagerQuestAction);
@@ -2037,14 +2173,6 @@ const FernfallSurvival = (() => {
 		document.querySelector("#villager-dialog-close-secondary").addEventListener("click", () => document.querySelector("#villager-dialog").close());
 		document.querySelector("#survival-list").addEventListener("click", (event) => {
 			const button = event.target.closest("[data-survival-action]");
-			const furnaceRecipe = event.target.closest("[data-furnace-recipe]");
-			const furnaceFuel = event.target.closest("[data-furnace-fuel]");
-			if (furnaceRecipe && !furnaceRecipe.disabled) return startFurnaceCook(furnaceRecipe.dataset.furnaceRecipe, currentFire());
-			if (furnaceFuel && !furnaceFuel.disabled) return addFurnaceFuel(currentFire(), furnaceFuel.dataset.furnaceFuel);
-			if (event.target.closest("#furnace-collect")) {
-				if (collectFire(currentFire())) refreshPanel();
-				return;
-			}
 			if (!button || button.disabled) return;
 			if (button.dataset.survivalAction === "craft") addCraftedItem(craftingRecipes.find((entry) => entry.id === button.dataset.recipe));
 			if (button.dataset.survivalAction === "cook") startCook(button.dataset.recipe, currentFire());
@@ -2173,6 +2301,7 @@ const FernfallSurvival = (() => {
 		(state.discoveredRecipes || []).forEach((key) => discoveredRecipes.add(key));
 		jimothyMet = state.jimothyMet ?? jimothyMet;
 		spawnTableTaken = Boolean(state.spawnTableTaken);
+		if (state.furnaceCursor?.id) player.inventory[state.furnaceCursor.id] = (player.inventory[state.furnaceCursor.id] || 0) + state.furnaceCursor.count;
 		worldEpoch = state.worldEpoch || 0;
 		(state.hostileChunks || []).forEach((key) => hostileChunks.add(key));
 		Object.assign(questProgress, state.questProgress || {});
@@ -2195,7 +2324,7 @@ const FernfallSurvival = (() => {
 			inventory: player.inventory, resources, animals, mobs, pickups, obstacles,
 			generatedChunks: [...generatedChunks], resourceChunks: [...resourceChunks], pondChunks: [...pondChunks], pondSpawnVersion: POND_SPAWN_VERSION, villageChunks: [...villageChunks],
 			villages, villagers, craftingTables, ponds, campfires, hostileProjectiles, craftingSlots,
-			discoveredRecipes: [...discoveredRecipes], jimothyMet, spawnTableTaken, selectedItem, questProgress, villagerQuestStates,
+			discoveredRecipes: [...discoveredRecipes], jimothyMet, spawnTableTaken, furnaceCursor, selectedItem, questProgress, villagerQuestStates,
 			completedSurvivalQuests: [...completedSurvivalQuests], worldEpoch,
 			hostileChunks: [...hostileChunks],
 			bed, bedSpawned, spawnPoint,
